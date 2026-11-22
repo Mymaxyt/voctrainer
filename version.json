@@ -1,0 +1,6 @@
+{
+  "versionCode": 12,
+  "versionName": "1.11",
+  "notes": "App sucht selbst nach Updates",
+  "apk": "https://raw.githubusercontent.com/Mymaxyt/voctrainer/main/dist/Vokabeltrainer.apk"
+}

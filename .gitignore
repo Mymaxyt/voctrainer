@@ -1,0 +1,4 @@
+*.jks
+*.keystore
+dist/*-unsigned.apk
+__pycache__/

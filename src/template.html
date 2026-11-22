@@ -1,0 +1,1011 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Vokabeltrainer</title>
+<style>
+:root{
+  --bg:#f4f2ee; --surface:#ffffff; --surface2:#ebe8e2; --text:#1d1b18; --muted:#6b665e;
+  --accent:#2f5d8a; --accent-ink:#ffffff; --good:#2e7d4f; --bad:#b4493b; --warn:#9a6a12; --line:#dcd7ce;
+  --good-bg:#e5f4e4; --bad-bg:#fbebeb; --shadow:0 10px 30px rgba(30,25,15,.12);
+}
+@media (prefers-color-scheme:dark){
+  :root{ --bg:#16181c; --surface:#22262c; --surface2:#2c3138; --text:#eceae6; --muted:#a19c93;
+    --accent:#7fb0e0; --accent-ink:#0f1a26; --good:#2f8a58; --bad:#b9533f; --warn:#e0b050; --line:#353a42;
+    --good-bg:#1e3326; --bad-bg:#3a2320; --shadow:0 10px 30px rgba(0,0,0,.45); }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overscroll-behavior:none}
+body{display:flex;flex-direction:column;min-height:100%;padding:14px 16px 18px}
+button{font:inherit}
+header{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+h1{font-size:20px;margin:0;font-weight:700;letter-spacing:-.01em}
+#count{font-size:14px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums;text-align:right}
+#count small{font-weight:400;color:var(--muted);font-size:12px;margin-right:4px}
+.bar{display:flex;height:8px;background:var(--surface2);border-radius:4px;margin:10px 0 6px;overflow:hidden}
+.bar>i{display:block;height:100%;width:0;transition:width .3s}
+#pSure{background:var(--good)} #pLearn{background:var(--good);opacity:.4}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--muted);margin-bottom:12px;font-variant-numeric:tabular-nums}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:9px;height:9px;border-radius:2px;display:inline-block}
+.legend .due{margin-left:auto;color:var(--text);font-weight:600}
+/* Tastatur offen: Kopfbereich zusammenklappen, damit nichts abgeschnitten wird */
+body.typing .seg, body.typing .chips, body.typing .tools, body.typing .legend{display:none}
+body.typing{padding-top:10px}
+body.typing .bar{margin-bottom:10px}
+body.typing #writeMode{margin-top:0;gap:10px}
+body.typing #exam{gap:8px}
+body.typing #exam .qbox{padding:12px 14px 14px}
+body.typing .sentence{font-size:17px}
+body.typing .qbox{min-height:0;padding:12px 16px 16px;box-shadow:none}
+body.typing .qhead{margin-bottom:8px}
+body.typing .qbox .word{font-size:19px}
+body.typing .result{padding:10px 14px}
+body.typing .result .sol{font-size:18px}
+body.typing .btn{padding:13px 10px}
+.chapline{display:none;font-size:12px;color:var(--muted);margin:-4px 0 8px}
+body.typing .chapline{display:block}
+.seg{display:flex;background:var(--surface2);border-radius:12px;padding:3px;margin-bottom:10px}
+.seg button{flex:1;border:0;background:transparent;color:var(--muted);padding:9px;border-radius:9px;font-size:15px;font-weight:600}
+.seg button.on{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;user-select:none;-webkit-user-select:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--surface);color:var(--text);padding:8px 12px;border-radius:999px;font-size:14px}
+.chip.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.tools{display:flex;gap:8px;margin-top:10px}
+.tool{flex:1;border:1px solid var(--line);background:var(--surface);color:var(--text);padding:9px 6px;border-radius:10px;font-size:13px}
+.tag{position:absolute;top:16px;left:18px;font-size:12px;color:var(--muted);letter-spacing:.02em}
+.weak{position:absolute;top:36px;left:18px;font-size:12px;color:var(--warn);font-weight:600}
+.side{position:absolute;top:16px;right:18px;font-size:12px;color:var(--muted)}
+.hint{position:absolute;bottom:16px;font-size:12px;color:var(--muted)}
+/* Kartenmodus */
+#cardMode{flex:1;display:flex;flex-direction:column;user-select:none;-webkit-user-select:none}
+.stage{flex:1;display:flex;align-items:center;justify-content:center;perspective:1400px;margin:16px 0;min-height:280px}
+.card{position:relative;width:100%;max-width:520px;height:min(50vh,420px);transform-style:preserve-3d;transition:transform .45s cubic-bezier(.2,.7,.2,1)}
+.card.flip{transform:rotateY(180deg)}
+.card.fly-r{transform:translateX(120%) rotate(12deg);transition:transform .25s ease-in}
+.card.fly-l{transform:translateX(-120%) rotate(-12deg);transition:transform .25s ease-in}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--surface);
+  border-radius:22px;box-shadow:var(--shadow);border:1px solid var(--line);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;padding:52px 22px 40px}
+.back{transform:rotateY(180deg)}
+.word{font-size:28px;font-weight:700;line-height:1.25;overflow-wrap:anywhere}
+.word.long{font-size:21px;font-weight:600}
+.sub{margin-top:14px;font-size:15px;color:var(--muted);line-height:1.4}
+.actions{display:flex;gap:12px}
+.btn{flex:1;border:0;border-radius:14px;padding:16px 10px;font-size:17px;font-weight:600;color:#fff}
+.btn.bad{background:var(--bad)} .btn.good{background:var(--good)} .btn.main{background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+/* Schreibmodus */
+#writeMode{display:none;flex-direction:column;gap:12px;margin-top:14px}
+.qbox{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);
+  padding:14px 18px 22px;min-height:150px;display:flex;flex-direction:column;text-align:center}
+.qhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;margin-bottom:12px;text-align:left}
+.qhead .tag,.qhead .weak,.qhead .side{position:static}
+.qhead .side{margin-left:auto}
+.qbox .word{flex:1;display:flex;align-items:center;justify-content:center}
+.qbox .word{font-size:22px;font-weight:600}
+form{display:flex;gap:8px}
+.typein{flex:1;min-width:0;font-size:18px;padding:14px 14px;border-radius:12px;border:1.5px solid var(--line);
+  background:var(--surface);color:var(--text);outline:none}
+.typein:focus{border-color:var(--accent)}
+.typein.locked{opacity:.6}
+#check{flex:none;padding:0 18px}
+.row{display:flex;gap:8px;align-items:center}
+#hintText{flex:1;font-family:ui-monospace,Menlo,monospace;font-size:16px;letter-spacing:.08em;color:var(--muted)}
+.result{display:none;border-radius:14px;padding:14px 16px;line-height:1.45}
+.result.ok{display:block;background:var(--good-bg)} .result.no{display:block;background:var(--bad-bg)}
+.result b{font-size:17px}
+.result .sol{font-size:20px;font-weight:700;margin-top:4px}
+.result .yours{color:var(--muted);font-size:14px;margin-top:4px}
+#afterBtns{display:none;gap:10px}
+/* Fertig */
+.done{display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px;flex:1;padding:20px 0}
+.done h2{margin:0;font-size:24px}
+.done p{margin:0;color:var(--muted);line-height:1.45}
+.done .btn{flex:none;padding:14px 22px}
+/* Bildschirme */
+.screen{display:none;flex:1;flex-direction:column}
+.screen.on{display:flex}
+.backbtn{border:0;background:transparent;color:var(--accent);font-size:16px;font-weight:600;padding:4px 8px 4px 0;margin-right:auto}
+header.nav{align-items:center}
+header.nav h1{flex:none}
+/* Startseite */
+#home{gap:14px;padding-top:18px}
+.hero h1{font-size:28px;margin:0}
+.hero p{margin:4px 0 0;color:var(--muted)}
+.tile{display:flex;flex-direction:column;gap:6px;text-align:left;background:var(--surface);border:1px solid var(--line);
+  border-radius:20px;padding:20px;box-shadow:var(--shadow);color:var(--text)}
+.tile .t{font-size:20px;font-weight:700}
+.tile .d{font-size:14px;color:var(--muted);line-height:1.4}
+.tile .m{font-size:13px;font-weight:600;margin-top:4px;font-variant-numeric:tabular-nums}
+.tile .btn{margin-top:10px}
+.opt{display:flex;align-items:center;gap:10px;font-size:14px;margin-top:8px}
+.opt input{width:20px;height:20px;accent-color:var(--accent)}
+/* Prüfung */
+#exam{gap:12px}
+#exam .bar{margin:10px 0 2px}
+#examProg{background:var(--accent)}
+.sentence{font-size:20px;line-height:1.55;text-align:left;font-weight:500}
+.gap{display:inline-block;min-width:3em;padding:0 4px;border-bottom:2px solid var(--accent);color:var(--accent);font-weight:700;
+  font-family:ui-monospace,Menlo,monospace;font-size:.92em;letter-spacing:.04em}
+.gap.filled{font-family:inherit;letter-spacing:0;color:var(--text)}
+#exam .qbox{padding:14px 18px 22px}
+.muted{color:var(--muted);font-size:13px}
+/* Ergebnis */
+#resultScreen{gap:14px}
+.score{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px;text-align:center;box-shadow:var(--shadow)}
+.score .big{font-size:40px;font-weight:800;font-variant-numeric:tabular-nums}
+.score .sub2{color:var(--muted);margin-top:4px}
+.rv{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--good);border-radius:12px;padding:12px 14px;line-height:1.45}
+.rv.no{border-left-color:var(--bad)}
+.rv .s{font-size:15px}
+.rv .s b{color:var(--good)}
+.rv.no .s b{color:var(--bad)}
+.rv .y{font-size:13px;color:var(--muted);margin-top:4px;display:flex;align-items:center;gap:8px;justify-content:space-between}
+.rv .y button{border:1px solid var(--line);background:transparent;color:var(--text);border-radius:8px;padding:5px 10px;font-size:12px;flex:none}
+#review{display:flex;flex-direction:column;gap:8px;padding-bottom:10px}
+
+/* Geräte-Sync */
+.tile.small{flex-direction:row;align-items:center;gap:14px;padding:16px 20px}
+.tile.small .grow{flex:1;display:flex;flex-direction:column;gap:3px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--line);flex:none}
+.dot.ok{background:var(--good)} .dot.err{background:var(--warn)}
+#syncScreen{gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:10px}
+.panel h3{margin:0;font-size:17px}
+.panel p{margin:0;color:var(--muted);font-size:14px;line-height:1.45}
+.code{font-family:ui-monospace,Menlo,monospace;font-size:15px;letter-spacing:.03em;width:100%;padding:12px;border-radius:10px;
+  border:1px dashed var(--accent);background:var(--surface2);color:var(--text);user-select:all;-webkit-user-select:all}
+.or{text-align:center;color:var(--muted);font-size:13px}
+#syncMsg{font-size:14px;line-height:1.45;min-height:1em}
+.steps{margin:0;padding-left:20px;font-size:14px;line-height:1.6;color:var(--text)}
+.steps a{color:var(--accent);font-weight:600}
+#syncMsg.err{color:var(--bad)} #syncMsg.ok{color:var(--good)}
+/* Tablets und breite Bildschirme */
+@media (min-width:700px){
+  body{max-width:860px;margin:0 auto;width:100%;padding:24px 32px 28px}
+  #home.on{display:grid;grid-template-columns:1fr 1fr;align-content:start;gap:18px}
+  #home .hero, #home .tile.small{grid-column:1/-1}
+  .hero h1{font-size:34px}
+  .word{font-size:36px} .word.long{font-size:27px}
+  .qbox .word{font-size:28px} .sentence{font-size:24px}
+  .card{max-width:680px;height:min(52vh,480px)}
+  .stage{margin:24px 0}
+  .btn{font-size:18px}
+  .typein{font-size:20px}
+}
+@media (min-width:700px) and (max-height:560px){   /* Querformat mit Tastatur */
+  .card{height:min(48vh,360px)}
+}
+@media (max-height:520px) and (orientation:landscape){   /* Handy quer */
+  body{padding-top:8px;padding-bottom:8px}
+  .seg{margin-bottom:6px} .seg button{padding:6px}
+  .legend{display:none}
+  .bar{margin-bottom:8px}
+  .chip{padding:5px 11px}
+  .tools{margin-top:6px} .tool{padding:6px}
+  .stage{min-height:0;margin:6px 0}
+  .card{height:max(130px,calc(100vh - 262px))}
+  .face{padding:34px 18px 28px}
+  .btn{padding:11px 10px}
+}
+.syn{margin-top:10px;font-size:14px;color:var(--muted);font-style:italic}
+#exam .syn{text-align:left}
+.logtext{width:100%;min-height:45vh;flex:1;font-family:ui-monospace,Menlo,monospace;font-size:12.5px;line-height:1.5;padding:12px;
+  border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--text);resize:vertical;white-space:pre-wrap}
+#logScreen{gap:14px}
+#logTop{white-space:pre-line}
+.update{display:none;flex-direction:column;gap:10px;background:var(--surface);border:2px solid var(--accent);border-radius:20px;padding:18px 20px}
+.update.on{display:flex}
+.update .grow{display:flex;flex-direction:column;gap:4px}
+.update b{font-size:17px} .update span{font-size:14px;color:var(--muted);line-height:1.4}
+.update .btn{text-align:center;text-decoration:none}
+#home.on .update.on, #home.on .verline{grid-column:1/-1}
+.verline{font-size:13px;color:var(--muted);text-align:center;padding:4px 0 8px}
+.linkbtn{border:0;background:none;color:var(--accent);font-size:13px;padding:0;text-decoration:underline}
+#updMsg{display:block;margin-top:4px}
+</style>
+</head>
+<body>
+<section id="home" class="screen">
+  <div class="hero"><h1>Vokabeltrainer</h1><p>Self-study-Vokabeln für den Test</p></div>
+  <div class="update" id="updBox">
+    <div class="grow"><b id="updTitle"></b><span id="updNotes"></span></div>
+    <a class="btn main" id="updBtn" href="#">Jetzt aktualisieren</a>
+    <p class="muted" id="updHow" style="display:none;margin:0">Der Download startet im Browser. Danach die Benachrichtigung „Download abgeschlossen“ antippen und „Aktualisieren“ wählen – dein Lernstand bleibt erhalten. Beim ersten Mal fragt Android, ob der Browser Apps installieren darf.</p>
+  </div>
+  <button class="tile" id="goTrain">
+    <span class="t">Vokabeltraining</span>
+    <span class="d">Karteikarten oder Schreiben, mit Wiederholung nach Zeit</span>
+    <span class="m" id="homeTrain"></span>
+  </button>
+  <div class="tile">
+    <span class="t">Prüfungssimulation</span>
+    <span class="d">30 zufällige Vokabeln als englische Lückensätze. Die Auswertung kommt erst am Ende.</span>
+    <label class="opt"><input type="checkbox" id="optLetters" checked> Anfangsbuchstaben als Hilfe zeigen</label>
+    <span class="m" id="homeExam"></span>
+    <button class="btn main" id="goExam">Prüfung starten</button>
+  </div>
+  <button class="tile small" id="goLog"><span class="dot err" id="logDot"></span>
+    <span class="grow"><span class="t" style="font-size:17px">Fehlerprotokoll</span><span class="d" id="homeLog">Noch keine Fehler</span></span><span class="d">›</span>
+  </button>
+  <button class="tile small" id="goSync"><span class="dot" id="syncDot"></span>
+    <span class="grow"><span class="t" style="font-size:17px">Geräte-Sync</span><span class="d" id="homeSync">Handy und Tablet verbinden</span></span><span class="d">›</span>
+  </button>
+  <div class="verline"><span id="verText"></span> · <button class="linkbtn" id="updCheck">Nach Updates suchen</button><span id="updMsg"></span></div>
+</section>
+
+<section id="logScreen" class="screen">
+  <header class="nav"><button class="backbtn" id="logHome">‹ Start</button><h1>Fehlerprotokoll</h1></header>
+  <div class="panel">
+    <h3 id="logSum">Noch keine Fehler</h3>
+    <p id="logTop"></p>
+    <div class="actions"><button class="btn ghost" id="logClear">Leeren</button><button class="btn main" id="logCopy">Alles kopieren</button></div>
+    <div id="logMsg" class="muted"></div>
+  </div>
+  <textarea id="logText" class="logtext" readonly spellcheck="false"></textarea>
+  <p class="muted">Jeder Fehler aus Schreiben, Prüfung und Karteikarten („Nochmal“) wird mit deiner Antwort gespeichert – auf allen gekoppelten Geräten gemeinsam. Zum Auswerten einfach kopieren und Claude schicken.</p>
+</section>
+
+<section id="syncScreen" class="screen">
+  <header class="nav"><button class="backbtn" id="syncHome">‹ Start</button><h1>Geräte-Sync</h1></header>
+  <div id="syncMsg"></div>
+  <div id="syncOff" style="display:contents">
+    <div class="panel">
+      <h3>1. Auf dem ersten Gerät</h3>
+      <p>Der Lernstand wird verschlüsselt in einem geheimen Gist in deinem GitHub-Konto gespeichert. Dafür einmal einen Token erstellen, der nur Gists bearbeiten darf:</p>
+      <ol class="steps">
+        <li><a href="https://github.com/settings/tokens/new?scopes=gist&amp;description=Vokabeltrainer" id="tokenLink">Token-Seite bei GitHub öffnen</a> (Berechtigung „gist“ ist schon ausgewählt)</li>
+        <li>Ablaufdatum wählen, z. B. 90 Tage, unten auf „Generate token“ tippen</li>
+        <li>Den Token (beginnt mit ghp_) kopieren und hier einfügen</li>
+      </ol>
+      <input id="syncToken" class="typein" type="text" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="ghp_…">
+      <button class="btn main" id="syncCreate">Kopplung erstellen</button>
+    </div>
+    <div class="or">oder</div>
+    <div class="panel">
+      <h3>2. Auf dem anderen Gerät</h3>
+      <p>Kopplungscode vom ersten Gerät einfügen. Beide Lernstände werden zusammengeführt – ein Token ist hier nicht nötig.</p>
+      <input id="syncCodeIn" class="typein" type="text" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="VT1.…">
+      <button class="btn main" id="syncJoin">Verbinden</button>
+    </div>
+  </div>
+  <div id="syncOn" style="display:contents">
+    <div class="panel">
+      <h3>Verbunden</h3>
+      <p id="syncStatus"></p>
+      <button class="btn main" id="syncNow">Jetzt synchronisieren</button>
+    </div>
+    <div class="panel">
+      <h3>Weiteres Gerät verbinden</h3>
+      <p>Diesen Code auf dem anderen Gerät unter Geräte-Sync → Verbinden einfügen. Er enthält den Schlüssel und deinen Token – nur an dich selbst schicken.</p>
+      <input class="code" id="syncCode" readonly>
+      <button class="btn ghost" id="syncCopy">Code kopieren</button>
+    </div>
+    <button class="btn ghost" id="syncUnpair" style="flex:none">Kopplung auf diesem Gerät trennen</button>
+  </div>
+  <p class="muted">Abgleich automatisch beim Öffnen und ein paar Sekunden nach jeder Antwort. Ende-zu-Ende-verschlüsselt (AES-GCM): Auch GitHub sieht nur unlesbare Daten.</p>
+</section>
+
+<section id="exam" class="screen">
+  <header class="nav"><button class="backbtn" id="examQuit">‹ Abbrechen</button><span id="examCount" class="muted"></span></header>
+  <div class="bar"><i id="examProg"></i></div>
+  <div class="qbox"><div class="qhead"><span class="tag" id="examTag"></span><span class="side">Lücke füllen</span></div><div class="sentence" id="sentence"></div><div class="syn" id="synE"></div></div>
+  <form id="examForm" autocomplete="off">
+    <input id="examAns" class="typein" type="text" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false"
+      enterkeyhint="enter" placeholder="Antwort …">
+    <button class="btn main" id="examNext" type="submit">Weiter</button>
+  </form>
+  <div class="row"><button class="tool" id="examPrev" type="button" style="flex:none;padding:9px 14px">‹ Zurück</button><span class="muted">Enter springt zur nächsten Lücke</span></div>
+</section>
+
+<section id="resultScreen" class="screen">
+  <header class="nav"><button class="backbtn" id="resHome">‹ Start</button><h1>Ergebnis</h1></header>
+  <div class="score"><div class="big" id="score"></div><div class="sub2" id="grade"></div></div>
+  <div class="actions"><button class="btn ghost" id="practiceWrong">Fehler üben</button><button class="btn main" id="examAgain">Neue Prüfung</button></div>
+  <div id="review"></div>
+</section>
+
+<section id="train" class="screen">
+<header class="nav"><button class="backbtn" id="trainHome">‹ Start</button><span id="count"></span></header>
+<div class="bar"><i id="pSure"></i><i id="pLearn"></i></div>
+<div class="legend" id="legend"></div>
+<div class="chapline" id="chapline"></div>
+<div class="seg"><button id="mCard" class="on">Karteikarten</button><button id="mWrite">Schreiben</button></div>
+<div class="chips" id="chips"></div>
+<div class="tools">
+  <button class="tool" id="dir">EN → DE</button>
+  <button class="tool" id="shuffle">Mischen</button>
+  <button class="tool" id="reset">Zurücksetzen</button>
+</div>
+
+<div id="cardMode">
+  <div class="stage" id="stage">
+    <div class="card" id="card">
+      <div class="face front"><span class="tag" id="tagF"></span><span class="weak" id="weakF"></span><span class="side">Vorderseite</span>
+        <div class="word" id="front"></div><div class="syn" id="synF"></div><div class="hint">Tippen zum Umdrehen</div></div>
+      <div class="face back"><span class="tag" id="tagB"></span><span class="side">Lösung</span>
+        <div class="word" id="back"></div><div class="sub" id="backSub"></div>
+        <div class="hint">← Nochmal · Gewusst →</div></div>
+    </div>
+  </div>
+  <div class="actions" id="actions">
+    <button class="btn bad" id="no">Nochmal</button>
+    <button class="btn good" id="yes">Gewusst</button>
+  </div>
+</div>
+
+<div id="writeMode">
+  <div class="qbox"><div class="qhead"><span class="tag" id="tagW"></span><span class="weak" id="weakW"></span><span class="side">Englisch schreiben</span></div>
+    <div class="word" id="prompt"></div><div class="syn" id="synW"></div></div>
+  <form id="form" autocomplete="off">
+    <input id="answer" class="typein" type="text" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false"
+      enterkeyhint="enter" placeholder="Englisches Wort …">
+    <button class="btn main" id="check" type="submit">Prüfen</button>
+  </form>
+  <div class="row" id="hintRow"><button class="tool" id="hintBtn" type="button" style="flex:none;padding:9px 14px">Tipp</button><span id="hintText"></span></div>
+  <div class="result" id="result"></div>
+  <div class="actions" id="afterBtns">
+    <button class="btn ghost" id="override">Zählt doch</button>
+    <button class="btn main" id="nextBtn">Weiter</button>
+  </div>
+</div>
+
+<div class="done" id="done">
+  <h2 id="doneTitle">Alles erledigt!</h2>
+  <p id="doneText"></p>
+  <button class="btn main" id="practice">Freies Üben (schwächste zuerst)</button>
+</div>
+</section>
+
+<script>
+const DATA = /*DATA*/[];
+const CHAPS = [["all","Alle"],["1","1 Industries"],["3","3 Strategy"],["7","7 Marketing"],["8","8 Distribution"],["2","2 Globalization"]];
+const MIN = 60e3, HOUR = 60*MIN, DAY = 24*HOUR;
+// Wartezeit je Box nach richtiger Antwort; oft falsche Karten kommen schneller zurück
+const IV = [0, 10*MIN, HOUR, 6*HOUR, DAY, 3*DAY, 7*DAY];
+const key = v => v.n + "|" + v.e;
+const store = {
+  get(k,d){ try{ const v = localStorage.getItem(k); return v===null?d:JSON.parse(v);}catch(e){return d;} },
+  set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} if((k === "srs" || k === "exams" || k === "log" || k === "logCleared") && window.syncReady) syncSoon(); }
+};
+let srs = store.get("srs", null);
+if(!srs){ // Übernahme aus Version 1.0
+  srs = {}; const now = Date.now();
+  for(const k of store.get("known", [])) srs[k] = {b:2, w:0, r:1, due: now + HOUR};
+  store.set("srs", srs);
+}
+let chap = store.get("chap", "all"), dirRev = store.get("dirRev", false), mode = store.get("mode", "card");
+let queue = [], cur = null, flipped = false, busy = false, free = false;
+let hintUsed = false, pending = null;
+let roundTotal = 0, roundDone = 0;   // aktuelle Runde: Karten gesamt / schon richtig beantwortet
+
+const $ = id => document.getElementById(id);
+const st = v => srs[key(v)] || (srs[key(v)] = {b:0, w:0, r:0, due:0});
+const inChap = v => chap === "all" || v.c.startsWith(chap + " ");
+const pool = () => DATA.filter(inChap);
+const isDue = v => st(v).due <= Date.now();
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+function grade(v, ok, hint){
+  const s = st(v), now = Date.now();
+  if(ok){
+    s.r++;
+    s.b = hint ? Math.max(s.b, 1) : Math.min(s.b + 1, IV.length - 1);
+    const f = Math.max(0.25, 1 / (1 + 0.5 * s.w));      // 1x falsch: 67 %, 2x: 50 %, 6x+: 25 % der Wartezeit
+    s.due = now + IV[s.b] * f;
+  } else { s.w++; s.b = 0; s.due = now; }
+  s.u = now;
+  store.set("srs", srs);
+}
+function buildQueue(){
+  free = false;
+  queue = shuffle(pool().filter(isDue));
+  queue.sort((a,b) => (st(b).w > 0) - (st(a).w > 0));   // schon mal falsche zuerst
+  roundTotal = queue.length; roundDone = 0;
+  next();
+}
+function startFree(){
+  free = true;
+  queue = shuffle(pool()).sort((a,b) => (st(b).w - st(b).b) - (st(a).w - st(a).b));
+  roundTotal = queue.length; roundDone = 0;
+  next();
+}
+function fmt(ms){
+  if(ms < HOUR) return Math.max(1, Math.round(ms/MIN)) + " Min.";
+  if(ms < DAY) return Math.round(ms/HOUR) + " Std.";
+  return Math.round(ms/DAY) + " Tag(en)";
+}
+// Stufen: offen = noch nie oder zuletzt falsch · gelernt = zuletzt richtig · sicher = 3× in Folge richtig (mit Pausen)
+function renderStats(){
+  const p = pool(), n = p.length || 1;
+  const sure = p.filter(v => st(v).b >= 3).length;
+  const learn = p.filter(v => st(v).b >= 1 && st(v).b < 3).length;
+  const open = p.length - sure - learn;
+  const due = p.filter(isDue).length;
+  $("pSure").style.width = 100*sure/n + "%";
+  $("pLearn").style.width = 100*learn/n + "%";
+  $("legend").innerHTML =
+    `<span><i style="background:var(--good)"></i>${sure} sicher</span>` +
+    `<span><i style="background:var(--good);opacity:.4"></i>${learn} gelernt</span>` +
+    `<span><i style="background:var(--surface2);border:1px solid var(--line)"></i>${open} offen</span>` +
+    `<span class="due">${due} fällig</span>`;
+  const left = cur ? queue.length + 1 : queue.length;
+  $("count").innerHTML = roundTotal && (cur || left)
+    ? `<small>${free ? "Freies Üben" : "Runde"}</small>${roundDone} / ${roundTotal} geschafft`
+    : `<small>Runde</small>fertig`;
+  $("chapline").textContent = "Kapitel " + CHAPS.find(c => c[0] === chap)[1] + " · zum Wechseln Tastatur schließen";
+}
+function renderChips(){
+  $("chips").innerHTML = "";
+  for(const [id,label] of CHAPS){
+    const b = document.createElement("button");
+    b.className = "chip" + (id===chap ? " on" : ""); b.textContent = label;
+    b.onclick = () => { chap = id; store.set("chap", chap); renderChips(); buildQueue(); };
+    $("chips").appendChild(b);
+  }
+}
+function weakText(v){ const w = st(v).w; return w >= 2 ? "schon " + w + "× falsch" : ""; }
+function tagText(v){ return v.c.split(" ")[0] + " · Aufg. " + v.n; }
+
+// Echtes Synonym aus der Liste anzeigen: dieses Wort ist nicht gesucht
+function setSyn(id, v){ const el = $(id); el.textContent = v && v.y ? "Synonym: " + v.y : ""; el.style.display = v && v.y ? "" : "none"; }
+function showCard(v){
+  const card = $("card");
+  card.classList.remove("flip","fly-l","fly-r"); flipped = false;
+  $("tagF").textContent = $("tagB").textContent = tagText(v);
+  $("weakF").textContent = weakText(v);
+  const f = dirRev ? v.q : v.e, b = dirRev ? v.e : v.q;
+  $("front").textContent = f; $("back").textContent = b; setSyn("synF", dirRev ? v : null); $("backSub").textContent = dirRev ? v.q : v.e;
+  $("front").classList.toggle("long", f.length > 32); $("back").classList.toggle("long", b.length > 32);
+}
+function showWrite(v){
+  $("tagW").textContent = tagText(v); $("weakW").textContent = weakText(v);
+  $("prompt").textContent = v.q; setSyn("synW", v);
+  $("answer").value = ""; $("answer").classList.remove("locked"); $("check").textContent = "Prüfen";
+  $("hintText").textContent = ""; $("hintRow").style.display = "flex"; hintUsed = false; pending = null;
+  $("result").className = "result"; $("afterBtns").style.display = "none";
+}
+function next(){
+  if(!queue.length && !free){                                          // inzwischen wieder fällige
+    queue = shuffle(pool().filter(isDue)); roundTotal += queue.length;
+  }
+  cur = queue.shift() || null;
+  renderStats();
+  const has = !!cur;
+  if(!has) $("answer").blur();
+  $("cardMode").style.display = has && mode === "card" ? "flex" : "none";
+  $("writeMode").style.display = has && mode === "write" ? "flex" : "none";
+  $("dir").style.visibility = mode === "card" ? "visible" : "hidden";
+  $("done").style.display = has ? "none" : "flex";
+  if(has){ mode === "card" ? showCard(cur) : showWrite(cur); return; }
+  const p = pool(), upcoming = p.map(v => st(v).due).filter(d => d > Date.now());
+  $("doneTitle").textContent = free ? "Durchgang geschafft!" : "Alles erledigt für jetzt!";
+  $("doneText").textContent = upcoming.length
+    ? "Nächste Wiederholung in " + fmt(Math.min(...upcoming) - Date.now()) + " – bis dahin kannst du frei weiterüben."
+    : "Keine Karten offen.";
+}
+function requeue(v){ queue.splice(Math.min(queue.length, 3 + Math.floor(Math.random()*4)), 0, v); }
+
+// ---------- Karteikarten
+function answerCard(ok){
+  if(!cur || busy) return;
+  busy = true;
+  grade(cur, ok, false);
+  if(!ok) addLog({m: "Karte", v: cur, a: "", q: dirRev ? "DE → EN" : "EN → DE"});
+  if(ok) roundDone++; else requeue(cur);
+  const card = $("card");
+  card.classList.add(ok ? "fly-r" : "fly-l");
+  setTimeout(() => { card.style.transition = "none"; next(); void card.offsetWidth; card.style.transition = ""; busy = false; }, 240);
+}
+function flip(){ if(!cur || busy) return; flipped = !flipped; $("card").classList.toggle("flip", flipped); }
+let sx = null, sy = null;
+$("card").addEventListener("pointerdown", e => { sx = e.clientX; sy = e.clientY; });
+$("card").addEventListener("pointerup", e => {
+  if(sx === null) return;
+  const dx = e.clientX - sx, dy = e.clientY - sy; sx = null;
+  if(Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy)) answerCard(dx > 0);
+  else if(Math.abs(dx) < 12 && Math.abs(dy) < 12) flip();
+});
+$("yes").onclick = () => answerCard(true);
+$("no").onclick = () => answerCard(false);
+
+// ---------- Schreiben (tolerant: Groß/Klein, Leerzeichen, Bindestriche, Satzzeichen, a/the/to)
+const norm = s => s.toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "")
+  .replace(/^\s*(a|an|the|to)\s+/, "").replace(/[\s\-‐-―\/.,;:'’`"()…]/g, "");
+function accepted(v){
+  const out = new Set();
+  for(const t of [v.e, ...v.a]){
+    out.add(norm(t));
+    out.add(norm(t.replace(/\([^)]*\)/g, " ")));
+  }
+  out.delete(""); return out;
+}
+function hintPattern(v){
+  return v.e.replace(/\s*\([^)]*\)\s*/g, " ").trim().replace(/[A-Za-z]+/g, w => w[0] + "_".repeat(w.length - 1)).split("").join("");
+}
+$("hintBtn").onclick = () => { if(!cur || pending) return; hintUsed = true; $("hintText").textContent = hintPattern(cur); $("answer").focus(); };
+// Enter / Prüfen: erst prüfen, beim zweiten Mal weiter – Tastatur bleibt dabei offen
+$("form").addEventListener("submit", e => {
+  e.preventDefault();
+  if(!cur) return;
+  if(pending){ finishWrite(pending.ok); return; }
+  const typed = $("answer").value;
+  const ok = typed.trim() !== "" && accepted(cur).has(norm(typed));
+  pending = {ok, typed};
+  $("answer").classList.add("locked"); $("check").textContent = "Weiter"; $("hintRow").style.display = "none";
+  const r = $("result");
+  r.className = "result " + (ok ? "ok" : "no");
+  r.innerHTML = "";
+  const t = document.createElement("b"); t.textContent = ok ? (hintUsed ? "Richtig (mit Tipp)" : "Richtig!") : (typed.trim() ? "Leider falsch" : "Nicht gewusst");
+  const sol = document.createElement("div"); sol.className = "sol"; sol.textContent = cur.e;
+  r.append(t, sol);
+  if(!ok && typed.trim()){ const y = document.createElement("div"); y.className = "yours"; y.textContent = "Deine Antwort: " + typed; r.append(y); }
+  $("override").style.display = ok ? "none" : "";
+  $("nextBtn").style.display = "none";            // "Prüfen" wird zu "Weiter"
+  $("afterBtns").style.display = ok ? "none" : "flex";
+});
+$("answer").addEventListener("input", () => { if(pending) $("answer").value = pending.typed; });
+function finishWrite(ok){
+  if(!pending) return;
+  grade(cur, ok, hintUsed && ok);
+  if(!pending.ok) addLog({m: "Schreiben", v: cur, a: pending.typed, q: cur.q, h: hintUsed, ov: ok});
+  if(ok) roundDone++; else requeue(cur);
+  pending = null; next();
+}
+// Tasten im Schreibmodus nehmen dem Eingabefeld nicht den Fokus -> Tastatur bleibt offen
+const typing = () => document.activeElement && document.activeElement.classList.contains("typein");
+for(const id of ["check", "nextBtn", "override", "hintBtn", "examNext", "examPrev"])
+  $(id).addEventListener("pointerdown", e => { if(typing()) e.preventDefault(); });
+// Kompakte Ansicht, solange getippt wird
+// Kompaktansicht nur bei echter Bildschirmtastatur (Höhe schrumpft deutlich).
+// Mit Ansteck-Tastatur bleibt alles normal und der Fokus bleibt im Feld.
+const viewH = () => Math.min(window.innerHeight, window.visualViewport ? window.visualViewport.height : window.innerHeight);
+let maxH = viewH(), lastW = window.innerWidth, kbOpen = false;
+const KB_MIN = 150;
+function kbCheck(){
+  const h = viewH();
+  if(window.innerWidth !== lastW){ lastW = window.innerWidth; maxH = h; if(!kbOpen) return; }   // Drehen: neu einmessen
+  if(h > maxH) maxH = h;
+  const open = h < maxH - KB_MIN;
+  if(open){
+    if(!kbOpen && typing()){ kbOpen = true; document.body.classList.add("typing"); }
+    if(kbOpen) window.scrollTo(0, 0);
+  } else if(kbOpen){
+    kbOpen = false; document.body.classList.remove("typing");
+    if(typing()) document.activeElement.blur();          // Bildschirmtastatur per Zurück-Taste geschlossen
+  }
+}
+for(const el of document.querySelectorAll(".typein")){
+  el.addEventListener("focus", () => { kbCheck(); setTimeout(kbCheck, 350); });
+  el.addEventListener("blur", () => setTimeout(() => { if(!typing()){ document.body.classList.remove("typing"); } }, 150));
+}
+window.addEventListener("resize", kbCheck);
+if(window.visualViewport) window.visualViewport.addEventListener("resize", kbCheck);
+$("chapline").addEventListener("click", () => $("answer").blur());
+
+// ---------- Bildschirme
+function show(id){
+  if(typing()) document.activeElement.blur();
+  for(const s of document.querySelectorAll(".screen")) s.classList.toggle("on", s.id === id);
+  window.scrollTo(0, 0);
+  if(id === "home"){ renderHome(); if(window.syncReady){ renderSync(); renderHomeLog(); renderUpdate(); } }
+  store.set("screen", id === "train" ? "train" : "home");
+}
+function renderHome(){
+  const all = DATA, sure = all.filter(v => st(v).b >= 3).length, learn = all.filter(v => st(v).b >= 1 && st(v).b < 3).length;
+  $("homeTrain").textContent = `${sure} sicher · ${learn} gelernt · ${all.length - sure - learn} offen · ${all.filter(isDue).length} fällig`;
+  const ex = store.get("exams", []);
+  $("homeExam").textContent = ex.length
+    ? `Letztes Ergebnis: ${ex[ex.length-1].p} / ${ex[ex.length-1].n} (${Math.round(100*ex[ex.length-1].p/ex[ex.length-1].n)} %) · ${ex.length} Prüfung${ex.length > 1 ? "en" : ""} gemacht`
+    : "Noch keine Prüfung gemacht";
+}
+$("goTrain").onclick = () => { show("train"); buildQueue(); };
+$("trainHome").onclick = () => show("home");
+
+// ---------- Prüfungssimulation
+const EXAM_N = 30;
+let exam = null;   // {items:[{v, ans, ok}], i, letters}
+$("optLetters").checked = store.get("optLetters", true);
+$("optLetters").onchange = () => store.set("optLetters", $("optLetters").checked);
+function gapPattern(g){ return g.replace(/[A-Za-z]+/g, w => w[0] + "_".repeat(w.length - 1)); }
+function examAccepted(v){ const s = accepted(v); s.add(norm(v.g)); return s; }
+function startExam(){
+  const seen = new Set(), picks = [];
+  for(const v of shuffle(DATA.slice())){            // jedes englische Wort höchstens einmal
+    const k = norm(v.e); if(seen.has(k)) continue;
+    seen.add(k); picks.push(v); if(picks.length === EXAM_N) break;
+  }
+  exam = {items: picks.map(v => ({v, ans: ""})), i: 0, letters: $("optLetters").checked};
+  show("exam"); renderQ();
+}
+function renderGap(){
+  const it = exam.items[exam.i], typed = $("examAns").value.trim();
+  const gap = document.querySelector("#sentence .gap");
+  gap.classList.toggle("filled", !!typed);
+  gap.textContent = typed || (exam.letters ? gapPattern(it.v.g) : it.v.g.split(/\s+/).map(() => "______").join(" "));
+}
+function renderQ(){
+  const it = exam.items[exam.i], [a, b] = it.v.s.split("___");
+  const s = $("sentence"); s.innerHTML = "";
+  const gap = document.createElement("span"); gap.className = "gap";
+  s.append(document.createTextNode(a), gap, document.createTextNode(b));
+  $("examTag").textContent = it.v.c.split(" ")[0] + " · Aufg. " + it.v.n; setSyn("synE", it.v);
+  $("examAns").value = it.ans;
+  $("examCount").textContent = `Frage ${exam.i + 1} / ${exam.items.length}`;
+  $("examProg").style.width = 100 * exam.i / exam.items.length + "%";
+  $("examNext").textContent = exam.i === exam.items.length - 1 ? "Abgeben" : "Weiter";
+  $("examPrev").style.visibility = exam.i ? "visible" : "hidden";
+  renderGap();
+}
+$("examAns").addEventListener("input", renderGap);
+$("examForm").addEventListener("submit", e => {
+  e.preventDefault(); if(!exam) return;
+  exam.items[exam.i].ans = $("examAns").value;
+  if(exam.i < exam.items.length - 1){ exam.i++; renderQ(); } else finishExam();
+});
+$("examPrev").onclick = () => { if(!exam || !exam.i) return; exam.items[exam.i].ans = $("examAns").value; exam.i--; renderQ(); };
+let quitArmed = null;
+$("examQuit").onclick = () => {
+  const b = $("examQuit");
+  if(!quitArmed){ b.textContent = "‹ Wirklich abbrechen?"; quitArmed = setTimeout(() => { quitArmed = null; b.textContent = "‹ Abbrechen"; }, 2500); return; }
+  clearTimeout(quitArmed); quitArmed = null; b.textContent = "‹ Abbrechen"; exam = null; show("home");
+};
+function note(pct){   // übliche Hochschul-Notenskala, nur als Richtwert
+  const t = [[95,"1,0"],[90,"1,3"],[85,"1,7"],[80,"2,0"],[75,"2,3"],[70,"2,7"],[65,"3,0"],[60,"3,3"],[55,"3,7"],[50,"4,0"]];
+  for(const [p, n] of t) if(pct >= p) return n;
+  return "5,0";
+}
+function finishExam(){
+  for(const it of exam.items){
+    it.ok = it.ans.trim() !== "" && examAccepted(it.v).has(norm(it.ans));
+    if(!it.ok){ it.before = JSON.stringify(st(it.v)); grade(it.v, false, false);   // Fehler landen im Training
+      it.logId = addLog({m: "Prüfung", v: it.v, a: it.ans, q: it.v.s, h: false}); }
+  }
+  const ex = store.get("exams", []); exam.saved = ex.length;
+  ex.push({t: Date.now(), n: exam.items.length, p: exam.items.filter(i => i.ok).length, u: Date.now()}); store.set("exams", ex.slice(-50));
+  show("resultScreen"); renderResult();
+}
+function renderResult(){
+  const n = exam.items.length, p = exam.items.filter(i => i.ok).length, pct = Math.round(100 * p / n);
+  $("score").textContent = `${p} / ${n}`;
+  $("grade").textContent = `${pct} % · Note etwa ${note(pct)} · ${pct >= 50 ? "bestanden" : "nicht bestanden"}`;
+  const ex = store.get("exams", []); if(ex[exam.saved] && ex[exam.saved].p !== p){ ex[exam.saved].p = p; ex[exam.saved].u = Date.now(); store.set("exams", ex); }
+  const r = $("review"); r.innerHTML = "";
+  const order = exam.items.map((it, k) => [it, k]).sort((x, y) => x[0].ok - y[0].ok);   // Fehler zuerst
+  for(const [it, k] of order){
+    const d = document.createElement("div"); d.className = "rv" + (it.ok ? "" : " no");
+    const s = document.createElement("div"); s.className = "s";
+    const [a, b] = it.v.s.split("___"), sol = document.createElement("b"); sol.textContent = it.v.g;
+    s.append(document.createTextNode((k + 1) + ". " + a), sol, document.createTextNode(b));
+    d.append(s);
+    if(!it.ok){
+      const y = document.createElement("div"); y.className = "y";
+      const t = document.createElement("span"); t.textContent = "Deine Antwort: " + (it.ans.trim() || "–");
+      const o = document.createElement("button"); o.textContent = "Zählt doch";
+      o.onclick = () => { it.ok = true; markLogOverride(it.logId); if(it.before){ srs[key(it.v)] = Object.assign(JSON.parse(it.before), {u: Date.now()}); store.set("srs", srs); } renderResult(); };
+      y.append(t, o); d.append(y);
+    }
+    r.append(d);
+  }
+  $("practiceWrong").style.display = p < n ? "" : "none";
+}
+$("goExam").onclick = startExam;
+$("examAgain").onclick = startExam;
+$("resHome").onclick = () => show("home");
+$("practiceWrong").onclick = () => {
+  const wrong = exam.items.filter(i => !i.ok).map(i => i.v);
+  show("train"); free = true; queue = wrong.slice(); roundTotal = queue.length; roundDone = 0; next();
+};
+$("nextBtn").onclick = () => finishWrite(pending && pending.ok);
+$("override").onclick = () => finishWrite(true);
+
+// ---------- Allgemein
+function setMode(m){
+  if(cur && pending) finishWrite(pending.ok);
+  $("answer").blur();
+  mode = m; store.set("mode", m);
+  $("mCard").classList.toggle("on", m === "card"); $("mWrite").classList.toggle("on", m === "write");
+  if(cur){ queue.unshift(cur); } next();
+}
+$("mCard").onclick = () => setMode("card");
+$("mWrite").onclick = () => setMode("write");
+$("shuffle").onclick = () => { if(cur) queue.push(cur); shuffle(queue); next(); };
+$("dir").onclick = () => { dirRev = !dirRev; store.set("dirRev", dirRev); $("dir").textContent = dirRev ? "DE → EN" : "EN → DE"; if(cur && mode === "card") showCard(cur); };
+let armed = null;
+$("reset").onclick = () => {
+  const b = $("reset");
+  if(!armed){ b.textContent = "Sicher?"; armed = setTimeout(() => { armed = null; b.textContent = "Zurücksetzen"; }, 2500); return; }
+  clearTimeout(armed); armed = null; b.textContent = "Zurücksetzen";
+  pool().forEach(v => srs[key(v)] = {b:0, w:0, r:0, due:0, u:Date.now()}); store.set("srs", srs); buildQueue();
+};
+$("practice").onclick = startFree;
+document.addEventListener("visibilitychange", () => { if(!document.hidden && !cur) buildQueue(); else renderStats(); if(window.syncReady){ doSync(); if(!document.hidden && Date.now() - ((upd && upd.checked) || 0) > HOUR) checkUpdate(false); } });
+$("dir").textContent = dirRev ? "DE → EN" : "EN → DE";
+$("mCard").classList.toggle("on", mode === "card"); $("mWrite").classList.toggle("on", mode === "write");
+
+// ---------- Geräte-Sync (verschlüsselt in einem geheimen GitHub-Gist)
+const GH = "https://api.github.com/gists", GFILE = "vokabeltrainer.json";
+let sync = store.get("sync", null);        // {gist, key, token, last, err}
+if(sync && !sync.gist){ sync = null; store.set("sync", null); }   // alte jsonblob-Versuche verwerfen
+let syncBusy = false, syncTimer = null, applying = false;
+const B32 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+function b32enc(bytes){ let bits = 0, val = 0, out = ""; for(const b of bytes){ val = (val << 8) | b; bits += 8; while(bits >= 5){ out += B32[(val >>> (bits - 5)) & 31]; bits -= 5; } } if(bits) out += B32[(val << (5 - bits)) & 31]; return out; }
+function b32dec(s){ let bits = 0, val = 0; const out = []; for(const c of s){ const i = B32.indexOf(c); if(i < 0) throw new Error("bad"); val = (val << 5) | i; bits += 5; if(bits >= 8){ out.push((val >>> (bits - 8)) & 255); bits -= 8; } } return new Uint8Array(out); }
+const b64 = u8 => btoa(String.fromCharCode(...u8));
+const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+function cryptoOk(){ return !!(window.crypto && crypto.subtle && crypto.getRandomValues); }
+async function aesKey(k){ return crypto.subtle.importKey("raw", b32dec(k), "AES-GCM", false, ["encrypt", "decrypt"]); }
+async function seal(obj, k){
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({name: "AES-GCM", iv}, await aesKey(k), new TextEncoder().encode(JSON.stringify(obj)));
+  return {app: "vokabeltrainer", v: 1, iv: b64(iv), ct: b64(new Uint8Array(ct))};
+}
+async function open_(blob, k){
+  if(!blob || blob.app !== "vokabeltrainer" || !blob.ct) throw new Error("Im Gist liegt kein Vokabeltrainer-Lernstand.");
+  try{
+    const pt = await crypto.subtle.decrypt({name: "AES-GCM", iv: unb64(blob.iv)}, await aesKey(k), unb64(blob.ct));
+    return JSON.parse(new TextDecoder().decode(pt));
+  }catch(e){ throw new Error("Code passt nicht – Schlüssel falsch."); }
+}
+const ru = r => r.u || ((r.r || r.w) ? 1 : 0);          // alte Einträge ohne Zeitstempel zählen als ältester Stand
+function localState(){
+  const s = {};
+  for(const [k, r] of Object.entries(srs)) if(ru(r)) s[k] = r;
+  return {srs: s, exams: store.get("exams", []), log: store.get("log", []), logCleared: store.get("logCleared", 0)};
+}
+// Pro Karte gewinnt der jüngere Stand; Prüfungen werden vereinigt
+function merge(remote){
+  let pulled = false, push = false;
+  const rs = remote.srs || {};
+  for(const [k, r] of Object.entries(rs)){ const l = srs[k]; if(!l || ru(r) > ru(l)){ srs[k] = r; pulled = true; } }
+  for(const [k, l] of Object.entries(srs)){ if(ru(l) && (!rs[k] || ru(l) > ru(rs[k]))) push = true; }
+  const m = new Map(), le = store.get("exams", []);
+  for(const e of remote.exams || []) m.set(e.t, e);
+  for(const e of le){ const r = m.get(e.t); if(!r){ m.set(e.t, e); push = true; } else if((e.u || 0) > (r.u || 0)){ m.set(e.t, e); push = true; } }
+  const ex = [...m.values()].sort((a, b) => a.t - b.t).slice(-50);
+  if(ex.length !== le.length || ex.some((e, i) => e.t !== le[i].t || e.p !== le[i].p)) pulled = true;
+  // Fehlerprotokoll: vereinigen per ID, "Leeren" gilt geräteübergreifend
+  const lc = Math.max(store.get("logCleared", 0), remote.logCleared || 0);
+  if(lc !== store.get("logCleared", 0)) pulled = true;
+  if(lc !== (remote.logCleared || 0)) push = true;
+  const lm = new Map(), ll = store.get("log", []);
+  for(const e of remote.log || []) if(e.t > lc) lm.set(e.id, e);
+  const remoteIds = new Set(lm.keys());
+  for(const e of ll){ if(e.t <= lc) continue; const r = lm.get(e.id); if(!r){ lm.set(e.id, e); push = true; } else if((e.u || 0) > (r.u || 0)){ lm.set(e.id, e); push = true; } }
+  const lg = [...lm.values()].sort((a, b) => a.t - b.t).slice(-LOG_MAX);
+  if(lg.length !== ll.length || lg.some((e, i) => e.id !== ll[i].id || e.ov !== ll[i].ov)) pulled = true;
+  applying = true; store.set("srs", srs); store.set("exams", ex); store.set("log", lg); store.set("logCleared", lc); applying = false;
+  return {pulled, push};
+}
+async function gh(method, path, token, body){
+  let res;
+  try{
+    res = await fetch(GH + path, {method, cache: "no-store",
+      headers: {"Accept": "application/vnd.github+json", "Authorization": "Bearer " + token,
+                "X-GitHub-Api-Version": "2022-11-28", "Content-Type": "application/json"},
+      body: body ? JSON.stringify(body) : undefined});
+  }catch(e){ throw new Error("Keine Verbindung – wird beim nächsten Öffnen nachgeholt."); }
+  if(res.status === 401) throw new Error("GitHub lehnt den Token ab – falsch kopiert oder abgelaufen.");
+  if(res.status === 403 || res.status === 429){
+    const rem = res.headers.get("x-ratelimit-remaining");
+    throw new Error(rem === "0" ? "GitHub-Limit erreicht – in einer Stunde klappt es wieder."
+                                : "Token hat keine Gist-Berechtigung – beim Erstellen „gist“ anhaken.");
+  }
+  if(res.status === 404) throw new Error("Gist nicht gefunden – gelöscht oder Code falsch.");
+  if(!res.ok) throw new Error("GitHub antwortet mit Fehler " + res.status + ".");
+  return res.json();
+}
+async function pullRemote(s){
+  const g = await gh("GET", "/" + s.gist, s.token);
+  const f = g.files && g.files[GFILE];
+  if(!f) throw new Error("Im Gist liegt kein Vokabeltrainer-Lernstand.");
+  let content = f.content;
+  if(f.truncated && f.raw_url) content = await (await fetch(f.raw_url, {cache: "no-store"})).text();
+  let blob; try{ blob = JSON.parse(content); }catch(e){ throw new Error("Gist-Inhalt ist beschädigt."); }
+  return open_(blob, s.key);
+}
+async function pushRemote(s){
+  await gh("PATCH", "/" + s.gist, s.token, {files: {[GFILE]: {content: JSON.stringify(await seal(localState(), s.key))}}});
+}
+function saveSync(){ store.set("sync", sync); renderSync(); }
+async function doSync(manual){
+  if(!sync || syncBusy || !cryptoOk()) return;
+  syncBusy = true; if(manual) msg("Synchronisiere …");
+  try{
+    const {pulled, push} = merge(await pullRemote(sync));
+    if(push) await pushRemote(sync);
+    sync.last = Date.now(); sync.err = null;
+    if(pulled) refreshAfterPull();
+    if(manual) msg(pulled ? "Neuer Lernstand vom anderen Gerät übernommen." : "Alles aktuell.", "ok");
+  }catch(e){ sync.err = e.message; if(manual) msg(e.message, "err"); }
+  finally{ syncBusy = false; if(sync) saveSync(); }
+}
+function syncSoon(){ if(applying || !sync) return; clearTimeout(syncTimer); syncTimer = setTimeout(() => doSync(false), 4000); }
+function refreshAfterPull(){
+  renderStats();
+  const scr = document.querySelector(".screen.on");
+  if(scr && scr.id === "home") renderHome();
+  if(scr && scr.id === "logScreen") renderLog();
+  if(scr && scr.id === "train" && !cur) buildQueue();
+}
+function msg(text, cls){ const m = $("syncMsg"); m.textContent = text || ""; m.className = cls || ""; }
+function ago(t){ if(!t) return "noch nie"; const d = Date.now() - t; return d < 60e3 ? "gerade eben" : "vor " + fmt(d); }
+const codeOf = s => ["VT1", s.gist, s.key, s.token].join(".");
+function parseCode(raw){
+  const p = raw.trim().replace(/\s+/g, "").split(".");
+  if(p.length !== 4 || p[0].toUpperCase() !== "VT1") return null;
+  const s = {gist: p[1], key: p[2].toUpperCase(), token: p[3], last: 0, err: null};
+  if(!/^[0-9a-f]{20,}$/i.test(s.gist) || !/^[A-Z2-7]{26}$/.test(s.key) || s.token.length < 20) return null;
+  return s;
+}
+function renderSync(){
+  const on = !!sync;
+  $("syncOff").style.display = on ? "none" : "contents";
+  $("syncOn").style.display = on ? "contents" : "none";
+  $("syncDot").className = "dot" + (on ? (sync.err ? " err" : " ok") : "");
+  $("homeSync").textContent = !on ? "Handy und Tablet verbinden"
+    : sync.err ? "Verbunden · letzter Versuch fehlgeschlagen" : "Verbunden · zuletzt synchronisiert " + ago(sync.last);
+  if(on){
+    $("syncCode").value = codeOf(sync);
+    $("syncStatus").textContent = "Zuletzt synchronisiert: " + ago(sync.last) + (sync.err ? " · Problem: " + sync.err : "");
+  }
+}
+$("goSync").onclick = () => { show("syncScreen"); msg(cryptoOk() ? "" : "Verschlüsselung ist auf diesem Gerät nicht verfügbar – Sync nicht möglich.", cryptoOk() ? "" : "err"); renderSync(); };
+$("syncHome").onclick = () => show("home");
+$("syncCreate").onclick = async () => {
+  if(!cryptoOk()) return;
+  const token = $("syncToken").value.trim().replace(/\s+/g, "");
+  if(token.length < 20){ msg("Bitte zuerst den GitHub-Token einfügen (beginnt mit ghp_ oder github_pat_).", "err"); return; }
+  $("syncCreate").disabled = true; msg("Erstelle geheimen Gist …");
+  try{
+    const key = b32enc(crypto.getRandomValues(new Uint8Array(16)));
+    const g = await gh("POST", "", token, {description: "Vokabeltrainer – verschlüsselter Lernstand (nicht bearbeiten)", public: false,
+      files: {[GFILE]: {content: JSON.stringify(await seal(localState(), key))}}});
+    if(!g || !g.id) throw new Error("GitHub hat keine Gist-ID geliefert.");
+    sync = {gist: g.id, key, token, last: Date.now(), err: null}; saveSync();
+    $("syncToken").value = ""; if(typing()) document.activeElement.blur();
+    msg("Kopplung erstellt. Jetzt den Code unten kopieren und auf dem anderen Gerät einfügen.", "ok");
+  }catch(e){ msg(e.message, "err"); }
+  $("syncCreate").disabled = false;
+};
+$("syncJoin").onclick = async () => {
+  if(!cryptoOk()) return;
+  const cand = parseCode($("syncCodeIn").value);
+  if(!cand){ msg("Code unvollständig – er beginnt mit VT1. und hat vier durch Punkte getrennte Teile.", "err"); return; }
+  $("syncJoin").disabled = true; msg("Verbinde …");
+  try{
+    const remote = await pullRemote(cand);
+    sync = cand;
+    const {pulled, push} = merge(remote);
+    if(push) await pushRemote(sync);
+    sync.last = Date.now(); saveSync(); if(pulled) refreshAfterPull();
+    $("syncCodeIn").value = ""; if(typing()) document.activeElement.blur();
+    msg("Verbunden – Lernstände zusammengeführt.", "ok");
+  }catch(e){ msg(e.message, "err"); }
+  $("syncJoin").disabled = false;
+};
+$("syncNow").onclick = () => doSync(true);
+$("syncCopy").onclick = async () => {
+  const v = $("syncCode").value;
+  let ok = false;
+  try{ await navigator.clipboard.writeText(v); ok = true; }catch(e){}
+  if(!ok){ const el = $("syncCode"); el.removeAttribute("readonly"); el.select(); try{ ok = document.execCommand("copy"); }catch(e){} el.setAttribute("readonly", ""); }
+  msg(ok ? "Code kopiert – jetzt z. B. per Messenger an dich selbst schicken." : "Kopieren ging nicht – Code lange antippen und markieren.", ok ? "ok" : "err");
+};
+let unpairArmed = null;
+$("syncUnpair").onclick = () => {
+  const b = $("syncUnpair");
+  if(!unpairArmed){ b.textContent = "Wirklich trennen? Nochmal tippen"; unpairArmed = setTimeout(() => { unpairArmed = null; b.textContent = "Kopplung auf diesem Gerät trennen"; }, 2500); return; }
+  clearTimeout(unpairArmed); unpairArmed = null; b.textContent = "Kopplung auf diesem Gerät trennen";
+  sync = null; store.set("sync", null); renderSync(); msg("Getrennt. Dein Lernstand bleibt auf diesem Gerät erhalten.", "ok");
+};
+
+// ---------- Fehlerprotokoll
+const APP_VERSION = "/*VERSION_NAME*/", APP_CODE = Number("/*VERSION_CODE*/"), LOG_MAX = 600;
+const DEVICE = Math.min(screen.width, screen.height) >= 600 ? "Tablet" : "Handy";
+function addLog({m, v, a, q, h, ov}){
+  const now = Date.now(), id = now.toString(36) + Math.random().toString(36).slice(2, 7);
+  const log = store.get("log", []);
+  log.push({id, t: now, u: now, d: DEVICE, m, n: v.n, e: v.e, a: a || "", q: q || "", h: !!h, ov: !!ov});
+  store.set("log", log.slice(-LOG_MAX));
+  return id;
+}
+function markLogOverride(id){
+  if(!id) return;
+  const log = store.get("log", []), e = log.find(x => x.id === id);
+  if(e){ e.ov = true; e.u = Date.now(); store.set("log", log); }
+}
+const pad = n => String(n).padStart(2, "0");
+const dt = t => { const d = new Date(t); return `${pad(d.getDate())}.${pad(d.getMonth()+1)}. ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+function logReal(){ return store.get("log", []).filter(e => !e.ov); }
+function topErrors(n){
+  const c = new Map();
+  for(const e of logReal()){ const k = e.e + "|" + e.n; c.set(k, (c.get(k) || 0) + 1); }
+  return [...c.entries()].sort((a, b) => b[1] - a[1]).slice(0, n).map(([k, cnt]) => { const [e, a] = k.split("|"); return `${cnt}× ${e} (${a})`; });
+}
+function logExport(){
+  const log = store.get("log", []), d = new Date();
+  const devs = [...new Set(log.map(e => e.d))].join(" + ") || DEVICE;
+  const L = [];
+  L.push(`Vokabeltrainer ${APP_VERSION} – Fehlerprotokoll`);
+  L.push(`Exportiert: ${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())} · ${log.length} Einträge · Geräte: ${devs}`);
+  if(!log.length) return L.join("\n") + "\n\nKeine Fehler aufgezeichnet.";
+  L.push("", "Häufigste Fehler (ohne „Zählt doch“):", ...topErrors(15));
+  L.push("", "Alle Einträge (neueste zuerst):");
+  for(const e of [...log].reverse()){
+    const ans = e.m === "Karte" ? `nicht gewusst (Karteikarte ${e.q})` : `„${e.a.trim() || "leer"}“`;
+    const extra = (e.h ? " · mit Tipp" : "") + (e.ov ? " · [Zählt doch]" : "");
+    const q = e.m === "Karte" ? "" : ` · Abfrage: ${e.q}`;
+    L.push(`${dt(e.t)} · ${e.d} · ${e.m} · ${e.n} · gesucht: ${e.e} · meine Antwort: ${ans}${extra}${q}`);
+  }
+  return L.join("\n");
+}
+function renderLog(){
+  const log = store.get("log", []), real = logReal();
+  const words = new Set(real.map(e => e.e + e.n)).size;
+  $("logSum").textContent = log.length ? `${real.length} Fehler bei ${words} Vokabeln` + (log.length > real.length ? ` · ${log.length - real.length}× „Zählt doch“` : "") : "Noch keine Fehler";
+  const top = topErrors(5);
+  $("logTop").textContent = top.length ? "Am häufigsten:\n" + top.join("\n") : "Sobald du etwas falsch beantwortest, erscheint es hier.";
+  $("logText").value = logExport();
+  $("logClear").style.display = log.length ? "" : "none";
+}
+function renderHomeLog(){
+  const n = logReal().length;
+  $("homeLog").textContent = n ? `${n} Fehler aufgezeichnet · zum Kopieren und Auswerten` : "Noch keine Fehler";
+  $("logDot").style.visibility = n ? "visible" : "hidden";
+}
+async function copyText(text, el){
+  try{ await navigator.clipboard.writeText(text); return true; }catch(e){}
+  try{ el.removeAttribute("readonly"); el.focus(); el.select(); const ok = document.execCommand("copy"); el.setAttribute("readonly", ""); el.blur(); return ok; }catch(e){ return false; }
+}
+$("goLog").onclick = () => { show("logScreen"); $("logMsg").textContent = ""; renderLog(); };
+$("logHome").onclick = () => show("home");
+$("logCopy").onclick = async () => {
+  const ok = await copyText(logExport(), $("logText"));
+  $("logMsg").textContent = ok ? "Kopiert – jetzt einfach im Chat einfügen." : "Kopieren ging nicht – Text unten lange antippen und „Alle auswählen“.";
+};
+let clearArmed = null;
+$("logClear").onclick = () => {
+  const b = $("logClear");
+  if(!clearArmed){ b.textContent = "Sicher? Nochmal tippen"; clearArmed = setTimeout(() => { clearArmed = null; b.textContent = "Leeren"; }, 2500); return; }
+  clearTimeout(clearArmed); clearArmed = null; b.textContent = "Leeren";
+  store.set("logCleared", Date.now()); store.set("log", []); renderLog();
+  $("logMsg").textContent = "Protokoll geleert" + (sync ? " – auch auf den gekoppelten Geräten." : ".");
+};
+
+// ---------- Updates (neueste Version liegt öffentlich im Repo Mymaxyt/voctrainer)
+const UPDATE_URL = "https://raw.githubusercontent.com/Mymaxyt/voctrainer/main/version.json";
+let upd = store.get("update", null);       // {code, name, notes, apk, checked}
+function renderUpdate(){
+  $("verText").textContent = "Version " + APP_VERSION;
+  const on = !!(upd && upd.code > APP_CODE && upd.apk);
+  $("updBox").classList.toggle("on", on);
+  if(on){
+    $("updTitle").textContent = "Update verfügbar: Version " + upd.name;
+    $("updNotes").textContent = upd.notes ? "Neu: " + upd.notes : "";
+    $("updBtn").href = upd.apk;
+  }
+}
+async function checkUpdate(manual){
+  if(manual) $("updMsg").textContent = "Suche …";
+  try{
+    const r = await fetch(UPDATE_URL + "?t=" + Date.now(), {cache: "no-store"});
+    if(!r.ok) throw new Error("HTTP " + r.status);
+    const j = await r.json();
+    if(!Number.isFinite(j.versionCode) || !j.apk) throw new Error("ungültige version.json");
+    upd = {code: j.versionCode, name: String(j.versionName || j.versionCode), notes: String(j.notes || ""), apk: String(j.apk), checked: Date.now()};
+    store.set("update", upd); renderUpdate();
+    if(manual) $("updMsg").textContent = upd.code > APP_CODE ? "Neue Version gefunden – siehe oben." : "Du hast die neueste Version.";
+  }catch(e){ if(manual) $("updMsg").textContent = "Prüfung fehlgeschlagen – keine Verbindung?"; }
+}
+$("updCheck").onclick = () => checkUpdate(true);
+$("updBtn").addEventListener("click", () => { $("updHow").style.display = ""; });   // Link öffnet den Browser, der die APK lädt
+window.syncReady = true;
+renderChips(); buildQueue(); show("home"); renderSync(); renderHomeLog(); renderUpdate(); doSync(false); checkUpdate(false);
+</script>
+</body>
+</html>
