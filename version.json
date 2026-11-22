@@ -1,6 +1,6 @@
 {
-  "versionCode": 12,
-  "versionName": "1.11",
-  "notes": "App sucht selbst nach Updates",
+  "versionCode": 13,
+  "versionName": "1.12",
+  "notes": "Genauere Abfragen bei 5 Vokabeln (Singular/Plural, -ing-Form)",
   "apk": "https://raw.githubusercontent.com/Mymaxyt/voctrainer/main/dist/Vokabeltrainer.apk"
 }
