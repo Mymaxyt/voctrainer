@@ -1,6 +1,6 @@
 {
-  "versionCode": 14,
-  "versionName": "1.13",
-  "notes": "Sync sparsamer: GitHub-Limit wird nicht mehr erreicht, Pausen laufen automatisch weiter",
+  "versionCode": 15,
+  "versionName": "1.14",
+  "notes": "Update installiert sich nach dem Download von selbst – kein Antippen der APK mehr",
   "apk": "https://raw.githubusercontent.com/Mymaxyt/voctrainer/main/dist/Vokabeltrainer.apk"
 }

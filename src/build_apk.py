@@ -9,6 +9,8 @@ Bestandteile (alle hier von Hand erzeugt):
 Signiert wird danach mit jarsigner (APK-Signaturschema v1, targetSdk 29).
 """
 import struct, zlib, hashlib, zipfile, sys, os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import dexasm
 
 PKG = "de.maxwerner.vokabeln"
 CLS = PKG + ".MainActivity"
@@ -30,7 +32,7 @@ def uleb(v):
 def pad4(b): return b + b"\0" * (-len(b) % 4)
 
 # ---------------------------------------------------------------- DEX
-def build_dex():
+def build_dex_v1():   # alter, von Hand codierter Startcode (Referenz; dexasm baut ihn identisch)
     ACT, CTX, BUN, VIEW = "Landroid/app/Activity;", "Landroid/content/Context;", "Landroid/os/Bundle;", "Landroid/view/View;"
     WS, WV, STR = "Landroid/webkit/WebSettings;", "Landroid/webkit/WebView;", "Ljava/lang/String;"
     URL = "file:///android_asset/index.html"
@@ -136,6 +138,138 @@ def build_dex():
     dex[8:12] = u32(zlib.adler32(bytes(dex[12:])))
     return bytes(dex)
 
+# ---------------------------------------------------------------- DEX (über dexasm)
+ACT, CTX, BUN, VIEW = "Landroid/app/Activity;", "Landroid/content/Context;", "Landroid/os/Bundle;", "Landroid/view/View;"
+WS, WV, STR, OBJ = "Landroid/webkit/WebSettings;", "Landroid/webkit/WebView;", "Ljava/lang/String;", "Ljava/lang/Object;"
+INTENT, URI, DM = "Landroid/content/Intent;", "Landroid/net/Uri;", "Landroid/app/DownloadManager;"
+REQ, QRY, HND, CUR = "Landroid/app/DownloadManager$Request;", "Landroid/app/DownloadManager$Query;", "Landroid/os/Handler;", "Landroid/database/Cursor;"
+UPD = "L" + PKG.replace(".", "/") + "/Updater;"
+APK_MIME = "application/vnd.android.package-archive"
+
+def classes():
+    main = {"name": CLS_DESC, "super": ACT, "methods": [
+      {"name": "<init>", "ret": "V", "params": [], "acc": 0x10001, "regs": 1, "code": [
+         ("invoke-direct", [0], (ACT, "<init>", "V", ())), ("return-void",)]},
+      {"name": "onCreate", "ret": "V", "params": [BUN], "acc": 0x4, "regs": 5, "code": [
+         ("invoke-super", [3, 4], (ACT, "onCreate", "V", (BUN,))),
+         ("const/4", 0, 1),
+         ("invoke-virtual", [3, 0], (ACT, "requestWindowFeature", "Z", ("I",))),
+         ("new-instance", 0, WV),
+         ("invoke-direct", [0, 3], (WV, "<init>", "V", (CTX,))),
+         ("invoke-virtual", [0], (WV, "getSettings", WS, ())),
+         ("move-result-object", 1),
+         ("const/4", 2, 1),
+         ("invoke-virtual", [1, 2], (WS, "setJavaScriptEnabled", "V", ("Z",))),
+         ("invoke-virtual", [1, 2], (WS, "setDomStorageEnabled", "V", ("Z",))),
+         ("invoke-virtual", [1, 2], (WS, "setAllowUniversalAccessFromFileURLs", "V", ("Z",))),
+         ("const-string", 1, "file:///android_asset/index.html"),
+         ("invoke-virtual", [0, 1], (WV, "loadUrl", "V", (STR,))),
+         ("invoke-virtual", [3, 0], (ACT, "setContentView", "V", (VIEW,))),
+         ("return-void",)]},
+      # vokabeltrainer://update?url=… kommt hier an; Fehler im Updater dürfen die App nie beenden
+      {"name": "onNewIntent", "ret": "V", "params": [INTENT], "acc": 0x4, "regs": 2, "code": [
+         "ts", ("invoke-static", [0, 1], (UPD, "handle", "V", (ACT, INTENT))), "te",
+         ("return-void",),
+         "h", ("return-void",)], "tries": [("ts", "te", "h")]}]}
+    upd = {"name": UPD, "super": OBJ, "interfaces": [ "Ljava/lang/Runnable;" ], "acc": 0x11,
+      "fields": [("a", ACT, 0), ("dm", DM, 0), ("h", HND, 0), ("id", "J", 0)],
+      "methods": [
+      {"name": "<init>", "ret": "V", "params": [], "acc": 0x10001, "regs": 1, "code": [
+         ("invoke-direct", [0], (OBJ, "<init>", "V", ())), ("return-void",)]},
+      # static void handle(Activity a=v6, Intent i=v7): APK per DownloadManager laden, dann run() abfragen lassen
+      {"name": "handle", "ret": "V", "params": [ACT, INTENT], "acc": 0x9, "static": True, "regs": 8, "code": [
+         "ts",
+         ("invoke-virtual", [7], (INTENT, "getData", URI, ())),
+         ("move-result-object", 0),
+         ("if-eqz", 0, "end"),
+         ("const-string", 1, "url"),
+         ("invoke-virtual", [0, 1], (URI, "getQueryParameter", STR, (STR,))),
+         ("move-result-object", 1),
+         ("if-eqz", 1, "end"),
+         ("new-instance", 0, UPD),
+         ("invoke-direct", [0], (UPD, "<init>", "V", ())),
+         ("iput-object", 6, 0, (UPD, "a", ACT)),
+         ("invoke-static", [1], (URI, "parse", URI, (STR,))),
+         ("move-result-object", 1),
+         ("new-instance", 2, REQ),
+         ("invoke-direct", [2, 1], (REQ, "<init>", "V", (URI,))),
+         ("const-string", 1, APK_MIME),
+         ("invoke-virtual", [2, 1], (REQ, "setMimeType", REQ, (STR,))),
+         ("const/4", 1, 0),
+         ("const-string", 3, "update.apk"),
+         ("invoke-virtual", [2, 6, 1, 3], (REQ, "setDestinationInExternalFilesDir", REQ, (CTX, STR, STR))),
+         ("const-string", 1, "download"),
+         ("invoke-virtual", [6, 1], (ACT, "getSystemService", OBJ, (STR,))),
+         ("move-result-object", 1),
+         ("check-cast", 1, DM),
+         ("iput-object", 1, 0, (UPD, "dm", DM)),
+         ("invoke-virtual", [1, 2], (DM, "enqueue", "J", (REQ,))),
+         ("move-result-wide", 2),
+         ("iput-wide", 2, 0, (UPD, "id", "J")),
+         ("new-instance", 1, HND),
+         ("invoke-direct", [1], (HND, "<init>", "V", ())),
+         ("iput-object", 1, 0, (UPD, "h", HND)),
+         ("const-wide/16", 2, 800),
+         ("invoke-virtual", [1, 0, 2, 3], (HND, "postDelayed", "Z", ("Ljava/lang/Runnable;", "J"))),
+         "te", "end",
+         ("return-void",),
+         "h", ("return-void",)], "tries": [("ts", "te", "h")]},
+      # void run() (this=v6): Download-Status prüfen; fertig -> Installationsdialog öffnen, sonst in 0,7 s erneut
+      {"name": "run", "ret": "V", "params": [], "acc": 0x1, "regs": 7, "code": [
+         "ts",
+         ("iget-object", 0, 6, (UPD, "dm", DM)),
+         ("new-instance", 1, QRY),
+         ("invoke-direct", [1], (QRY, "<init>", "V", ())),
+         ("const/4", 2, 1),
+         ("new-array", 2, 2, "[J"),
+         ("iget-wide", 3, 6, (UPD, "id", "J")),
+         ("const/4", 5, 0),
+         ("aput-wide", 3, 2, 5),
+         ("invoke-virtual", [1, 2], (QRY, "setFilterById", QRY, ("[J",))),
+         ("invoke-virtual", [0, 1], (DM, "query", CUR, (QRY,))),
+         ("move-result-object", 1),
+         ("if-eqz", 1, "end"),
+         ("invoke-interface", [1], (CUR, "moveToFirst", "Z", ())),
+         ("move-result", 2),
+         ("if-eqz", 2, "close"),
+         ("const-string", 2, "status"),
+         ("invoke-interface", [1, 2], (CUR, "getColumnIndex", "I", (STR,))),
+         ("move-result", 2),
+         ("invoke-interface", [1, 2], (CUR, "getInt", "I", ("I",))),
+         ("move-result", 2),
+         ("invoke-interface", [1], (CUR, "close", "V", ())),
+         ("const/16", 3, 8),                       # STATUS_SUCCESSFUL
+         ("if-eq", 2, 3, "install"),
+         ("const/16", 3, 16),                      # STATUS_FAILED
+         ("if-eq", 2, 3, "end"),
+         ("iget-object", 1, 6, (UPD, "h", HND)),
+         ("const-wide/16", 3, 700),
+         ("invoke-virtual", [1, 6, 3, 4], (HND, "postDelayed", "Z", ("Ljava/lang/Runnable;", "J"))),
+         ("return-void",),
+         "install",
+         ("iget-wide", 2, 6, (UPD, "id", "J")),
+         ("invoke-virtual", [0, 2, 3], (DM, "getUriForDownloadedFile", URI, ("J",))),
+         ("move-result-object", 1),
+         ("new-instance", 2, INTENT),
+         ("const-string", 3, "android.intent.action.VIEW"),
+         ("invoke-direct", [2, 3], (INTENT, "<init>", "V", (STR,))),
+         ("const-string", 3, APK_MIME),
+         ("invoke-virtual", [2, 1, 3], (INTENT, "setDataAndType", INTENT, (URI, STR))),
+         ("const", 3, 0x10000001),                 # NEW_TASK | GRANT_READ_URI_PERMISSION
+         ("invoke-virtual", [2, 3], (INTENT, "addFlags", INTENT, ("I",))),
+         ("iget-object", 1, 6, (UPD, "a", ACT)),
+         ("invoke-virtual", [1, 2], (ACT, "startActivity", "V", (INTENT,))),
+         ("return-void",),
+         "close",
+         ("invoke-interface", [1], (CUR, "close", "V", ())),
+         "te", "end",
+         ("return-void",),
+         "h", ("return-void",)], "tries": [("ts", "te", "h")]}]}
+    return [main, upd]
+
+def build_dex():
+    return dexasm.build(classes())
+
 # ---------------------------------------------------------------- String-Pool (UTF-16)
 def string_pool(strs):
     offs, blob = [], bytearray()
@@ -151,7 +285,7 @@ def string_pool(strs):
 # ---------------------------------------------------------------- Manifest (AXML)
 ANDROID_NS = "http://schemas.android.com/apk/res/android"
 ATTR_IDS = [("label", 0x01010001), ("icon", 0x01010002), ("name", 0x01010003), ("exported", 0x01010010),
-            ("configChanges", 0x0101001F), ("minSdkVersion", 0x0101020C), ("versionCode", 0x0101021B),
+            ("launchMode", 0x0101001D), ("configChanges", 0x0101001F), ("scheme", 0x01010027), ("minSdkVersion", 0x0101020C), ("versionCode", 0x0101021B),
             ("versionName", 0x0101021C), ("targetSdkVersion", 0x01010270)]
 T_REF, T_STR, T_DEC, T_HEX, T_BOOL = 0x01, 0x03, 0x10, 0x11, 0x12
 
@@ -163,12 +297,19 @@ def build_manifest():
     tree = ("manifest", [("versionCode", T_DEC, VERSION_CODE), ("versionName", T_STR, VERSION_NAME), ("package", T_STR, PKG)], [
         ("uses-sdk", [("minSdkVersion", T_DEC, MIN_SDK), ("targetSdkVersion", T_DEC, TARGET_SDK)], []),
         ("uses-permission", [("name", T_STR, "android.permission.INTERNET")], []),
+        ("uses-permission", [("name", T_STR, "android.permission.REQUEST_INSTALL_PACKAGES")], []),
         ("application", [("label", T_STR, LABEL), ("icon", T_REF, 0x7F010000)], [
-            ("activity", [("name", T_STR, CLS), ("exported", T_BOOL, True),
+            ("activity", [("name", T_STR, CLS), ("exported", T_BOOL, True), ("launchMode", T_DEC, 2),   # singleTask
                           ("configChanges", T_HEX, 0x80 | 0x400 | 0x20 | 0x100 | 0x800 | 0x10)], [
                 ("intent-filter", [], [
                     ("action", [("name", T_STR, "android.intent.action.MAIN")], []),
                     ("category", [("name", T_STR, "android.intent.category.LAUNCHER")], []),
+                ]),
+                ("intent-filter", [], [                 # vokabeltrainer://update?url=… aus der App-Seite
+                    ("action", [("name", T_STR, "android.intent.action.VIEW")], []),
+                    ("category", [("name", T_STR, "android.intent.category.DEFAULT")], []),
+                    ("category", [("name", T_STR, "android.intent.category.BROWSABLE")], []),
+                    ("data", [("scheme", T_STR, "vokabeltrainer")], []),
                 ])])])])
     for s in ("android", ANDROID_NS): S(s)
     ids = dict(ATTR_IDS)

@@ -207,6 +207,7 @@ header.nav h1{flex:none}
 .verline{font-size:13px;color:var(--muted);text-align:center;padding:4px 0 8px}
 .linkbtn{border:0;background:none;color:var(--accent);font-size:13px;padding:0;text-decoration:underline}
 #updMsg{display:block;margin-top:4px}
+#updFallback{color:var(--accent)}
 </style>
 </head>
 <body>
@@ -215,7 +216,7 @@ header.nav h1{flex:none}
   <div class="update" id="updBox">
     <div class="grow"><b id="updTitle"></b><span id="updNotes"></span></div>
     <a class="btn main" id="updBtn" href="#">Jetzt aktualisieren</a>
-    <p class="muted" id="updHow" style="display:none;margin:0">Der Download startet im Browser. Danach die Benachrichtigung „Download abgeschlossen“ antippen und „Aktualisieren“ wählen – dein Lernstand bleibt erhalten. Beim ersten Mal fragt Android, ob der Browser Apps installieren darf.</p>
+    <p class="muted" id="updHow" style="display:none;margin:0">Das Update wird geladen (Fortschritt oben in der Benachrichtigungsleiste) – danach öffnet sich die Installation von selbst. Nur „Aktualisieren“ tippen, dein Lernstand bleibt erhalten. Beim allerersten Mal schickt Android dich zu „Aus dieser Quelle zulassen“: einschalten, zurück, fertig.<br><a id="updFallback" href="#">Es passiert nichts? Stattdessen im Browser laden</a></p>
   </div>
   <button class="tile" id="goTrain">
     <span class="t">Vokabeltraining</span>
@@ -1036,7 +1037,8 @@ function renderUpdate(){
   if(on){
     $("updTitle").textContent = "Update verfügbar: Version " + upd.name;
     $("updNotes").textContent = upd.notes ? "Neu: " + upd.notes : "";
-    $("updBtn").href = upd.apk;
+    $("updBtn").href = "vokabeltrainer://update?url=" + encodeURIComponent(upd.apk);   // App lädt selbst und öffnet die Installation
+    $("updFallback").href = upd.apk;
   }
 }
 async function checkUpdate(manual){
