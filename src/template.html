@@ -723,7 +723,7 @@ $("reset").onclick = () => {
   pool().forEach(v => srs[key(v)] = {b:0, w:0, r:0, due:0, u:Date.now()}); store.set("srs", srs); buildQueue();
 };
 $("practice").onclick = startFree;
-document.addEventListener("visibilitychange", () => { if(!document.hidden && !cur) buildQueue(); else renderStats(); if(window.syncReady){ doSync(); if(!document.hidden && Date.now() - ((upd && upd.checked) || 0) > HOUR) checkUpdate(false); } });
+document.addEventListener("visibilitychange", () => { if(!document.hidden && !cur) buildQueue(); else renderStats(); if(window.syncReady){ syncOnVisibility(); if(!document.hidden && Date.now() - ((upd && upd.checked) || 0) > HOUR) checkUpdate(false); } });
 $("dir").textContent = dirRev ? "DE → EN" : "EN → DE";
 $("mCard").classList.toggle("on", mode === "card"); $("mWrite").classList.toggle("on", mode === "write");
 
@@ -781,50 +781,92 @@ function merge(remote){
   applying = true; store.set("srs", srs); store.set("exams", ex); store.set("log", lg); store.set("logCleared", lc); applying = false;
   return {pulled, push};
 }
-async function gh(method, path, token, body){
+// Sparsam mit GitHub: höchstens ein Abgleich pro Minute beim Üben, sofort beim Verlassen der App.
+// Unveränderter Gist wird per ETag erkannt (Antwort 304 zählt nicht gegen das GitHub-Limit).
+const SYNC_GAP = 60e3;
+let syncCache = store.get("syncCache", null);       // {gist, etag, remote}
+let syncEvents = store.get("syncEvents", []);       // Diagnose: letzte Anfragen
+let syncDirty = false, syncLastTry = 0, syncRetry = null;
+function syncEvent(m, status, rem, note){
+  syncEvents.push({t: Date.now(), m, s: status, r: rem == null ? "" : rem, n: note || ""});
+  syncEvents = syncEvents.slice(-30); store.set("syncEvents", syncEvents);
+}
+const hhmm = t => { const d = new Date(t); return pad(d.getHours()) + ":" + pad(d.getMinutes()); };
+async function gh(method, path, token, body, etag){
   let res;
-  try{
-    res = await fetch(GH + path, {method, cache: "no-store",
-      headers: {"Accept": "application/vnd.github+json", "Authorization": "Bearer " + token,
-                "X-GitHub-Api-Version": "2022-11-28", "Content-Type": "application/json"},
-      body: body ? JSON.stringify(body) : undefined});
-  }catch(e){ throw new Error("Keine Verbindung – wird beim nächsten Öffnen nachgeholt."); }
+  const headers = {"Accept": "application/vnd.github+json", "Authorization": "Bearer " + token,
+                   "X-GitHub-Api-Version": "2022-11-28", "Content-Type": "application/json"};
+  if(etag) headers["If-None-Match"] = etag;
+  try{ res = await fetch(GH + path, {method, cache: "no-store", headers, body: body ? JSON.stringify(body) : undefined}); }
+  catch(e){ syncEvent(method, "offline"); throw new Error("Keine Verbindung – wird automatisch nachgeholt."); }
+  const rem = res.headers.get("x-ratelimit-remaining");
+  if(res.status !== 403 && res.status !== 429) syncEvent(method, res.status, rem);
+  if(res.status === 304) return {status: 304};
   if(res.status === 401) throw new Error("GitHub lehnt den Token ab – falsch kopiert oder abgelaufen.");
   if(res.status === 403 || res.status === 429){
-    const rem = res.headers.get("x-ratelimit-remaining");
-    throw new Error(rem === "0" ? "GitHub-Limit erreicht – in einer Stunde klappt es wieder."
-                                : "Token hat keine Gist-Berechtigung – beim Erstellen „gist“ anhaken.");
+    let text = ""; try{ text = (await res.json()).message || ""; }catch(e){}
+    const ra = Number(res.headers.get("retry-after")), reset = Number(res.headers.get("x-ratelimit-reset"));
+    const limited = res.status === 429 || rem === "0" || /rate limit/i.test(text) || ra > 0;
+    if(!limited){ syncEvent(method, res.status, rem, text.slice(0, 80)); throw new Error("GitHub verweigert den Zugriff (" + (text || "403") + ") – Token braucht die Berechtigung „gist“."); }
+    const until = ra > 0 ? Date.now() + ra * 1000 : (rem === "0" && reset ? reset * 1000 : Date.now() + 5 * MIN);
+    const err = new Error((rem === "0" ? "GitHub-Stundenlimit erreicht" : "GitHub bremst zu viele Anfragen") + " – geht ab " + hhmm(until) + " Uhr automatisch weiter.");
+    err.until = until; syncEvent(method, res.status, rem, (text || "").slice(0, 80)); throw err;
   }
   if(res.status === 404) throw new Error("Gist nicht gefunden – gelöscht oder Code falsch.");
   if(!res.ok) throw new Error("GitHub antwortet mit Fehler " + res.status + ".");
-  return res.json();
+  return {status: res.status, json: await res.json(), etag: res.headers.get("ETag")};
 }
 async function pullRemote(s){
-  const g = await gh("GET", "/" + s.gist, s.token);
-  const f = g.files && g.files[GFILE];
+  const cached = syncCache && syncCache.gist === s.gist ? syncCache : null;
+  const r = await gh("GET", "/" + s.gist, s.token, null, cached && cached.etag);
+  if(r.status === 304 && cached) return cached.remote;          // nichts Neues auf GitHub
+  const g = r.json, f = g && g.files && g.files[GFILE];
   if(!f) throw new Error("Im Gist liegt kein Vokabeltrainer-Lernstand.");
   let content = f.content;
   if(f.truncated && f.raw_url) content = await (await fetch(f.raw_url, {cache: "no-store"})).text();
   let blob; try{ blob = JSON.parse(content); }catch(e){ throw new Error("Gist-Inhalt ist beschädigt."); }
-  return open_(blob, s.key);
+  const remote = await open_(blob, s.key);
+  syncCache = {gist: s.gist, etag: r.etag || null, remote}; store.set("syncCache", syncCache);
+  return remote;
 }
 async function pushRemote(s){
-  await gh("PATCH", "/" + s.gist, s.token, {files: {[GFILE]: {content: JSON.stringify(await seal(localState(), s.key))}}});
+  const state = localState();
+  await gh("PATCH", "/" + s.gist, s.token, {files: {[GFILE]: {content: JSON.stringify(await seal(state, s.key))}}});
+  syncCache = {gist: s.gist, etag: null, remote: state}; store.set("syncCache", syncCache);   // nächster Abruf lädt neu
 }
 function saveSync(){ store.set("sync", sync); renderSync(); }
 async function doSync(manual){
   if(!sync || syncBusy || !cryptoOk()) return;
-  syncBusy = true; if(manual) msg("Synchronisiere …");
+  const now = Date.now();
+  if(!manual && sync.blockedUntil > now){ planRetry(sync.blockedUntil - now + 3000); return; }
+  syncBusy = true; syncLastTry = now; syncDirty = false; if(manual) msg("Synchronisiere …");
   try{
     const {pulled, push} = merge(await pullRemote(sync));
     if(push) await pushRemote(sync);
-    sync.last = Date.now(); sync.err = null;
+    sync.last = Date.now(); sync.err = null; sync.blockedUntil = 0;
     if(pulled) refreshAfterPull();
     if(manual) msg(pulled ? "Neuer Lernstand vom anderen Gerät übernommen." : "Alles aktuell.", "ok");
-  }catch(e){ sync.err = e.message; if(manual) msg(e.message, "err"); }
+  }catch(e){
+    sync.err = e.message; syncDirty = true;
+    if(e.until){ sync.blockedUntil = e.until; planRetry(e.until - Date.now() + 3000); }
+    else planRetry(5 * MIN);
+    if(manual) msg(e.message, "err");
+  }
   finally{ syncBusy = false; if(sync) saveSync(); }
 }
-function syncSoon(){ if(applying || !sync) return; clearTimeout(syncTimer); syncTimer = setTimeout(() => doSync(false), 4000); }
+function planRetry(ms){ clearTimeout(syncRetry); syncRetry = setTimeout(() => doSync(false), Math.max(5000, ms)); }
+function syncSoon(){
+  if(applying || !sync) return;
+  syncDirty = true;
+  if(syncTimer) return;                                            // Abgleich ist schon geplant
+  const wait = Math.max(5000, SYNC_GAP - (Date.now() - syncLastTry));
+  syncTimer = setTimeout(() => { syncTimer = null; doSync(false); }, wait);
+}
+function syncOnVisibility(){
+  if(!sync) return;
+  if(document.hidden){ if(syncDirty){ clearTimeout(syncTimer); syncTimer = null; doSync(false); } }   // beim Verlassen sichern
+  else if(Date.now() - syncLastTry > 30e3) doSync(false);                                            // beim Zurückkommen holen
+}
 function refreshAfterPull(){
   renderStats();
   const scr = document.querySelector(".screen.on");
@@ -848,10 +890,13 @@ function renderSync(){
   $("syncOn").style.display = on ? "contents" : "none";
   $("syncDot").className = "dot" + (on ? (sync.err ? " err" : " ok") : "");
   $("homeSync").textContent = !on ? "Handy und Tablet verbinden"
+    : sync.blockedUntil > Date.now() ? "Verbunden · GitHub-Pause bis " + hhmm(sync.blockedUntil) + " Uhr"
     : sync.err ? "Verbunden · letzter Versuch fehlgeschlagen" : "Verbunden · zuletzt synchronisiert " + ago(sync.last);
   if(on){
     $("syncCode").value = codeOf(sync);
-    $("syncStatus").textContent = "Zuletzt synchronisiert: " + ago(sync.last) + (sync.err ? " · Problem: " + sync.err : "");
+    const lastRem = [...syncEvents].reverse().find(e => e.r !== "");
+    $("syncStatus").textContent = "Zuletzt synchronisiert: " + ago(sync.last) + (sync.err ? " · Problem: " + sync.err : "")
+      + (lastRem ? " · GitHub-Kontingent: noch " + lastRem.r + " Anfragen diese Stunde" : "");
   }
 }
 $("goSync").onclick = () => { show("syncScreen"); msg(cryptoOk() ? "" : "Verschlüsselung ist auf diesem Gerät nicht verfügbar – Sync nicht möglich.", cryptoOk() ? "" : "err"); renderSync(); };
@@ -863,8 +908,8 @@ $("syncCreate").onclick = async () => {
   $("syncCreate").disabled = true; msg("Erstelle geheimen Gist …");
   try{
     const key = b32enc(crypto.getRandomValues(new Uint8Array(16)));
-    const g = await gh("POST", "", token, {description: "Vokabeltrainer – verschlüsselter Lernstand (nicht bearbeiten)", public: false,
-      files: {[GFILE]: {content: JSON.stringify(await seal(localState(), key))}}});
+    const g = (await gh("POST", "", token, {description: "Vokabeltrainer – verschlüsselter Lernstand (nicht bearbeiten)", public: false,
+      files: {[GFILE]: {content: JSON.stringify(await seal(localState(), key))}}})).json;
     if(!g || !g.id) throw new Error("GitHub hat keine Gist-ID geliefert.");
     sync = {gist: g.id, key, token, last: Date.now(), err: null}; saveSync();
     $("syncToken").value = ""; if(typing()) document.activeElement.blur();
@@ -933,8 +978,12 @@ function logExport(){
   const L = [];
   L.push(`Vokabeltrainer ${APP_VERSION} – Fehlerprotokoll`);
   L.push(`Exportiert: ${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())} · ${log.length} Einträge · Geräte: ${devs}`);
-  if(!log.length) return L.join("\n") + "\n\nKeine Fehler aufgezeichnet.";
+  if(!log.length && !syncEvents.length) return L.join("\n") + "\n\nKeine Fehler aufgezeichnet.";
   L.push("", "Häufigste Fehler (ohne „Zählt doch“):", ...topErrors(15));
+  if(syncEvents.length){
+    L.push("", `Sync-Ereignisse auf diesem Gerät (${DEVICE}, letzte ${Math.min(15, syncEvents.length)}):`);
+    for(const e of syncEvents.slice(-15).reverse()) L.push(`${dt(e.t)} · ${e.m} · ${e.s}` + (e.r !== "" ? ` · Rest ${e.r}` : "") + (e.n ? ` · ${e.n}` : ""));
+  }
   L.push("", "Alle Einträge (neueste zuerst):");
   for(const e of [...log].reverse()){
     const ans = e.m === "Karte" ? `nicht gewusst (Karteikarte ${e.q})` : `„${e.a.trim() || "leer"}“`;

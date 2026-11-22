@@ -1,6 +1,6 @@
 {
-  "versionCode": 13,
-  "versionName": "1.12",
-  "notes": "Genauere Abfragen bei 5 Vokabeln (Singular/Plural, -ing-Form)",
+  "versionCode": 14,
+  "versionName": "1.13",
+  "notes": "Sync sparsamer: GitHub-Limit wird nicht mehr erreicht, Pausen laufen automatisch weiter",
   "apk": "https://raw.githubusercontent.com/Mymaxyt/voctrainer/main/dist/Vokabeltrainer.apk"
 }
