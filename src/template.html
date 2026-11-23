@@ -9,11 +9,18 @@
   --bg:#f4f2ee; --surface:#ffffff; --surface2:#ebe8e2; --text:#1d1b18; --muted:#6b665e;
   --accent:#2f5d8a; --accent-ink:#ffffff; --good:#2e7d4f; --bad:#b4493b; --warn:#9a6a12; --line:#dcd7ce;
   --good-bg:#e5f4e4; --bad-bg:#fbebeb; --shadow:0 10px 30px rgba(30,25,15,.12);
+  /* Lernstufen: eine Farbe, je weiter desto dunkler (geprüft: monotone Helligkeit, ≥ 2:1 zur Fläche) */
+  --st0:#86b6ef; --st1:#5598e7; --st2:#2a78d6; --st3:#1c5cab; --st4:#104281;
+  --st0-ink:#0b0b0b; --st1-ink:#ffffff; --st2-ink:#ffffff; --st3-ink:#ffffff; --st4-ink:#ffffff;
+  --meter:#2a78d6; --meter-track:#cde2fb; --bar1:#2a78d6; --mark-bad:#f6cfc9; --mark-good:#c8ecd0;
 }
 @media (prefers-color-scheme:dark){
   :root{ --bg:#16181c; --surface:#22262c; --surface2:#2c3138; --text:#eceae6; --muted:#a19c93;
     --accent:#7fb0e0; --accent-ink:#0f1a26; --good:#2f8a58; --bad:#b9533f; --warn:#e0b050; --line:#353a42;
-    --good-bg:#1e3326; --bad-bg:#3a2320; --shadow:0 10px 30px rgba(0,0,0,.45); }
+    --good-bg:#1e3326; --bad-bg:#3a2320; --shadow:0 10px 30px rgba(0,0,0,.45);
+    --st0:#1c5cab; --st1:#2a78d6; --st2:#5598e7; --st3:#86b6ef; --st4:#b7d3f6;
+    --st0-ink:#ffffff; --st1-ink:#ffffff; --st2-ink:#ffffff; --st3-ink:#0b0b0b; --st4-ink:#0b0b0b;
+    --meter:#5598e7; --meter-track:#0d366b; --bar1:#3987e5; --mark-bad:#6b2a22; --mark-good:#1f5a34; }
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
@@ -26,15 +33,21 @@ h1{font-size:20px;margin:0;font-weight:700;letter-spacing:-.01em}
 #count small{font-weight:400;color:var(--muted);font-size:12px;margin-right:4px}
 .bar{display:flex;height:8px;background:var(--surface2);border-radius:4px;margin:10px 0 6px;overflow:hidden}
 .bar>i{display:block;height:100%;width:0;transition:width .3s}
-#pSure{background:var(--good)} #pLearn{background:var(--good);opacity:.4}
 .legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--muted);margin-bottom:12px;font-variant-numeric:tabular-nums}
 .legend span{display:inline-flex;align-items:center;gap:5px}
 .legend i{width:9px;height:9px;border-radius:2px;display:inline-block}
-.legend .due{margin-left:auto;color:var(--text);font-weight:600}
+.legend b{color:var(--text);font-weight:600}
+/* Lernstufen-Balken: Teile eines Ganzen, 2px Lücke statt Rahmen */
+.segbar{display:flex;gap:2px;width:100%;margin:10px 0 6px}
+.segbar>i{display:block;height:8px;border-radius:999px;min-width:0;flex:0 0 0}
+.segbar.tall{margin:4px 0 8px}
+.segbar.tall>i{height:28px;border-radius:4px;font-style:normal;font-size:12px;font-weight:600;line-height:28px;padding:0 6px;white-space:nowrap;overflow:hidden}
+.meter{height:8px;border-radius:999px;background:var(--meter-track);overflow:hidden}
+.meter>i{display:block;height:100%;border-radius:999px;background:var(--meter);width:0}
 /* Tastatur offen: Kopfbereich zusammenklappen, damit nichts abgeschnitten wird */
-body.typing .seg, body.typing .chips, body.typing .tools, body.typing .legend{display:none}
+body.typing .seg, body.typing .chips, body.typing .tools, body.typing .legend, body.typing .specialbar{display:none}
 body.typing{padding-top:10px}
-body.typing .bar{margin-bottom:10px}
+body.typing .segbar{margin-bottom:10px}
 body.typing #writeMode{margin-top:0;gap:10px}
 body.typing #exam{gap:8px}
 body.typing #exam .qbox{padding:12px 14px 14px}
@@ -42,26 +55,31 @@ body.typing .sentence{font-size:17px}
 body.typing .qbox{min-height:0;padding:12px 16px 16px;box-shadow:none}
 body.typing .qhead{margin-bottom:8px}
 body.typing .qbox .word{font-size:19px}
-body.typing .result{padding:10px 14px}
+body.typing .result{padding:10px 14px;font-size:14px}
 body.typing .result .sol{font-size:18px}
+body.typing .result .fixnote{display:none}
 body.typing .btn{padding:13px 10px}
 .chapline{display:none;font-size:12px;color:var(--muted);margin:-4px 0 8px}
 body.typing .chapline{display:block}
 .seg{display:flex;background:var(--surface2);border-radius:12px;padding:3px;margin-bottom:10px}
-.seg button{flex:1;border:0;background:transparent;color:var(--muted);padding:9px;border-radius:9px;font-size:15px;font-weight:600}
+.seg button{flex:1;border:0;background:transparent;color:var(--muted);padding:9px 4px;border-radius:9px;font-size:15px;font-weight:600;min-width:0}
 .seg button.on{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.seg.small{margin:6px 0 2px}
+.seg.small button{font-size:13px;padding:7px 2px}
 .chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;user-select:none;-webkit-user-select:none}
 .chips::-webkit-scrollbar{display:none}
 .chip{flex:none;border:1px solid var(--line);background:var(--surface);color:var(--text);padding:8px 12px;border-radius:999px;font-size:14px}
 .chip.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .tools{display:flex;gap:8px;margin-top:10px}
 .tool{flex:1;border:1px solid var(--line);background:var(--surface);color:var(--text);padding:9px 6px;border-radius:10px;font-size:13px}
+.specialbar{display:flex;align-items:center;gap:10px;margin-top:10px;padding:8px 12px;border-radius:12px;background:var(--surface);border:1px dashed var(--accent);font-size:14px}
+.specialbar span{flex:1}
 .tag{position:absolute;top:16px;left:18px;font-size:12px;color:var(--muted);letter-spacing:.02em}
 .weak{position:absolute;top:36px;left:18px;font-size:12px;color:var(--warn);font-weight:600}
 .side{position:absolute;top:16px;right:18px;font-size:12px;color:var(--muted)}
 .hint{position:absolute;bottom:16px;font-size:12px;color:var(--muted)}
 /* Kartenmodus */
-#cardMode{flex:1;display:flex;flex-direction:column;user-select:none;-webkit-user-select:none}
+#cardMode{flex:1;display:none;flex-direction:column;user-select:none;-webkit-user-select:none}
 .stage{flex:1;display:flex;align-items:center;justify-content:center;perspective:1400px;margin:16px 0;min-height:280px}
 .card{position:relative;width:100%;max-width:520px;height:min(50vh,420px);transform-style:preserve-3d;transition:transform .45s cubic-bezier(.2,.7,.2,1)}
 .card.flip{transform:rotateY(180deg)}
@@ -78,15 +96,20 @@ body.typing .chapline{display:block}
 .btn{flex:1;border:0;border-radius:14px;padding:16px 10px;font-size:17px;font-weight:600;color:#fff}
 .btn.bad{background:var(--bad)} .btn.good{background:var(--good)} .btn.main{background:var(--accent);color:var(--accent-ink)}
 .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
-/* Schreibmodus */
+/* Schreiben / Lückensatz */
 #writeMode{display:none;flex-direction:column;gap:12px;margin-top:14px}
 .qbox{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);
   padding:14px 18px 22px;min-height:150px;display:flex;flex-direction:column;text-align:center}
 .qhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;margin-bottom:12px;text-align:left}
 .qhead .tag,.qhead .weak,.qhead .side{position:static}
 .qhead .side{margin-left:auto}
+.qhead .kind{font-size:12px;font-weight:600;color:var(--accent)}
 .qbox .word{flex:1;display:flex;align-items:center;justify-content:center}
 .qbox .word{font-size:22px;font-weight:600}
+.qbox .sentence{flex:1;display:flex;align-items:center}
+.qbox .sentence>span.s{display:block}
+.qbox .sentence.textbox{display:block}
+.meaning{margin-top:10px;font-size:14px;color:var(--muted);text-align:left}
 form{display:flex;gap:8px}
 .typein{flex:1;min-width:0;font-size:18px;padding:14px 14px;border-radius:12px;border:1.5px solid var(--line);
   background:var(--surface);color:var(--text);outline:none}
@@ -96,16 +119,25 @@ form{display:flex;gap:8px}
 .row{display:flex;gap:8px;align-items:center}
 #hintText{flex:1;font-family:ui-monospace,Menlo,monospace;font-size:16px;letter-spacing:.08em;color:var(--muted)}
 .result{display:none;border-radius:14px;padding:14px 16px;line-height:1.45}
-.result.ok{display:block;background:var(--good-bg)} .result.no{display:block;background:var(--bad-bg)}
+.result.ok,.result.fixed{display:block;background:var(--good-bg)} .result.no{display:block;background:var(--bad-bg)}
 .result b{font-size:17px}
 .result .sol{font-size:20px;font-weight:700;margin-top:4px}
-.result .yours{color:var(--muted);font-size:14px;margin-top:4px}
-#afterBtns{display:none;gap:10px}
+.result .sol.covered{color:transparent;text-shadow:0 0 10px rgba(127,127,127,.6);user-select:none}
+.result .yours,.result .muted{color:var(--muted);font-size:14px;margin-top:4px}
+.result .diff{font-family:ui-monospace,Menlo,monospace;font-size:16px;margin-top:6px;line-height:1.6;overflow-wrap:anywhere}
+.result .diff small{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:12px;color:var(--muted);display:inline-block;min-width:58px}
+.diff .x{background:var(--mark-bad);border-radius:3px;text-decoration:line-through;text-decoration-thickness:2px}
+.diff .m{color:var(--bad);font-weight:700}
+.diff .y{background:var(--mark-good);border-radius:3px;font-weight:700}
+.result .contrast{font-size:14px;margin-top:6px}
+.result .fixnote{font-size:13px;color:var(--muted);margin-top:6px}
+.result .rhead{display:flex;align-items:baseline;gap:10px;justify-content:space-between}
+.linkbtn{border:0;background:none;color:var(--accent);font-size:13px;padding:0;text-decoration:underline}
 /* Fertig */
 .done{display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px;flex:1;padding:20px 0}
 .done h2{margin:0;font-size:24px}
-.done p{margin:0;color:var(--muted);line-height:1.45}
-.done .btn{flex:none;padding:14px 22px}
+.done p{margin:0;color:var(--muted);line-height:1.45;max-width:440px}
+.done .btn{flex:none;padding:14px 22px;width:100%;max-width:360px}
 /* Bildschirme */
 .screen{display:none;flex:1;flex-direction:column}
 .screen.on{display:flex}
@@ -124,6 +156,15 @@ header.nav h1{flex:none}
 .tile .btn{margin-top:10px}
 .opt{display:flex;align-items:center;gap:10px;font-size:14px;margin-top:8px}
 .opt input{width:20px;height:20px;accent-color:var(--accent)}
+.select{font:inherit;font-size:14px;padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--text);margin-top:6px}
+.ready .rtop{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.ready .cd{font-size:13px;color:var(--muted)}
+.ready .stats{display:flex;gap:22px;margin-top:4px}
+.stat{display:flex;flex-direction:column;gap:2px}
+.stat .v{font-size:28px;font-weight:700;line-height:1.1}
+.stat .l{font-size:12px;color:var(--muted)}
+.ready .segbar{margin:8px 0 2px}
+.ready .legend{margin:2px 0 0}
 /* Prüfung */
 #exam{gap:12px}
 #exam .bar{margin:10px 0 2px}
@@ -132,31 +173,68 @@ header.nav h1{flex:none}
 .gap{display:inline-block;min-width:3em;padding:0 4px;border-bottom:2px solid var(--accent);color:var(--accent);font-weight:700;
   font-family:ui-monospace,Menlo,monospace;font-size:.92em;letter-spacing:.04em}
 .gap.filled{font-family:inherit;letter-spacing:0;color:var(--text)}
+.gap.ok{font-family:inherit;letter-spacing:0;color:var(--good);border-bottom-color:var(--good)}
+.gap.no{font-family:inherit;letter-spacing:0;color:var(--bad);border-bottom-color:var(--bad)}
+.textbox .gap{min-width:2.2em;border-bottom-color:var(--line);color:var(--muted)}
+.textbox .gap.on{border-bottom-color:var(--accent);color:var(--accent);background:var(--surface2);border-radius:4px 4px 0 0}
+.textbox .gap.filled{color:var(--text)}
+.textbox{max-height:calc(var(--vvh, 100vh) - 250px);min-height:120px;overflow-y:auto;font-size:18px;line-height:1.7}
+body.typing .textbox{font-size:16px;max-height:calc(var(--vvh, 100vh) - 190px)}
 #exam .qbox{padding:14px 18px 22px}
 .muted{color:var(--muted);font-size:13px}
 /* Ergebnis */
 #resultScreen{gap:14px}
 .score{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px;text-align:center;box-shadow:var(--shadow)}
-.score .big{font-size:40px;font-weight:800;font-variant-numeric:tabular-nums}
+.score .big{font-size:40px;font-weight:800}
 .score .sub2{color:var(--muted);margin-top:4px}
 .rv{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--good);border-radius:12px;padding:12px 14px;line-height:1.45}
 .rv.no{border-left-color:var(--bad)}
 .rv .s{font-size:15px}
 .rv .s b{color:var(--good)}
 .rv.no .s b{color:var(--bad)}
-.rv .y{font-size:13px;color:var(--muted);margin-top:4px;display:flex;align-items:center;gap:8px;justify-content:space-between}
+.rv .y{font-size:13px;color:var(--muted);margin-top:4px;display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap}
 .rv .y button{border:1px solid var(--line);background:transparent;color:var(--text);border-radius:8px;padding:5px 10px;font-size:12px;flex:none}
+.rv .diff{font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-top:4px}
 #review{display:flex;flex-direction:column;gap:8px;padding-bottom:10px}
-
+/* Fortschritt */
+#progress{gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:10px}
+.panel h3{margin:0;font-size:17px}
+.panel p{margin:0;color:var(--muted);font-size:14px;line-height:1.45}
+.panel p b{color:var(--text)}
+.herofig{font-size:56px;font-weight:700;line-height:1;letter-spacing:-.02em}
+.herorow{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.herorow .note{font-size:20px;font-weight:600}
+.statrow{display:flex;gap:22px;flex-wrap:wrap}
+.chaprows{display:grid;grid-template-columns:minmax(92px,auto) 1fr auto;gap:8px 10px;align-items:center;font-size:13px}
+.chaprows .segbar{margin:0}
+.chaprows .fig{color:var(--muted);font-variant-numeric:tabular-nums;text-align:right}
+.mlist{display:flex;flex-direction:column;gap:10px}
+.mrow{display:grid;grid-template-columns:1fr 34%;gap:2px 10px;align-items:center;font-size:14px}
+.mrow .nm{font-weight:600;overflow-wrap:anywhere}
+.mrow .bx{display:flex;align-items:center;gap:8px}
+.mrow .bx .meter{flex:1}
+.mrow .bx span{font-variant-numeric:tabular-nums;min-width:3.2em;text-align:right;color:var(--muted)}
+.mrow .wr{grid-column:1/-1;font-size:12px;color:var(--muted)}
+.hbars{display:grid;grid-template-columns:auto 1fr auto;gap:8px 10px;align-items:center;font-size:14px}
+.hbars .hb i{display:block;height:12px;background:var(--bar1);border-radius:0 4px 4px 0;min-width:2px}
+.hbars .val{font-variant-numeric:tabular-nums;color:var(--text);text-align:right}
+.pairs{display:flex;flex-direction:column;gap:8px;font-size:14px}
+.pairs div small{display:block;color:var(--muted);font-size:12px}
+.tbl{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+.tbl th{text-align:right;font-weight:600;color:var(--muted);padding:4px 6px;border-bottom:1px solid var(--line)}
+.tbl td{text-align:right;padding:6px;border-bottom:1px solid var(--line)}
+.tbl th:first-child,.tbl td:first-child{text-align:left}
+.examdate{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.examdate input{font:inherit;font-size:15px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--text)}
+.method{font-size:13px;color:var(--muted);line-height:1.5;margin:0;padding-left:18px}
+.method li{margin-bottom:4px}
 /* Geräte-Sync */
 .tile.small{flex-direction:row;align-items:center;gap:14px;padding:16px 20px}
 .tile.small .grow{flex:1;display:flex;flex-direction:column;gap:3px}
 .dot{width:10px;height:10px;border-radius:50%;background:var(--line);flex:none}
 .dot.ok{background:var(--good)} .dot.err{background:var(--warn)}
 #syncScreen{gap:14px}
-.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:10px}
-.panel h3{margin:0;font-size:17px}
-.panel p{margin:0;color:var(--muted);font-size:14px;line-height:1.45}
 .code{font-family:ui-monospace,Menlo,monospace;font-size:15px;letter-spacing:.03em;width:100%;padding:12px;border-radius:10px;
   border:1px dashed var(--accent);background:var(--surface2);color:var(--text);user-select:all;-webkit-user-select:all}
 .or{text-align:center;color:var(--muted);font-size:13px}
@@ -168,14 +246,17 @@ header.nav h1{flex:none}
 @media (min-width:700px){
   body{max-width:860px;margin:0 auto;width:100%;padding:24px 32px 28px}
   #home.on{display:grid;grid-template-columns:1fr 1fr;align-content:start;gap:18px}
-  #home .hero, #home .tile.small{grid-column:1/-1}
+  #home .hero, #home .tile.small, #home .ready, #home .intro{grid-column:1/-1}
   .hero h1{font-size:34px}
   .word{font-size:36px} .word.long{font-size:27px}
   .qbox .word{font-size:28px} .sentence{font-size:24px}
+  .textbox{font-size:21px}
   .card{max-width:680px;height:min(52vh,480px)}
   .stage{margin:24px 0}
   .btn{font-size:18px}
   .typein{font-size:20px}
+  #progress.on{display:grid;grid-template-columns:1fr 1fr;align-content:start;gap:18px}
+  #progress>header, #progress .wide{grid-column:1/-1}
 }
 @media (min-width:700px) and (max-height:560px){   /* Querformat mit Tastatur */
   .card{height:min(48vh,360px)}
@@ -184,13 +265,15 @@ header.nav h1{flex:none}
   body{padding-top:8px;padding-bottom:8px}
   .seg{margin-bottom:6px} .seg button{padding:6px}
   .legend{display:none}
-  .bar{margin-bottom:8px}
+  .segbar{margin-bottom:8px}
   .chip{padding:5px 11px}
   .tools{margin-top:6px} .tool{padding:6px}
   .stage{min-height:0;margin:6px 0}
   .card{height:max(130px,calc(100vh - 262px))}
   .face{padding:34px 18px 28px}
   .btn{padding:11px 10px}
+  .qbox{min-height:0;padding:10px 16px 14px} #writeMode{margin-top:8px;gap:8px}
+  .qbox .word{font-size:19px} .sentence{font-size:17px}
 }
 .syn{margin-top:10px;font-size:14px;color:var(--muted);font-style:italic}
 #exam .syn{text-align:left}
@@ -205,7 +288,6 @@ header.nav h1{flex:none}
 .update .btn{text-align:center;text-decoration:none}
 #home.on .update.on, #home.on .verline{grid-column:1/-1}
 .verline{font-size:13px;color:var(--muted);text-align:center;padding:4px 0 8px}
-.linkbtn{border:0;background:none;color:var(--accent);font-size:13px;padding:0;text-decoration:underline}
 #updMsg{display:block;margin-top:4px}
 #updFallback{color:var(--accent)}
 </style>
@@ -218,15 +300,33 @@ header.nav h1{flex:none}
     <a class="btn main" id="updBtn" href="#">Jetzt aktualisieren</a>
     <p class="muted" id="updHow" style="display:none;margin:0">Das Update wird geladen (Fortschritt oben in der Benachrichtigungsleiste) – danach öffnet sich die Installation von selbst. Nur „Aktualisieren“ tippen, dein Lernstand bleibt erhalten. Beim allerersten Mal schickt Android dich zu „Aus dieser Quelle zulassen“: einschalten, zurück, fertig.<br><a id="updFallback" href="#">Es passiert nichts? Stattdessen im Browser laden</a></p>
   </div>
+  <div class="panel intro" id="intro115" style="display:none">
+    <h3>Neu in Version 1.15</h3>
+    <p><b>Lernplan:</b> Jedes Wort kommt jeden Tag einmal dran, meist als Lückensatz wie in der Prüfung. Nach einem Fehler tippst du die Lösung einmal ab, und das Wort kommt nach etwa 1 und 10 Minuten wieder.</p>
+    <p><b>Fortschritt:</b> Prognose für den Prüfungstag, Lernstufen, Wackelkandidaten und Fehlerarten. Dein bisheriger Stand ist übernommen. Weil die Stufen jetzt Nachweise über mehrere Tage verlangen, steht anfangs fast alles auf „In Arbeit“.</p>
+    <p><b>„Zählt doch“ gibt es nicht mehr:</b> Falsch bleibt falsch. Wertet die App etwas wirklich zu Unrecht als falsch, tippe „Bewertung melden“.</p>
+    <button class="btn main" id="introOk" style="flex:none">Verstanden</button>
+  </div>
+  <button class="tile ready" id="goProgress">
+    <span class="rtop"><span class="t">Fortschritt</span><span class="cd" id="homeCountdown"></span></span>
+    <span class="stats">
+      <span class="stat"><span class="v" id="homePrognose">–</span><span class="l">Prognose · Note <b id="homeNote">–</b></span></span>
+      <span class="stat"><span class="v" id="homeToday">–</span><span class="l">heute geschafft</span></span>
+    </span>
+    <span class="segbar" id="homeStages" role="img"></span>
+    <span class="legend" id="homeLegend"></span>
+  </button>
   <button class="tile" id="goTrain">
-    <span class="t">Vokabeltraining</span>
-    <span class="d">Karteikarten oder Schreiben, mit Wiederholung nach Zeit</span>
+    <span class="t">Lernplan</span>
+    <span class="d">Jedes Wort heute einmal ohne Hilfe richtig – Fehlerwörter kommen nach 1 und 10 Minuten wieder</span>
     <span class="m" id="homeTrain"></span>
   </button>
   <div class="tile">
     <span class="t">Prüfungssimulation</span>
-    <span class="d">30 zufällige Vokabeln als englische Lückensätze. Die Auswertung kommt erst am Ende.</span>
-    <label class="opt"><input type="checkbox" id="optLetters" checked> Anfangsbuchstaben als Hilfe zeigen</label>
+    <span class="d" id="examDesc">Englische Lückensätze, die im Training nie vorkommen. Die Auswertung kommt erst am Ende.</span>
+    <div class="seg small" id="examKinds"><button data-k="s30">30 Sätze</button><button data-k="all">Alle 155</button><button data-k="text">Lückentext</button></div>
+    <select class="select" id="textPick" aria-label="Lückentext auswählen"></select>
+    <label class="opt"><input type="checkbox" id="optLetters"> Anfangsbuchstaben als Hilfe zeigen</label>
     <span class="m" id="homeExam"></span>
     <button class="btn main" id="goExam">Prüfung starten</button>
   </div>
@@ -239,6 +339,63 @@ header.nav h1{flex:none}
   <div class="verline"><span id="verText"></span> · <button class="linkbtn" id="updCheck">Nach Updates suchen</button><span id="updMsg"></span></div>
 </section>
 
+<section id="progress" class="screen">
+  <header class="nav"><button class="backbtn" id="progHome">‹ Start</button><h1>Fortschritt</h1></header>
+  <div class="panel wide">
+    <div class="examdate"><span><b>Prüfung</b> <span id="examWhen"></span></span><span class="muted" id="examLeft"></span>
+      <button class="linkbtn" id="examEdit">ändern</button></div>
+    <div class="examdate" id="examEditRow" style="display:none"><input type="datetime-local" id="examInput"><button class="tool" id="examSave" style="flex:none;padding:9px 14px">Speichern</button></div>
+  </div>
+  <div class="panel">
+    <h3>Prognose für den Prüfungstag</h3>
+    <div class="herorow"><span class="herofig" id="progPct">–</span><span class="note">Note <span id="progNote">–</span></span></div>
+    <p id="progChance"></p>
+    <p class="muted" id="progNever"></p>
+  </div>
+  <div class="panel">
+    <h3>Heute</h3>
+    <div class="meter" role="img" id="todayMeterBox"><i id="todayMeter"></i></div>
+    <p id="todayText"></p>
+    <p id="todayMore"></p>
+    <button class="btn main" id="progTrain" style="flex:none">Weiterlernen</button>
+  </div>
+  <div class="panel wide">
+    <h3>Lernstufen</h3>
+    <div class="segbar tall" id="progStages" role="img"></div>
+    <div class="legend" id="progLegend" style="margin-bottom:0"></div>
+    <div class="chaprows" id="chapRows"></div>
+  </div>
+  <div class="panel">
+    <h3>Wackelkandidaten</h3>
+    <p>Die Wörter mit der niedrigsten Prognose – mit deinen letzten Falschschreibungen.</p>
+    <div class="mlist" id="weakList"></div>
+    <button class="btn main" id="weakGo" style="flex:none">Diese jetzt üben</button>
+  </div>
+  <div class="panel">
+    <h3>Fehlerarten</h3>
+    <p id="errSub"></p>
+    <div class="hbars" id="errBars"></div>
+  </div>
+  <div class="panel">
+    <h3>Verwechslungen</h3>
+    <div class="pairs" id="pairList"></div>
+    <button class="btn ghost" id="pairGo" style="flex:none">Diese Paare im Wechsel üben</button>
+  </div>
+  <div class="panel">
+    <h3>Verlauf</h3>
+    <table class="tbl" id="dayTable"></table>
+  </div>
+  <div class="panel wide">
+    <h3>So wird gerechnet</h3>
+    <ul class="method">
+      <li><b>Prognose:</b> Für jedes Wort schätzt ein Gedächtnismodell (FSRS-6, gelernt aus Millionen echter Wiederholungen), wie wahrscheinlich du es zum Prüfungstermin noch richtig schreibst – aus deinen Antworten, deren Abständen und deinen Fehlern. Der Mittelwert ergibt die erwartete Quote. Die 1,0-Chance gilt für 30 zufällige Lücken mit höchstens einem Fehler. Nie geübte Wörter zählen als falsch.</li>
+      <li><b>Lernstufen</b> zählen nur Fakten aus getippten Antworten. Gefestigt: seit dem letzten Fehler 2× ohne Hilfe richtig, mindestens 10 Minuten auseinander. Sicher: an 2 Tagen, davon 1× im Lückensatz. Prüfungsfest: 3× an 3 Tagen, davon 2× im Satz. Ein Fehler oder Tipp setzt auf „In Arbeit“ zurück. Karteikarten zählen nicht, weil man sich dort selbst bewertet.</li>
+      <li><b>Heute geschafft:</b> einmal ohne Hilfe richtig; nach einem Fehler zweimal (nach etwa 1 und 10 Minuten). Der Lerntag beginnt um 4 Uhr.</li>
+      <li>151 verschiedene Wörter: market share, brand loyalty, distribution channel und end user stehen in zwei Kapiteln und zählen je einmal.</li>
+    </ul>
+  </div>
+</section>
+
 <section id="logScreen" class="screen">
   <header class="nav"><button class="backbtn" id="logHome">‹ Start</button><h1>Fehlerprotokoll</h1></header>
   <div class="panel">
@@ -248,7 +405,7 @@ header.nav h1{flex:none}
     <div id="logMsg" class="muted"></div>
   </div>
   <textarea id="logText" class="logtext" readonly spellcheck="false"></textarea>
-  <p class="muted">Jeder Fehler aus Schreiben, Prüfung und Karteikarten („Nochmal“) wird mit deiner Antwort gespeichert – auf allen gekoppelten Geräten gemeinsam. Zum Auswerten einfach kopieren und Claude schicken.</p>
+  <p class="muted">Jeder Fehler aus Lückensätzen, Schreiben, Prüfung und Karteikarten („Nochmal“) wird mit deiner Antwort und der Fehlerart gespeichert – auf allen gekoppelten Geräten gemeinsam. Zum Auswerten einfach kopieren und Claude schicken.</p>
 </section>
 
 <section id="syncScreen" class="screen">
@@ -288,13 +445,13 @@ header.nav h1{flex:none}
     </div>
     <button class="btn ghost" id="syncUnpair" style="flex:none">Kopplung auf diesem Gerät trennen</button>
   </div>
-  <p class="muted">Abgleich automatisch beim Öffnen und ein paar Sekunden nach jeder Antwort. Ende-zu-Ende-verschlüsselt (AES-GCM): Auch GitHub sieht nur unlesbare Daten.</p>
+  <p class="muted">Abgleich automatisch beim Öffnen, beim Verlassen der App und höchstens alle zwei Minuten beim Üben. Ende-zu-Ende-verschlüsselt (AES-GCM): Auch GitHub sieht nur unlesbare Daten.</p>
 </section>
 
 <section id="exam" class="screen">
   <header class="nav"><button class="backbtn" id="examQuit">‹ Abbrechen</button><span id="examCount" class="muted"></span></header>
   <div class="bar"><i id="examProg"></i></div>
-  <div class="qbox"><div class="qhead"><span class="tag" id="examTag"></span><span class="side">Lücke füllen</span></div><div class="sentence" id="sentence"></div><div class="syn" id="synE"></div></div>
+  <div class="qbox"><div class="qhead"><span class="tag" id="examTag"></span><span class="side" id="examSide">Lücke füllen</span></div><div class="sentence" id="sentence"></div><div class="syn" id="synE"></div></div>
   <form id="examForm" autocomplete="off">
     <input id="examAns" class="typein" type="text" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false"
       enterkeyhint="enter" placeholder="Antwort …">
@@ -312,16 +469,13 @@ header.nav h1{flex:none}
 
 <section id="train" class="screen">
 <header class="nav"><button class="backbtn" id="trainHome">‹ Start</button><span id="count"></span></header>
-<div class="bar"><i id="pSure"></i><i id="pLearn"></i></div>
+<div class="segbar" id="trainStages" role="img"></div>
 <div class="legend" id="legend"></div>
 <div class="chapline" id="chapline"></div>
-<div class="seg"><button id="mCard" class="on">Karteikarten</button><button id="mWrite">Schreiben</button></div>
+<div class="seg" id="modes"><button data-m="plan">Plan</button><button data-m="c">Lücken</button><button data-m="w">Schreiben</button><button data-m="k">Karten</button></div>
 <div class="chips" id="chips"></div>
-<div class="tools">
-  <button class="tool" id="dir">EN → DE</button>
-  <button class="tool" id="shuffle">Mischen</button>
-  <button class="tool" id="reset">Zurücksetzen</button>
-</div>
+<div class="tools" id="tools"><button class="tool" id="dir">EN → DE</button></div>
+<div class="specialbar" id="specialBar" style="display:none"><span id="specialText"></span><button class="linkbtn" id="specialEnd">Liste beenden</button></div>
 
 <div id="cardMode">
   <div class="stage" id="stage">
@@ -337,167 +491,227 @@ header.nav h1{flex:none}
     <button class="btn bad" id="no">Nochmal</button>
     <button class="btn good" id="yes">Gewusst</button>
   </div>
+  <p class="muted" style="text-align:center;margin:8px 0 0">Karten sind zum Aufwärmen – für den Fortschritt zählen nur getippte Antworten.</p>
 </div>
 
 <div id="writeMode">
-  <div class="qbox"><div class="qhead"><span class="tag" id="tagW"></span><span class="weak" id="weakW"></span><span class="side">Englisch schreiben</span></div>
-    <div class="word" id="prompt"></div><div class="syn" id="synW"></div></div>
+  <div class="qbox"><div class="qhead"><span class="tag" id="tagW"></span><span class="weak" id="weakW"></span><span class="kind" id="kindW"></span><span class="side" id="sideW">Englisch schreiben</span></div>
+    <div class="word" id="prompt"></div>
+    <div class="sentence" id="cloze"></div>
+    <div class="syn" id="synW"></div>
+    <div class="meaning" id="meaning"></div></div>
   <form id="form" autocomplete="off">
     <input id="answer" class="typein" type="text" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false"
       enterkeyhint="enter" placeholder="Englisches Wort …">
-    <button class="btn main" id="check" type="submit">Prüfen</button>
+    <button class="btn main keepkb" id="check" type="submit">Prüfen</button>
   </form>
-  <div class="row" id="hintRow"><button class="tool" id="hintBtn" type="button" style="flex:none;padding:9px 14px">Tipp</button><span id="hintText"></span></div>
+  <div class="row" id="hintRow"><button class="tool keepkb" id="hintBtn" type="button" style="flex:none;padding:9px 14px">Tipp</button><span id="hintText"></span></div>
   <div class="result" id="result"></div>
-  <div class="actions" id="afterBtns">
-    <button class="btn ghost" id="override">Zählt doch</button>
-    <button class="btn main" id="nextBtn">Weiter</button>
-  </div>
 </div>
 
 <div class="done" id="done">
   <h2 id="doneTitle">Alles erledigt!</h2>
   <p id="doneText"></p>
-  <button class="btn main" id="practice">Freies Üben (schwächste zuerst)</button>
+  <button class="btn main" id="doneBonus">Bonus: schwächste Wörter üben</button>
+  <button class="btn ghost" id="doneText2">Lückentext-Prüfung</button>
+  <button class="btn ghost" id="doneProgress">Fortschritt ansehen</button>
 </div>
 </section>
 
 <script>
 const DATA = /*DATA*/[];
+const TEXTS = /*TEXTS*/[];
+/*ENGINE*/
+const UNITS = Engine.init(DATA);
 const CHAPS = [["all","Alle"],["1","1 Industries"],["3","3 Strategy"],["7","7 Marketing"],["8","8 Distribution"],["2","2 Globalization"]];
-const MIN = 60e3, HOUR = 60*MIN, DAY = 24*HOUR;
-// Wartezeit je Box nach richtiger Antwort; oft falsche Karten kommen schneller zurück
-const IV = [0, 10*MIN, HOUR, 6*HOUR, DAY, 3*DAY, 7*DAY];
-const key = v => v.n + "|" + v.e;
+const MIN = 60e3, HOUR = 60 * MIN, DAY = 24 * HOUR;
+const SYNC_KEYS = new Set(["hist", "exams", "log", "logCleared", "settings"]);
 const store = {
-  get(k,d){ try{ const v = localStorage.getItem(k); return v===null?d:JSON.parse(v);}catch(e){return d;} },
-  set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} if((k === "srs" || k === "exams" || k === "log" || k === "logCleared") && window.syncReady) syncSoon(); }
+  get(k, d){ try{ const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} if(SYNC_KEYS.has(k) && window.syncReady) syncSoon(); }
 };
-let srs = store.get("srs", null);
-if(!srs){ // Übernahme aus Version 1.0
-  srs = {}; const now = Date.now();
-  for(const k of store.get("known", [])) srs[k] = {b:2, w:0, r:1, due: now + HOUR};
-  store.set("srs", srs);
-}
-let chap = store.get("chap", "all"), dirRev = store.get("dirRev", false), mode = store.get("mode", "card");
-let queue = [], cur = null, flipped = false, busy = false, free = false;
-let hintUsed = false, pending = null;
-let roundTotal = 0, roundDone = 0;   // aktuelle Runde: Karten gesamt / schon richtig beantwortet
-
 const $ = id => document.getElementById(id);
-const st = v => srs[key(v)] || (srs[key(v)] = {b:0, w:0, r:0, due:0});
-const inChap = v => chap === "all" || v.c.startsWith(chap + " ");
-const pool = () => DATA.filter(inChap);
-const isDue = v => st(v).due <= Date.now();
-function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
-
-function grade(v, ok, hint){
-  const s = st(v), now = Date.now();
-  if(ok){
-    s.r++;
-    s.b = hint ? Math.max(s.b, 1) : Math.min(s.b + 1, IV.length - 1);
-    const f = Math.max(0.25, 1 / (1 + 0.5 * s.w));      // 1x falsch: 67 %, 2x: 50 %, 6x+: 25 % der Wartezeit
-    s.due = now + IV[s.b] * f;
-  } else { s.w++; s.b = 0; s.due = now; }
-  s.u = now;
-  store.set("srs", srs);
-}
-function buildQueue(){
-  free = false;
-  queue = shuffle(pool().filter(isDue));
-  queue.sort((a,b) => (st(b).w > 0) - (st(a).w > 0));   // schon mal falsche zuerst
-  roundTotal = queue.length; roundDone = 0;
-  next();
-}
-function startFree(){
-  free = true;
-  queue = shuffle(pool()).sort((a,b) => (st(b).w - st(b).b) - (st(a).w - st(a).b));
-  roundTotal = queue.length; roundDone = 0;
-  next();
-}
+const pad = n => String(n).padStart(2, "0");
+function shuffle(a){ for(let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function el(tag, cls, text){ const e = document.createElement(tag); if(cls) e.className = cls; if(text != null) e.textContent = text; return e; }
+const WD = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+const fmtWhen = t => { const d = new Date(t); return `${WD[d.getDay()]} ${pad(d.getDate())}.${pad(d.getMonth() + 1)}., ${pad(d.getHours())}:${pad(d.getMinutes())} Uhr`; };
 function fmt(ms){
-  if(ms < HOUR) return Math.max(1, Math.round(ms/MIN)) + " Min.";
-  if(ms < DAY) return Math.round(ms/HOUR) + " Std.";
-  return Math.round(ms/DAY) + " Tag(en)";
+  if(ms < HOUR) return Math.max(1, Math.round(ms / MIN)) + " Min.";
+  if(ms < DAY) return Math.round(ms / HOUR) + " Std.";
+  return Math.round(ms / DAY) + " Tag(en)";
 }
-// Stufen: offen = noch nie oder zuletzt falsch · gelernt = zuletzt richtig · sicher = 3× in Folge richtig (mit Pausen)
-function renderStats(){
-  const p = pool(), n = p.length || 1;
-  const sure = p.filter(v => st(v).b >= 3).length;
-  const learn = p.filter(v => st(v).b >= 1 && st(v).b < 3).length;
-  const open = p.length - sure - learn;
-  const due = p.filter(isDue).length;
-  $("pSure").style.width = 100*sure/n + "%";
-  $("pLearn").style.width = 100*learn/n + "%";
-  $("legend").innerHTML =
-    `<span><i style="background:var(--good)"></i>${sure} sicher</span>` +
-    `<span><i style="background:var(--good);opacity:.4"></i>${learn} gelernt</span>` +
-    `<span><i style="background:var(--surface2);border:1px solid var(--line)"></i>${open} offen</span>` +
-    `<span class="due">${due} fällig</span>`;
-  const left = cur ? queue.length + 1 : queue.length;
-  $("count").innerHTML = roundTotal && (cur || left)
-    ? `<small>${free ? "Freies Üben" : "Runde"}</small>${roundDone} / ${roundTotal} geschafft`
-    : `<small>Runde</small>fertig`;
-  $("chapline").textContent = "Kapitel " + CHAPS.find(c => c[0] === chap)[1] + " · zum Wechseln Tastatur schließen";
+
+// ---------- Lernstand: Verlauf je Wort (ab 1.15); ältere Stände werden einmalig übernommen
+let hist = store.get("hist", null);
+if(!hist || typeof hist !== "object"){
+  hist = Engine.migrate(store.get("srs", {}), store.get("log", []), store.get("logCleared", 0), Date.now());
+  store.set("hist", hist); store.set("migratedAt", Date.now());
+}
+const EXAM_DEFAULT = new Date(2026, 10, 26, 8, 0).getTime();       // Do 26.11.2026, 08:00
+let settings = store.get("settings", null);
+if(!settings || !settings.examAt) settings = {examAt: EXAM_DEFAULT, u: 0};
+const H = u => hist[u.k] || [];
+function infos(now){ const m = new Map(); for(const u of UNITS) m.set(u.k, Engine.info(hist[u.k], now, settings.examAt)); return m; }
+function record(u, g, m, e, p, noSave){
+  const list = hist[u.k] || (hist[u.k] = []);
+  let t = Date.now(); if(list.length && list[list.length - 1][0] >= t) t = list[list.length - 1][0] + 1;
+  const a = [t, g, m]; if(g === 1){ a.push(e || "n"); if(p) a.push(p); }
+  list.push(a); if(!noSave) store.set("hist", hist);
+  return a;
+}
+const firstEntry = u => DATA[u.entries[0]];
+const tagOf = v => v.c.split(" ")[0] + " · Aufg. " + v.n;
+const fullE = k => { const u = Engine.unitByKey(k); return u ? firstEntry(u).e : k; };
+function summary(now){
+  const I = infos(now), counts = [0, 0, 0, 0, 0]; let done = 0, learn = 0, never = 0, sum = 0; const rs = [];
+  for(const u of UNITS){ const i = I.get(u.k); counts[i.stage]++; if(i.today.done) done++; if(i.today.learning) learn++; if(!i.n) never++; sum += i.rExam; rs.push(i.rExam); }
+  const pct = Math.round(100 * sum / UNITS.length);
+  return {I, counts, done, learn, never, pct, rs};
+}
+
+// ---------- Lernstufen-Balken (Prüfungsfest links, Neu rechts)
+const ORDER = [4, 3, 2, 1, 0];
+function stageBar(box, counts, tall){
+  box.textContent = "";
+  const total = counts.reduce((a, b) => a + b, 0) || 1;
+  box.setAttribute("aria-label", ORDER.map(s => `${Engine.STAGES[s]} ${counts[s]}`).join(", "));
+  const missing = [];
+  for(const s of ORDER){
+    if(!counts[s]) continue;
+    const i = el("i"); i.style.flex = counts[s] + " 1 0"; i.style.background = `var(--st${s})`;
+    i.title = `${Engine.STAGES[s]}: ${counts[s]} (${Math.round(100 * counts[s] / total)} %)`;
+    if(tall){ i.style.color = `var(--st${s}-ink)`; i.textContent = counts[s]; }
+    box.appendChild(i);
+  }
+  if(tall) requestAnimationFrame(() => { for(const i of box.children) if(i.scrollWidth > i.clientWidth + 1){ i.textContent = ""; } });
+  return missing;
+}
+function stageLegend(box, counts, withNumbers){
+  box.textContent = "";
+  for(const s of ORDER){
+    const sp = el("span"), sw = el("i"); sw.style.background = `var(--st${s})`;
+    sp.append(sw, document.createTextNode(Engine.STAGES[s] + (withNumbers ? " " : "")));
+    if(withNumbers){ sp.append(el("b", null, String(counts[s]))); }
+    box.appendChild(sp);
+  }
+}
+
+// ---------- Training
+let chap = store.get("chap", "all"), dirRev = store.get("dirRev", false);
+let tmode = store.get("tmode", "plan");
+if(!["plan", "c", "w", "k"].includes(tmode)) tmode = "plan";
+let cur = null, pending = null, hintLevel = 0, recent = [], special = null, bonus = false, cardQ = null, busy = false, flipped = false, waitTimer = null;
+const seed = Math.random().toString(36).slice(2, 8);
+const inChap = u => chap === "all" || u.chaps.includes(chap);
+const pool = () => UNITS.filter(inChap);
+
+function renderTrainHead(){
+  const now = Date.now(), I = infos(now), P = pool(), counts = [0, 0, 0, 0, 0];
+  let done = 0, due = 0;
+  for(const u of P){ const i = I.get(u.k); counts[i.stage]++; if(i.today.done) done++; if(i.today.learning) due++; }
+  stageBar($("trainStages"), counts, false);
+  const lg = $("legend"); stageLegend(lg, counts, true);
+  if(due) lg.prepend(el("span", null, `${due} Wiederholung${due > 1 ? "en" : ""} offen`));
+  const c = $("count"); c.textContent = "";
+  if(special){ c.append(el("small", null, "Liste"), document.createTextNode(`${special.total - special.left.length} / ${special.total}`)); }
+  else if(tmode === "k"){ c.append(el("small", null, "Karten"), document.createTextNode(cardQ ? `${cardQ.done} / ${cardQ.total}` : "")); }
+  else { c.append(el("small", null, "Heute geschafft"), document.createTextNode(`${done} / ${P.length}`)); }
+  $("chapline").textContent = "Kapitel " + CHAPS.find(x => x[0] === chap)[1] + " · zum Wechseln Tastatur schließen";
+  $("specialBar").style.display = special ? "flex" : "none";
+  if(special) $("specialText").textContent = `${special.title}: noch ${special.left.length} von ${special.total}`;
 }
 function renderChips(){
   $("chips").innerHTML = "";
-  for(const [id,label] of CHAPS){
-    const b = document.createElement("button");
-    b.className = "chip" + (id===chap ? " on" : ""); b.textContent = label;
-    b.onclick = () => { chap = id; store.set("chap", chap); renderChips(); buildQueue(); };
+  for(const [id, label] of CHAPS){
+    const b = el("button", "chip" + (id === chap ? " on" : ""), label);
+    b.onclick = () => { chap = id; store.set("chap", chap); cardQ = null; renderChips(); next(); };
     $("chips").appendChild(b);
   }
 }
-function weakText(v){ const w = st(v).w; return w >= 2 ? "schon " + w + "× falsch" : ""; }
-function tagText(v){ return v.c.split(" ")[0] + " · Aufg. " + v.n; }
+function renderModes(){ for(const b of $("modes").children) b.classList.toggle("on", b.dataset.m === tmode); $("tools").style.display = tmode === "k" ? "" : "none"; }
+for(const b of $("modes").children) b.onclick = () => { if(typing()) document.activeElement.blur(); tmode = b.dataset.m; store.set("tmode", tmode); cardQ = null; renderModes(); next(); };
 
-// Echtes Synonym aus der Liste anzeigen: dieses Wort ist nicht gesucht
-function setSyn(id, v){ const el = $(id); el.textContent = v && v.y ? "Synonym: " + v.y : ""; el.style.display = v && v.y ? "" : "none"; }
-function showCard(v){
-  const card = $("card");
-  card.classList.remove("flip","fly-l","fly-r"); flipped = false;
-  $("tagF").textContent = $("tagB").textContent = tagText(v);
-  $("weakF").textContent = weakText(v);
+function weakText(u){
+  const a = H(u), errs = a.filter(x => x[1] === 1).length, sp = a.filter(x => x[1] === 1 && x[3] === "s").length;
+  return [errs >= 2 ? errs + "× falsch" : "", sp >= 2 ? "auf Schreibweise achten" : ""].filter(Boolean).join(" · ");
+}
+function setSyn(id, u){ const e = $(id), s = u ? u.syn : []; e.textContent = s.length ? (s.length > 1 ? "Synonyme: " : "Synonym: ") + s.join(", ") : ""; e.style.display = s.length ? "" : "none"; }
+function hintPattern(s){ return String(s).replace(/\s*\([^)]*\)\s*/g, " ").trim().replace(/[A-Za-z]+/g, w => w[0] + "_".repeat(w.length - 1)); }
+
+function next(){
+  clearTimeout(waitTimer); waitTimer = null;
+  pending = null; hintLevel = 0;
+  const now = Date.now();
+  let q = null, wait = null;
+  if(special){
+    if(!special.left.length){ const t = special.title; special = null; renderTrainHead(); return showDone("Liste geschafft!", `${t}: jedes Wort einmal ohne Hilfe richtig. Die Wörter bleiben im Lernplan.`, null); }
+    const r2 = new Set(recent.slice(-2)), k = special.left.find(x => !r2.has(x)) || special.left[0], u = Engine.unitByKey(k);
+    q = {u, m: tmode === "plan" || tmode === "k" ? Engine.modeFor(u, H(u), "open", 0) : tmode, kind: "special"};
+  } else if(tmode === "k"){
+    q = nextCard();
+  } else {
+    const p = Engine.pick(pool(), infos(now), now, recent, {examAt: settings.examAt, seed, bonus});
+    if(p.u) q = {u: p.u, m: tmode === "plan" ? Engine.modeFor(p.u, H(p.u), p.kind, p.step) : tmode, kind: p.kind, step: p.step};
+    else wait = p;
+  }
+  if(q){
+    if(q.m === "c"){ q.sent = Engine.sentence(q.u, H(q.u)); if(!q.sent) q.m = "w"; }
+    q.v = DATA[q.m === "c" ? q.sent.i : Engine.promptEntry(q.u, H(q.u))];
+  }
+  cur = q; if(cur) cur.shown = now;
+  renderTrainHead();
+  if(!cur && typing()) document.activeElement.blur();
+  $("cardMode").style.display = cur && cur.m === "k" ? "flex" : "none";
+  $("writeMode").style.display = cur && cur.m !== "k" ? "flex" : "none";
+  $("done").style.display = cur ? "none" : "flex";
+  if(!cur){
+    if(tmode === "k") return showDone("Kartenrunde geschafft!", "Alle Karten dieser Auswahl einmal gewusst. Für den Fortschritt zählen nur getippte Antworten – weiter mit dem Lernplan.", null);
+    const P = pool(), I = infos(now), done = P.filter(u => I.get(u.k).today.done).length;
+    if(wait && wait.wait != null){
+      waitTimer = setTimeout(next, wait.wait + 300);
+      return showDone("Gleich geht's weiter", `${done} von ${P.length} Wörtern heute geschafft. Noch ${wait.learning} Wiederholung${wait.learning > 1 ? "en" : ""} nach Fehlern – die nächste in ${fmt(Math.max(wait.wait, 30e3))}. Bis dahin kannst du die schwächsten Wörter üben.`, wait);
+    }
+    return showDone("Tagesziel geschafft!", `Alle ${P.length} Wörter${chap === "all" ? "" : " dieses Kapitels"} heute ohne Hilfe richtig. Morgen kommen sie wieder dran – der Abstand macht das Wissen stabil. Wer heute noch mehr will:`, wait);
+  }
+  if(cur.m === "k") showCard(cur); else showAsk(cur);
+}
+function showDone(title, text){
+  $("cardMode").style.display = "none"; $("writeMode").style.display = "none"; $("done").style.display = "flex";
+  $("doneTitle").textContent = title; $("doneText").textContent = text;
+  $("doneBonus").style.display = tmode === "k" ? "none" : "";
+  $("doneBonus").textContent = bonus ? "Weiter: schwächste Wörter" : "Bonus: schwächste Wörter üben";
+}
+$("doneBonus").onclick = () => { bonus = true; next(); };
+$("doneText2").onclick = () => { examKind = "text"; store.set("examKind", examKind); startExam(); };
+$("doneProgress").onclick = () => show("progress");
+$("specialEnd").onclick = () => { special = null; next(); };
+
+// ---------- Karteikarten (zum Aufwärmen; selbst bewertet, zählt nicht als sicher)
+function nextCard(){
+  if(!cardQ){ const I = infos(Date.now()); const list = shuffle(pool()).sort((a, b) => I.get(a.k).rNow - I.get(b.k).rNow); cardQ = {list, total: list.length, done: 0}; }
+  if(!cardQ.list.length) return null;
+  const u = cardQ.list[0];
+  return {u, m: "k", kind: "card"};
+}
+function showCard(q){
+  const card = $("card"), v = firstEntry(q.u);
+  card.classList.remove("flip", "fly-l", "fly-r"); flipped = false;
+  $("tagF").textContent = $("tagB").textContent = tagOf(v);
+  $("weakF").textContent = weakText(q.u);
   const f = dirRev ? v.q : v.e, b = dirRev ? v.e : v.q;
-  $("front").textContent = f; $("back").textContent = b; setSyn("synF", dirRev ? v : null); $("backSub").textContent = dirRev ? v.q : v.e;
+  $("front").textContent = f; $("back").textContent = b; setSyn("synF", dirRev ? q.u : null); $("backSub").textContent = dirRev ? v.q : v.e;
   $("front").classList.toggle("long", f.length > 32); $("back").classList.toggle("long", b.length > 32);
 }
-function showWrite(v){
-  $("tagW").textContent = tagText(v); $("weakW").textContent = weakText(v);
-  $("prompt").textContent = v.q; setSyn("synW", v);
-  $("answer").value = ""; $("answer").classList.remove("locked"); $("check").textContent = "Prüfen";
-  $("hintText").textContent = ""; $("hintRow").style.display = "flex"; hintUsed = false; pending = null;
-  $("result").className = "result"; $("afterBtns").style.display = "none";
-}
-function next(){
-  if(!queue.length && !free){                                          // inzwischen wieder fällige
-    queue = shuffle(pool().filter(isDue)); roundTotal += queue.length;
-  }
-  cur = queue.shift() || null;
-  renderStats();
-  const has = !!cur;
-  if(!has) $("answer").blur();
-  $("cardMode").style.display = has && mode === "card" ? "flex" : "none";
-  $("writeMode").style.display = has && mode === "write" ? "flex" : "none";
-  $("dir").style.visibility = mode === "card" ? "visible" : "hidden";
-  $("done").style.display = has ? "none" : "flex";
-  if(has){ mode === "card" ? showCard(cur) : showWrite(cur); return; }
-  const p = pool(), upcoming = p.map(v => st(v).due).filter(d => d > Date.now());
-  $("doneTitle").textContent = free ? "Durchgang geschafft!" : "Alles erledigt für jetzt!";
-  $("doneText").textContent = upcoming.length
-    ? "Nächste Wiederholung in " + fmt(Math.min(...upcoming) - Date.now()) + " – bis dahin kannst du frei weiterüben."
-    : "Keine Karten offen.";
-}
-function requeue(v){ queue.splice(Math.min(queue.length, 3 + Math.floor(Math.random()*4)), 0, v); }
-
-// ---------- Karteikarten
 function answerCard(ok){
-  if(!cur || busy) return;
+  if(!cur || busy || cur.m !== "k") return;
   busy = true;
-  grade(cur, ok, false);
-  if(!ok) addLog({m: "Karte", v: cur, a: "", q: dirRev ? "DE → EN" : "EN → DE"});
-  if(ok) roundDone++; else requeue(cur);
+  const u = cur.u, v = firstEntry(u);
+  record(u, ok ? 2 : 1, "k", "n");
+  if(!ok) addLog({m: "Karte", v, a: "", q: dirRev ? "DE → EN" : "EN → DE", k: "n"});
+  recent.push(u.k);
+  cardQ.list.shift();
+  if(ok) cardQ.done++; else cardQ.list.splice(Math.min(cardQ.list.length, 3 + Math.floor(Math.random() * 4)), 0, u);
   const card = $("card");
   card.classList.add(ok ? "fly-r" : "fly-l");
   setTimeout(() => { card.style.transition = "none"; next(); void card.offsetWidth; card.style.transition = ""; busy = false; }, 240);
@@ -513,55 +727,137 @@ $("card").addEventListener("pointerup", e => {
 });
 $("yes").onclick = () => answerCard(true);
 $("no").onclick = () => answerCard(false);
+$("dir").onclick = () => { dirRev = !dirRev; store.set("dirRev", dirRev); $("dir").textContent = dirRev ? "DE → EN" : "EN → DE"; if(cur && cur.m === "k") showCard(cur); };
 
-// ---------- Schreiben (tolerant: Groß/Klein, Leerzeichen, Bindestriche, Satzzeichen, a/the/to)
-const norm = s => s.toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "")
-  .replace(/^\s*(a|an|the|to)\s+/, "").replace(/[\s\-‐-―\/.,;:'’`"()…]/g, "");
-function accepted(v){
-  const out = new Set();
-  for(const t of [v.e, ...v.a]){
-    out.add(norm(t));
-    out.add(norm(t.replace(/\([^)]*\)/g, " ")));
+// ---------- Schreiben und Lückensatz
+function showAsk(q){
+  const v = q.v;
+  $("tagW").textContent = tagOf(v);
+  $("weakW").textContent = weakText(q.u);
+  $("kindW").textContent = q.kind === "learn" ? "Wiederholung" : q.kind === "bonus" ? "Bonus" : q.kind === "special" ? "Liste" : "";
+  $("sideW").textContent = q.m === "c" ? "Lücke füllen" : "Englisch schreiben";
+  $("prompt").style.display = q.m === "w" ? "" : "none";
+  $("cloze").style.display = q.m === "c" ? "" : "none";
+  if(q.m === "w") $("prompt").textContent = v.q;
+  else {
+    const [a, b] = q.sent.s.split("___"), s = $("cloze"), sp = el("span", "s");
+    s.textContent = ""; const gap = el("span", "gap", "______"); gap.id = "clozeGap";
+    sp.append(document.createTextNode(a), gap, document.createTextNode(b)); s.appendChild(sp);
   }
-  out.delete(""); return out;
+  setSyn("synW", q.u);
+  $("meaning").textContent = ""; $("meaning").style.display = "none";
+  const inp = $("answer"); inp.value = ""; inp.classList.remove("locked"); inp.placeholder = q.m === "c" ? "Wort für die Lücke …" : "Englisches Wort …";
+  $("check").textContent = "Prüfen";
+  $("hintText").textContent = ""; $("hintRow").style.display = "flex";
+  $("hintBtn").style.display = ""; $("hintBtn").textContent = q.m === "c" ? "Tipp: Bedeutung" : "Tipp";
+  $("result").className = "result"; $("result").textContent = "";
 }
-function hintPattern(v){
-  return v.e.replace(/\s*\([^)]*\)\s*/g, " ").trim().replace(/[A-Za-z]+/g, w => w[0] + "_".repeat(w.length - 1)).split("").join("");
-}
-$("hintBtn").onclick = () => { if(!cur || pending) return; hintUsed = true; $("hintText").textContent = hintPattern(cur); $("answer").focus(); };
-// Enter / Prüfen: erst prüfen, beim zweiten Mal weiter – Tastatur bleibt dabei offen
+function setGap(text, cls){ const g = $("clozeGap"); if(!g) return; g.textContent = text || "______"; g.className = "gap" + (cls ? " " + cls : text ? " filled" : ""); }
+$("hintBtn").onclick = () => {
+  if(!cur || pending || cur.m === "k") return;
+  if(cur.m === "c" && hintLevel === 0){
+    hintLevel = 1; $("meaning").textContent = "Bedeutung: " + cur.v.q; $("meaning").style.display = "";
+    $("hintBtn").textContent = "Tipp: Buchstaben";
+  } else { hintLevel = 2; $("hintText").textContent = hintPattern(cur.m === "c" ? cur.sent.g : cur.v.e); $("hintBtn").style.display = "none"; }
+  $("answer").focus();
+};
 $("form").addEventListener("submit", e => {
   e.preventDefault();
-  if(!cur) return;
-  if(pending){ finishWrite(pending.ok); return; }
-  const typed = $("answer").value;
-  const ok = typed.trim() !== "" && accepted(cur).has(norm(typed));
-  pending = {ok, typed};
-  $("answer").classList.add("locked"); $("check").textContent = "Weiter"; $("hintRow").style.display = "none";
-  const r = $("result");
-  r.className = "result " + (ok ? "ok" : "no");
-  r.innerHTML = "";
-  const t = document.createElement("b"); t.textContent = ok ? (hintUsed ? "Richtig (mit Tipp)" : "Richtig!") : (typed.trim() ? "Leider falsch" : "Nicht gewusst");
-  const sol = document.createElement("div"); sol.className = "sol"; sol.textContent = cur.e;
-  r.append(t, sol);
-  if(!ok && typed.trim()){ const y = document.createElement("div"); y.className = "yours"; y.textContent = "Deine Antwort: " + typed; r.append(y); }
-  $("override").style.display = ok ? "none" : "";
-  $("nextBtn").style.display = "none";            // "Prüfen" wird zu "Weiter"
-  $("afterBtns").style.display = ok ? "none" : "flex";
+  if(!cur || cur.m === "k") return;
+  if(pending){ if(pending.phase === "fix") checkRetype(); else next(); return; }
+  const typed = $("answer").value, extra = cur.m === "c" ? cur.sent.g : null;
+  const ok = Engine.isRight(cur.u, typed, extra), res = ok ? {e: null} : Engine.classify(cur.u, typed);
+  const g = ok ? (hintLevel ? 2 : 3) : 1;
+  record(cur.u, g, cur.m, res.e, res.p);
+  recent.push(cur.u.k);
+  if(special && g === 3) special.left = special.left.filter(k => k !== cur.u.k);
+  let logId = null;
+  if(!ok) logId = addLog({m: cur.m === "c" ? "Lückensatz" : "Schreiben", v: cur.v, a: typed, q: cur.m === "c" ? cur.sent.s : cur.v.q, h: hintLevel > 0, k: res.e, p: res.p});
+  pending = {phase: ok ? "right" : "fix", ok, typed, keep: typed, res, logId};
+  showResult();
+  renderTrainHead();
 });
-$("answer").addEventListener("input", () => { if(pending) $("answer").value = pending.typed; });
-function finishWrite(ok){
-  if(!pending) return;
-  grade(cur, ok, hintUsed && ok);
-  if(!pending.ok) addLog({m: "Schreiben", v: cur, a: pending.typed, q: cur.q, h: hintUsed, ov: ok});
-  if(ok) roundDone++; else requeue(cur);
-  pending = null; next();
+const solOf = q => q.m === "c" ? q.sent.g : q.v.e;
+function errLabel(res){
+  if(res.e === "v") return "Verwechslung mit „" + fullE(res.p) + "“";
+  if(res.e === "f") return "Form" + (res.d ? " – " + res.d : (res.p ? " (" + fullE(res.p) + " ist eine andere Vokabel)" : ""));
+  if(res.e === "n") return res.d === "unvollständig" ? "Unvollständig" : "Nicht gewusst";
+  return Engine.ERR[res.e] || "Falsch";
 }
+function diffBlock(typed, target){
+  const ops = Engine.align(typed, target), d = el("div", "diff");
+  const l1 = el("div"), l2 = el("div");
+  l1.append(el("small", null, "Deine:")); l2.append(el("small", null, "Richtig:"));
+  for(const [op, a, b] of ops){
+    if(op === "=" ){ l1.append(document.createTextNode(a)); l2.append(document.createTextNode(b)); }
+    else if(op === "~"){ l1.append(el("span", "x", a)); l2.append(el("span", "y", b)); }
+    else if(op === "+"){ l1.append(el("span", "x", a)); }
+    else { l1.append(el("span", "m", "‸")); l2.append(el("span", "y", b)); }
+  }
+  d.append(l1, l2); return d;
+}
+function reportBtn(id){
+  const b = el("button", "linkbtn keepkb", "Bewertung melden");
+  b.type = "button";
+  b.addEventListener("pointerdown", e => { if(typing()) e.preventDefault(); });
+  b.onclick = () => { flagLog(id); b.textContent = "Gemeldet – zählt trotzdem als Fehler"; b.disabled = true; };
+  return b;
+}
+function showResult(){
+  const p = pending, r = $("result"), inp = $("answer");
+  r.textContent = ""; $("hintRow").style.display = "none";
+  if(p.ok){
+    r.className = "result ok";
+    r.append(el("b", null, hintLevel ? "Richtig (mit Tipp)" : "Richtig!"), el("div", "sol", cur.m === "c" ? cur.sent.g : cur.v.e));
+    if(cur.kind === "learn") r.append(el("div", "muted", cur.step === 1 ? "Kommt in etwa 10 Minuten noch einmal." : "Für heute geschafft."));
+    if(hintLevel) r.append(el("div", "muted", "Mit Tipp zählt es noch nicht als sicher – das Wort kommt heute noch einmal."));
+    inp.classList.add("locked"); $("check").textContent = "Weiter";
+    if(cur.m === "c") setGap(cur.sent.g, "ok");
+    return;
+  }
+  r.className = "result no";
+  const res = p.res, typed = p.typed.trim(), head = el("div", "rhead");
+  head.append(el("b", null, errLabel(res)), reportBtn(p.logId)); r.append(head);
+  if(typed){
+    if(res.e === "s" || res.e === "f"){ const t = cur.m === "c" && Engine.dist(Engine.norm(typed), Engine.norm(cur.sent.g)) <= Engine.closest(cur.u, typed).d ? cur.sent.g : Engine.closest(cur.u, typed).form; r.append(diffBlock(typed, t)); }
+    else r.append(el("div", "yours", "Deine Antwort: " + typed));
+  }
+  const sol = el("div", "sol", solOf(cur)); sol.id = "solLine"; r.append(sol);
+  if(res.p){
+    const pu = Engine.unitByKey(res.p);
+    if(pu) r.append(el("div", "contrast", `${firstEntry(pu).e} = ${firstEntry(pu).d}  ·  ${cur.v.e} = ${cur.v.d}`));
+  }
+  r.append(el("div", "fixnote", "Tippe die Lösung jetzt einmal ab – sie verschwindet, sobald du anfängst. Das Wort kommt in etwa einer Minute wieder."));
+  inp.value = ""; inp.classList.remove("locked"); inp.placeholder = "Lösung abtippen …";
+  $("check").textContent = "Prüfen";
+  if(cur.m === "c") setGap(cur.sent.g, "no");
+}
+function checkRetype(){
+  const inp = $("answer"), typed = inp.value, sol = $("solLine");
+  if(Engine.isRight(cur.u, typed, cur.m === "c" ? cur.sent.g : null)){
+    pending.phase = "fixed"; pending.keep = typed;
+    const r = $("result"); r.className = "result fixed"; r.textContent = "";
+    r.append(el("b", null, "Richtig abgetippt."), el("div", "sol", solOf(cur)), el("div", "muted", "Gleich kommt das Wort noch einmal – dann aus dem Kopf."));
+    inp.classList.add("locked"); $("check").textContent = "Weiter";
+    if(cur.m === "c") setGap(cur.sent.g, "ok");
+  } else {
+    if(sol) sol.classList.remove("covered");
+    inp.value = ""; inp.placeholder = "Noch nicht genau – schau hin und tippe es ab";
+    if(cur.m === "c") setGap(cur.sent.g, "no");
+  }
+}
+$("answer").addEventListener("input", () => {
+  if(!cur || cur.m === "k") return;
+  const inp = $("answer");
+  if(pending && pending.phase !== "fix"){ inp.value = pending.keep; return; }
+  if(pending){ const sol = $("solLine"); if(sol && inp.value) sol.classList.add("covered"); if(cur.m === "c") setGap(inp.value.trim(), inp.value.trim() ? "" : "no"); if(!inp.value && cur.m === "c") setGap(cur.sent.g, "no"); return; }
+  if(cur.m === "c") setGap(inp.value.trim());
+});
+
 // Tasten im Schreibmodus nehmen dem Eingabefeld nicht den Fokus -> Tastatur bleibt offen
 const typing = () => document.activeElement && document.activeElement.classList.contains("typein");
-for(const id of ["check", "nextBtn", "override", "hintBtn", "examNext", "examPrev"])
-  $(id).addEventListener("pointerdown", e => { if(typing()) e.preventDefault(); });
-// Kompakte Ansicht, solange getippt wird
+for(const e of document.querySelectorAll(".keepkb, #examNext, #examPrev"))
+  e.addEventListener("pointerdown", ev => { if(typing()) ev.preventDefault(); });
 // Kompaktansicht nur bei echter Bildschirmtastatur (Höhe schrumpft deutlich).
 // Mit Ansteck-Tastatur bleibt alles normal und der Fokus bleibt im Feld.
 const viewH = () => Math.min(window.innerHeight, window.visualViewport ? window.visualViewport.height : window.innerHeight);
@@ -569,6 +865,7 @@ let maxH = viewH(), lastW = window.innerWidth, kbOpen = false;
 const KB_MIN = 150;
 function kbCheck(){
   const h = viewH();
+  document.documentElement.style.setProperty("--vvh", h + "px");
   if(window.innerWidth !== lastW){ lastW = window.innerWidth; maxH = h; if(!kbOpen) return; }   // Drehen: neu einmessen
   if(h > maxH) maxH = h;
   const open = h < maxH - KB_MIN;
@@ -580,12 +877,13 @@ function kbCheck(){
     if(typing()) document.activeElement.blur();          // Bildschirmtastatur per Zurück-Taste geschlossen
   }
 }
-for(const el of document.querySelectorAll(".typein")){
-  el.addEventListener("focus", () => { kbCheck(); setTimeout(kbCheck, 350); });
-  el.addEventListener("blur", () => setTimeout(() => { if(!typing()){ document.body.classList.remove("typing"); } }, 150));
+for(const e of document.querySelectorAll(".typein")){
+  e.addEventListener("focus", () => { kbCheck(); setTimeout(kbCheck, 350); });
+  e.addEventListener("blur", () => setTimeout(() => { if(!typing()){ document.body.classList.remove("typing"); } }, 150));
 }
 window.addEventListener("resize", kbCheck);
 if(window.visualViewport) window.visualViewport.addEventListener("resize", kbCheck);
+kbCheck();
 $("chapline").addEventListener("click", () => $("answer").blur());
 
 // ---------- Bildschirme
@@ -594,49 +892,202 @@ function show(id){
   for(const s of document.querySelectorAll(".screen")) s.classList.toggle("on", s.id === id);
   window.scrollTo(0, 0);
   if(id === "home"){ renderHome(); if(window.syncReady){ renderSync(); renderHomeLog(); renderUpdate(); } }
+  if(id === "progress") renderProgress();
+  if(id !== "train"){ clearTimeout(waitTimer); waitTimer = null; }
   store.set("screen", id === "train" ? "train" : "home");
 }
-function renderHome(){
-  const all = DATA, sure = all.filter(v => st(v).b >= 3).length, learn = all.filter(v => st(v).b >= 1 && st(v).b < 3).length;
-  $("homeTrain").textContent = `${sure} sicher · ${learn} gelernt · ${all.length - sure - learn} offen · ${all.filter(isDue).length} fällig`;
-  const ex = store.get("exams", []);
-  $("homeExam").textContent = ex.length
-    ? `Letztes Ergebnis: ${ex[ex.length-1].p} / ${ex[ex.length-1].n} (${Math.round(100*ex[ex.length-1].p/ex[ex.length-1].n)} %) · ${ex.length} Prüfung${ex.length > 1 ? "en" : ""} gemacht`
-    : "Noch keine Prüfung gemacht";
+function countdown(now){
+  const d = settings.examAt - now;
+  if(d <= 0) return "Prüfung war " + fmtWhen(settings.examAt);
+  const days = Math.floor(d / DAY), hours = Math.floor((d % DAY) / HOUR);
+  return "Prüfung in " + (days ? days + (days > 1 ? " Tagen " : " Tag ") : "") + hours + " Std.";
 }
-$("goTrain").onclick = () => { show("train"); buildQueue(); };
-$("trainHome").onclick = () => show("home");
+function renderHome(){
+  const now = Date.now(), S = summary(now);
+  $("homeCountdown").textContent = countdown(now);
+  $("homePrognose").textContent = S.pct + " %"; $("homeNote").textContent = Engine.note(S.pct);
+  $("homeToday").textContent = `${S.done} / ${UNITS.length}`;
+  stageBar($("homeStages"), S.counts, false); stageLegend($("homeLegend"), S.counts, true);
+  const after = now >= settings.examAt, open = after ? UNITS.filter(u => { const i = S.I.get(u.k); return !i.today.done && !i.today.learning && i.rNow < 0.9; }).length : UNITS.length - S.done - S.learn;
+  $("homeTrain").textContent = (open > 0 ? (after ? `${open} Wörter zum Auffrischen fällig` : `Heute noch ${open} Wörter offen`) : (after ? "Nichts fällig" : "Tagesziel geschafft")) + (S.learn ? ` · ${S.learn} Wiederholung${S.learn > 1 ? "en" : ""} nach Fehlern` : "");
+  renderExamTile();
+}
+$("goTrain").onclick = () => { special = null; bonus = false; show("train"); next(); };
+$("intro115").style.display = store.get("intro115", false) ? "none" : "";
+$("introOk").onclick = () => { store.set("intro115", true); $("intro115").style.display = "none"; };
+$("trainHome").onclick = () => { special = null; bonus = false; show("home"); };
+$("goProgress").onclick = () => show("progress");
+$("progHome").onclick = () => show("home");
+$("progTrain").onclick = () => { special = null; bonus = false; show("train"); next(); };
+
+// ---------- Fortschritt
+function renderProgress(){
+  const now = Date.now(), S = summary(now), I = S.I;
+  $("examWhen").textContent = fmtWhen(settings.examAt);
+  $("examLeft").textContent = countdown(now);
+  $("progPct").textContent = S.pct + " %"; $("progNote").textContent = Engine.note(S.pct);
+  const ch = Engine.chance(S.rs, 30, 0.95);
+  $("progChance").textContent = "";
+  $("progChance").append(document.createTextNode("Erwarteter Anteil richtiger Lücken am " + fmtWhen(Math.max(now, settings.examAt)).split(",")[0] + " – Chance auf 1,0: "), el("b", null, Math.round(100 * ch) + " %"), document.createTextNode(" (30 Lücken, höchstens 1 Fehler)."));
+  $("progNever").textContent = S.never ? `${S.never} Wörter noch nie geübt – sie zählen als falsch.` : "";
+  // Heute
+  $("todayMeter").style.width = (100 * S.done / UNITS.length) + "%";
+  $("todayMeterBox").setAttribute("aria-label", `${S.done} von ${UNITS.length} Wörtern heute geschafft`);
+  $("todayText").textContent = ""; $("todayText").append(el("b", null, `${S.done} von ${UNITS.length}`), document.createTextNode(" Wörtern heute ohne Hilfe richtig" + (S.learn ? `, ${S.learn} warten auf Wiederholung nach einem Fehler.` : ".")));
+  const today = Engine.daily(hist, now, 1)[0];
+  $("todayMore").textContent = today && Engine.dayKey(today.t) === Engine.dayKey(now)
+    ? `${today.answers} Antworten heute · erster Versuch richtig: ${today.words ? Math.round(100 * today.firstOk / today.words) : 0} % (${today.firstOk} von ${today.words} Wörtern)` : "Heute noch nichts geübt.";
+  // Lernstufen
+  stageBar($("progStages"), S.counts, true); stageLegend($("progLegend"), S.counts, true);
+  const rows = $("chapRows"); rows.textContent = "";
+  for(const [id, label] of CHAPS.slice(1)){
+    const us = UNITS.filter(u => u.chaps.includes(id)), c = [0, 0, 0, 0, 0];
+    for(const u of us) c[I.get(u.k).stage]++;
+    const bar = el("span", "segbar"); bar.setAttribute("role", "img"); stageBar(bar, c, false);
+    rows.append(el("span", null, label), bar, el("span", "fig", `${c[3] + c[4]} / ${us.length} sicher`));
+  }
+  // Wackelkandidaten
+  const log = store.get("log", []), weak = UNITS.filter(u => I.get(u.k).n).sort((a, b) => I.get(a.k).rExam - I.get(b.k).rExam || I.get(b.k).errs - I.get(a.k).errs).slice(0, 10);
+  const wl = $("weakList"); wl.textContent = "";
+  for(const u of weak){
+    const i = I.get(u.k), es = new Set(u.entries.map(x => DATA[x].e)), wrong = [];
+    for(let j = log.length - 1; j >= 0 && wrong.length < 2; j--){ const e = log[j]; if(es.has(e.e) && e.a && e.a.trim() && !wrong.includes(e.a.trim())) wrong.push(e.a.trim()); }
+    const row = el("div", "mrow"), bx = el("span", "bx"), m = el("span", "meter"), f = el("i");
+    f.style.width = Math.round(100 * i.rExam) + "%"; m.appendChild(f); m.setAttribute("role", "img"); m.setAttribute("aria-label", Math.round(100 * i.rExam) + " Prozent");
+    bx.append(m, el("span", null, Math.round(100 * i.rExam) + " %"));
+    row.append(el("span", "nm", firstEntry(u).e), bx);
+    row.append(el("span", "wr", [Engine.STAGES[i.stage], i.errs ? i.errs + "× falsch" : "", wrong.length ? "zuletzt: " + wrong.map(w => "„" + w + "“").join(", ") : ""].filter(Boolean).join(" · ")));
+    wl.appendChild(row);
+  }
+  $("weakGo").style.display = weak.length ? "" : "none";
+  $("weakGo").textContent = `Diese ${weak.length} jetzt üben`;
+  $("weakGo").onclick = () => startSpecial("Wackelkandidaten", weak.map(u => u.k));
+  // Fehlerarten
+  const ec = Engine.errorsByType(hist, now - 7 * DAY), tot = Object.values(ec).reduce((a, b) => a + b, 0);
+  $("errSub").textContent = tot ? `Letzte 7 Tage, ${tot} Fehler beim Tippen.` : "In den letzten 7 Tagen keine Fehler beim Tippen.";
+  const eb = $("errBars"); eb.textContent = "";
+  const maxE = Math.max(1, ...Object.values(ec));
+  for(const [k, n] of Object.entries(ec).sort((a, b) => b[1] - a[1])){
+    if(!tot) break;
+    const hb = el("span", "hb"), i = el("i"); i.style.width = (100 * n / maxE).toFixed(1) + "%"; if(!n) i.style.display = "none";
+    hb.append(i); hb.title = `${Engine.ERR[k]}: ${n}`;
+    eb.append(el("span", null, Engine.ERR[k]), hb, el("span", "val", String(n)));
+  }
+  // Verwechslungen
+  const cf = Engine.confusions(hist).slice(0, 6), pl = $("pairList"); pl.textContent = "";
+  if(!cf.length) pl.append(el("p", null, "Noch keine Verwechslungen – sobald du zwei Vokabeln vertauschst, stehen sie hier."));
+  for(const c of cf){
+    const a = Engine.unitByKey(c.a), b = Engine.unitByKey(c.b), d = el("div");
+    d.append(document.createTextNode(`${firstEntry(a).e} ↔ ${firstEntry(b).e} · ${c.n}×`), el("small", null, `${firstEntry(a).d} ↔ ${firstEntry(b).d}`));
+    pl.appendChild(d);
+  }
+  $("pairGo").style.display = cf.length ? "" : "none";
+  $("pairGo").onclick = () => startSpecial("Verwechslungen", cf.flatMap(c => [c.a, c.b]).filter((k, i, arr) => arr.indexOf(k) === i));
+  // Verlauf
+  const tb = $("dayTable"); tb.textContent = "";
+  const days = Engine.daily(hist, now, 7);
+  const hr = el("tr"); for(const h of ["Tag", "Antworten", "1. Versuch richtig", "geschafft"]) hr.append(el("th", null, h)); tb.append(hr);
+  for(const d of days){
+    const dd = new Date(d.t), tr = el("tr");
+    tr.append(el("td", null, `${WD[dd.getDay()]} ${pad(dd.getDate())}.${pad(dd.getMonth() + 1)}.`), el("td", null, String(d.answers)),
+      el("td", null, d.words ? Math.round(100 * d.firstOk / d.words) + " %" : "–"), el("td", null, `${d.done} / ${UNITS.length}`));
+    tb.append(tr);
+  }
+  if(!days.length){ const tr = el("tr"), td = el("td", null, "Noch keine getippten Antworten."); td.colSpan = 4; tr.append(td); tb.append(tr); }
+}
+function startSpecial(title, keys){
+  if(!keys.length) return;
+  special = {title, left: shuffle(keys.slice()), total: keys.length}; bonus = false;
+  if(tmode === "k"){ tmode = "plan"; store.set("tmode", tmode); renderModes(); }
+  show("train"); next();
+}
+const toLocalInput = t => { const d = new Date(t); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+$("examEdit").onclick = () => { $("examEditRow").style.display = "flex"; $("examInput").value = toLocalInput(settings.examAt); };
+$("examSave").onclick = () => {
+  const v = $("examInput").value, t = v ? new Date(v).getTime() : NaN;
+  if(!Number.isFinite(t)) return;
+  settings = {examAt: t, u: Date.now()}; store.set("settings", settings);
+  $("examEditRow").style.display = "none"; renderProgress();
+};
 
 // ---------- Prüfungssimulation
 const EXAM_N = 30;
-let exam = null;   // {items:[{v, ans, ok}], i, letters}
-$("optLetters").checked = store.get("optLetters", true);
-$("optLetters").onchange = () => store.set("optLetters", $("optLetters").checked);
+let examKind = store.get("examKind", "s30"), exam = null;   // {kind, items:[{u, v, s, g, ans, ok, res, logId}], i, letters, text}
+$("optLetters").checked = store.get("optLetters2", false);
+$("optLetters").onchange = () => store.set("optLetters2", $("optLetters").checked);
+(() => {
+  const s = $("textPick"); s.append(new Option("Zufälliger Lückentext", "rand"));
+  for(const t of TEXTS) s.append(new Option(`${t.id} – ${t.title} (${(t.text.match(/\[\[/g) || []).length} Lücken)`, t.id));
+  for(const b of $("examKinds").children) b.onclick = () => { examKind = b.dataset.k; store.set("examKind", examKind); renderExamTile(); };
+})();
+function renderExamTile(){
+  for(const b of $("examKinds").children) b.classList.toggle("on", b.dataset.k === examKind);
+  $("textPick").style.display = examKind === "text" ? "" : "none";
+  $("examDesc").textContent = examKind === "text" ? "Ein zusammenhängender Text je Buchaufgabe, ohne Wortkasten – wie eine schwere Klausuraufgabe."
+    : examKind === "all" ? "Alle 155 Prüfungssätze in zufälliger Reihenfolge. Die Auswertung kommt erst am Ende."
+    : "30 zufällige Vokabeln als englische Lückensätze, die im Training nie vorkommen. Die Auswertung kommt erst am Ende.";
+  const ex = store.get("exams", []), last = ex[ex.length - 1];
+  $("homeExam").textContent = last ? `Letztes Ergebnis: ${last.p} / ${last.n} (${Math.round(100 * last.p / last.n)} %, Note ${Engine.note(Math.round(100 * last.p / last.n))}) · ${ex.length} Prüfung${ex.length > 1 ? "en" : ""}` : "Noch keine Prüfung gemacht";
+}
 function gapPattern(g){ return g.replace(/[A-Za-z]+/g, w => w[0] + "_".repeat(w.length - 1)); }
-function examAccepted(v){ const s = accepted(v); s.add(norm(v.g)); return s; }
+function pickText(){
+  const v = $("textPick").value;
+  if(v && v !== "rand") return TEXTS.find(t => t.id === v);
+  const done = new Map(); for(const e of store.get("exams", [])) if(String(e.k || "").startsWith("text:")) done.set(e.k.slice(5), Math.max(done.get(e.k.slice(5)) || 0, e.t));
+  const order = shuffle(TEXTS.slice()).sort((a, b) => (done.get(a.id) || 0) - (done.get(b.id) || 0));
+  return order[0];
+}
 function startExam(){
-  const seen = new Set(), picks = [];
-  for(const v of shuffle(DATA.slice())){            // jedes englische Wort höchstens einmal
-    const k = norm(v.e); if(seen.has(k)) continue;
-    seen.add(k); picks.push(v); if(picks.length === EXAM_N) break;
+  const letters = $("optLetters").checked; let items = [], text = null;
+  if(examKind === "text"){
+    text = pickText();
+    for(const m of text.text.matchAll(/\[\[(\d+)\]\]/g)){ const i = +m[1]; items.push({u: Engine.unitOf(i), v: DATA[i], s: null, g: DATA[i].g, ans: "", n: items.length + 1}); }
+  } else if(examKind === "all"){
+    items = shuffle(DATA.map((v, i) => ({u: Engine.unitOf(i), v, s: v.s, g: v.g, ans: ""})));
+  } else {
+    const seen = new Set();
+    for(const i of shuffle(DATA.map((_, i) => i))){
+      const u = Engine.unitOf(i); if(seen.has(u.k)) continue;
+      seen.add(u.k); items.push({u, v: DATA[i], s: DATA[i].s, g: DATA[i].g, ans: ""});
+      if(items.length === EXAM_N) break;
+    }
   }
-  exam = {items: picks.map(v => ({v, ans: ""})), i: 0, letters: $("optLetters").checked};
+  exam = {kind: examKind, items, i: 0, letters, text};
   show("exam"); renderQ();
 }
+function gapText(it, active){ const typed = it === exam.items[exam.i] ? $("examAns").value.trim() : it.ans.trim(); return typed || (exam.letters ? gapPattern(it.g) : it.g.split(/\s+/).map(() => "_____").join(" ")); }
 function renderGap(){
   const it = exam.items[exam.i], typed = $("examAns").value.trim();
-  const gap = document.querySelector("#sentence .gap");
+  const gap = document.querySelector("#sentence .gap.on") || document.querySelector("#sentence .gap");
+  if(!gap) return;
   gap.classList.toggle("filled", !!typed);
-  gap.textContent = typed || (exam.letters ? gapPattern(it.v.g) : it.v.g.split(/\s+/).map(() => "______").join(" "));
+  gap.textContent = (exam.text ? `(${it.n}) ` : "") + gapText(it);
 }
 function renderQ(){
-  const it = exam.items[exam.i], [a, b] = it.v.s.split("___");
-  const s = $("sentence"); s.innerHTML = "";
-  const gap = document.createElement("span"); gap.className = "gap";
-  s.append(document.createTextNode(a), gap, document.createTextNode(b));
-  $("examTag").textContent = it.v.c.split(" ")[0] + " · Aufg. " + it.v.n; setSyn("synE", it.v);
+  const it = exam.items[exam.i], s = $("sentence");
+  s.textContent = ""; s.className = "sentence" + (exam.text ? " textbox" : "");
   $("examAns").value = it.ans;
-  $("examCount").textContent = `Frage ${exam.i + 1} / ${exam.items.length}`;
+  if(exam.text){
+    const parts = exam.text.text.split(/\[\[(\d+)\]\]/); let k = 0;
+    for(let j = 0; j < parts.length; j++){
+      if(j % 2 === 0){ s.append(document.createTextNode(parts[j])); continue; }
+      const item = exam.items[k++], g = el("span", "gap" + (item === it ? " on" : "") + (item.ans.trim() ? " filled" : ""));
+      g.textContent = `(${item.n}) ` + gapText(item); g.dataset.i = k - 1;
+      g.onclick = () => { exam.items[exam.i].ans = $("examAns").value; exam.i = +g.dataset.i; renderQ(); $("examAns").focus(); };
+      s.append(g);
+    }
+    $("examTag").textContent = `Aufgabe ${exam.text.id} · ${exam.text.title}`;
+    $("examSide").textContent = "Lückentext";
+    $("examCount").textContent = `Lücke ${exam.i + 1} / ${exam.items.length}`;
+    const on = s.querySelector(".gap.on"); if(on) requestAnimationFrame(() => { const top = on.offsetTop - s.offsetTop - s.clientHeight / 3; s.scrollTop = Math.max(0, top); });
+  } else {
+    const [a, b] = it.s.split("___"), gap = el("span", "gap on"), sp = el("span", "s");
+    sp.append(document.createTextNode(a), gap, document.createTextNode(b)); s.append(sp);
+    $("examTag").textContent = it.v.c.split(" ")[0] + " · Aufg. " + it.v.n;
+    $("examSide").textContent = "Lücke füllen";
+    $("examCount").textContent = `Frage ${exam.i + 1} / ${exam.items.length}`;
+  }
+  setSyn("synE", it.u);
   $("examProg").style.width = 100 * exam.i / exam.items.length + "%";
   $("examNext").textContent = exam.i === exam.items.length - 1 ? "Abgeben" : "Weiter";
   $("examPrev").style.visibility = exam.i ? "visible" : "hidden";
@@ -655,40 +1106,45 @@ $("examQuit").onclick = () => {
   if(!quitArmed){ b.textContent = "‹ Wirklich abbrechen?"; quitArmed = setTimeout(() => { quitArmed = null; b.textContent = "‹ Abbrechen"; }, 2500); return; }
   clearTimeout(quitArmed); quitArmed = null; b.textContent = "‹ Abbrechen"; exam = null; show("home");
 };
-function note(pct){   // übliche Hochschul-Notenskala, nur als Richtwert
-  const t = [[95,"1,0"],[90,"1,3"],[85,"1,7"],[80,"2,0"],[75,"2,3"],[70,"2,7"],[65,"3,0"],[60,"3,3"],[55,"3,7"],[50,"4,0"]];
-  for(const [p, n] of t) if(pct >= p) return n;
-  return "5,0";
+function contextOf(it){
+  if(it.s) return it.s;
+  const parts = exam.text.text.split(/(?<=[.!?:])\s+/), mark = `[[${DATA.indexOf(it.v)}]]`;
+  const sent = parts.find(p => p.includes(mark)) || "";
+  return sent.replace(mark, "___").replace(/\[\[(\d+)\]\]/g, (m, i) => DATA[+i].g);
 }
 function finishExam(){
+  const m = exam.text ? "t" : "x", logs = [];
   for(const it of exam.items){
-    it.ok = it.ans.trim() !== "" && examAccepted(it.v).has(norm(it.ans));
-    if(!it.ok){ it.before = JSON.stringify(st(it.v)); grade(it.v, false, false);   // Fehler landen im Training
-      it.logId = addLog({m: "Prüfung", v: it.v, a: it.ans, q: it.v.s, h: false}); }
+    it.ok = Engine.isRight(it.u, it.ans, it.g);
+    it.res = it.ok ? {e: null} : Engine.classify(it.u, it.ans);
+    record(it.u, it.ok ? (exam.letters ? 2 : 3) : 1, m, it.res.e, it.res.p, true);
+    if(!it.ok) logs.push([it, {m: exam.text ? "Lückentext" : "Prüfung", v: it.v, a: it.ans, q: contextOf(it), h: exam.letters, k: it.res.e, p: it.res.p}]);
   }
-  const ex = store.get("exams", []); exam.saved = ex.length;
-  ex.push({t: Date.now(), n: exam.items.length, p: exam.items.filter(i => i.ok).length, u: Date.now()}); store.set("exams", ex.slice(-50));
+  store.set("hist", hist);
+  const ids = addLogs(logs.map(x => x[1])); logs.forEach((x, j) => x[0].logId = ids[j]);
+  const ex = store.get("exams", []);
+  ex.push({t: Date.now(), n: exam.items.length, p: exam.items.filter(i => i.ok).length, u: Date.now(), k: exam.text ? "text:" + exam.text.id : exam.kind, l: exam.letters});
+  store.set("exams", ex.slice(-50));
   show("resultScreen"); renderResult();
 }
 function renderResult(){
   const n = exam.items.length, p = exam.items.filter(i => i.ok).length, pct = Math.round(100 * p / n);
   $("score").textContent = `${p} / ${n}`;
-  $("grade").textContent = `${pct} % · Note etwa ${note(pct)} · ${pct >= 50 ? "bestanden" : "nicht bestanden"}`;
-  const ex = store.get("exams", []); if(ex[exam.saved] && ex[exam.saved].p !== p){ ex[exam.saved].p = p; ex[exam.saved].u = Date.now(); store.set("exams", ex); }
+  $("grade").textContent = `${pct} % · Note etwa ${Engine.note(pct)} · ${pct >= 50 ? "bestanden" : "nicht bestanden"}` + (exam.letters ? " · mit Anfangsbuchstaben" : "");
   const r = $("review"); r.innerHTML = "";
   const order = exam.items.map((it, k) => [it, k]).sort((x, y) => x[0].ok - y[0].ok);   // Fehler zuerst
   for(const [it, k] of order){
-    const d = document.createElement("div"); d.className = "rv" + (it.ok ? "" : " no");
-    const s = document.createElement("div"); s.className = "s";
-    const [a, b] = it.v.s.split("___"), sol = document.createElement("b"); sol.textContent = it.v.g;
-    s.append(document.createTextNode((k + 1) + ". " + a), sol, document.createTextNode(b));
+    const d = el("div", "rv" + (it.ok ? "" : " no")), s = el("div", "s");
+    const [a, b] = contextOf(it).split("___");
+    s.append(document.createTextNode((exam.text ? `(${it.n}) ` : (k + 1) + ". ") + a), el("b", null, it.g), document.createTextNode(b || ""));
     d.append(s);
     if(!it.ok){
-      const y = document.createElement("div"); y.className = "y";
-      const t = document.createElement("span"); t.textContent = "Deine Antwort: " + (it.ans.trim() || "–");
-      const o = document.createElement("button"); o.textContent = "Zählt doch";
-      o.onclick = () => { it.ok = true; markLogOverride(it.logId); if(it.before){ srs[key(it.v)] = Object.assign(JSON.parse(it.before), {u: Date.now()}); store.set("srs", srs); } renderResult(); };
-      y.append(t, o); d.append(y);
+      const y = el("div", "y"), typed = it.ans.trim();
+      y.append(el("span", null, errLabel(it.res) + " · Deine Antwort: " + (typed || "–")));
+      const o = el("button", null, "Bewertung melden");
+      o.onclick = () => { flagLog(it.logId); o.textContent = "Gemeldet"; o.disabled = true; };
+      y.append(o); d.append(y);
+      if(typed && (it.res.e === "s" || it.res.e === "f")) d.append(diffBlock(typed, Engine.dist(Engine.norm(typed), Engine.norm(it.g)) <= Engine.closest(it.u, typed).d ? it.g : Engine.closest(it.u, typed).form));
     }
     r.append(d);
   }
@@ -697,36 +1153,18 @@ function renderResult(){
 $("goExam").onclick = startExam;
 $("examAgain").onclick = startExam;
 $("resHome").onclick = () => show("home");
-$("practiceWrong").onclick = () => {
-  const wrong = exam.items.filter(i => !i.ok).map(i => i.v);
-  show("train"); free = true; queue = wrong.slice(); roundTotal = queue.length; roundDone = 0; next();
-};
-$("nextBtn").onclick = () => finishWrite(pending && pending.ok);
-$("override").onclick = () => finishWrite(true);
+$("practiceWrong").onclick = () => startSpecial("Fehler aus der Prüfung", [...new Set(exam.items.filter(i => !i.ok).map(i => i.u.k))]);
 
-// ---------- Allgemein
-function setMode(m){
-  if(cur && pending) finishWrite(pending.ok);
-  $("answer").blur();
-  mode = m; store.set("mode", m);
-  $("mCard").classList.toggle("on", m === "card"); $("mWrite").classList.toggle("on", m === "write");
-  if(cur){ queue.unshift(cur); } next();
-}
-$("mCard").onclick = () => setMode("card");
-$("mWrite").onclick = () => setMode("write");
-$("shuffle").onclick = () => { if(cur) queue.push(cur); shuffle(queue); next(); };
-$("dir").onclick = () => { dirRev = !dirRev; store.set("dirRev", dirRev); $("dir").textContent = dirRev ? "DE → EN" : "EN → DE"; if(cur && mode === "card") showCard(cur); };
-let armed = null;
-$("reset").onclick = () => {
-  const b = $("reset");
-  if(!armed){ b.textContent = "Sicher?"; armed = setTimeout(() => { armed = null; b.textContent = "Zurücksetzen"; }, 2500); return; }
-  clearTimeout(armed); armed = null; b.textContent = "Zurücksetzen";
-  pool().forEach(v => srs[key(v)] = {b:0, w:0, r:0, due:0, u:Date.now()}); store.set("srs", srs); buildQueue();
-};
-$("practice").onclick = startFree;
-document.addEventListener("visibilitychange", () => { if(!document.hidden && !cur) buildQueue(); else renderStats(); if(window.syncReady){ syncOnVisibility(); if(!document.hidden && Date.now() - ((upd && upd.checked) || 0) > HOUR) checkUpdate(false); } });
+document.addEventListener("visibilitychange", () => {
+  if(!document.hidden){
+    const scr = document.querySelector(".screen.on");
+    if(scr && scr.id === "train"){ if(!cur || (!pending && cur.m !== "k" && Date.now() - cur.shown > 30 * MIN)) next(); else renderTrainHead(); }   // nach langer Pause neu planen
+    if(scr && scr.id === "home") renderHome();
+    if(scr && scr.id === "progress") renderProgress();
+  }
+  if(window.syncReady){ syncOnVisibility(); if(!document.hidden && Date.now() - ((upd && upd.checked) || 0) > HOUR) checkUpdate(false); }
+});
 $("dir").textContent = dirRev ? "DE → EN" : "EN → DE";
-$("mCard").classList.toggle("on", mode === "card"); $("mWrite").classList.toggle("on", mode === "write");
 
 // ---------- Geräte-Sync (verschlüsselt in einem geheimen GitHub-Gist)
 const GH = "https://api.github.com/gists", GFILE = "vokabeltrainer.json";
@@ -736,7 +1174,7 @@ let syncBusy = false, syncTimer = null, applying = false;
 const B32 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 function b32enc(bytes){ let bits = 0, val = 0, out = ""; for(const b of bytes){ val = (val << 8) | b; bits += 8; while(bits >= 5){ out += B32[(val >>> (bits - 5)) & 31]; bits -= 5; } } if(bits) out += B32[(val << (5 - bits)) & 31]; return out; }
 function b32dec(s){ let bits = 0, val = 0; const out = []; for(const c of s){ const i = B32.indexOf(c); if(i < 0) throw new Error("bad"); val = (val << 5) | i; bits += 5; if(bits >= 8){ out.push((val >>> (bits - 8)) & 255); bits -= 8; } } return new Uint8Array(out); }
-const b64 = u8 => btoa(String.fromCharCode(...u8));
+const b64 = u8 => { let s = ""; for(let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode(...u8.subarray(i, i + 0x8000)); return btoa(s); };
 const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
 function cryptoOk(){ return !!(window.crypto && crypto.subtle && crypto.getRandomValues); }
 async function aesKey(k){ return crypto.subtle.importKey("raw", b32dec(k), "AES-GCM", false, ["encrypt", "decrypt"]); }
@@ -752,18 +1190,19 @@ async function open_(blob, k){
     return JSON.parse(new TextDecoder().decode(pt));
   }catch(e){ throw new Error("Code passt nicht – Schlüssel falsch."); }
 }
-const ru = r => r.u || ((r.r || r.w) ? 1 : 0);          // alte Einträge ohne Zeitstempel zählen als ältester Stand
+// Ab 1.15: Verlauf aller Antworten (hist). Für ein Gerät mit älterer Version wird zusätzlich der alte Kästchen-Stand (srs) mitgeschickt.
 function localState(){
-  const s = {};
-  for(const [k, r] of Object.entries(srs)) if(ru(r)) s[k] = r;
-  return {srs: s, exams: store.get("exams", []), log: store.get("log", []), logCleared: store.get("logCleared", 0)};
+  return {v: 2, hist, settings, exams: store.get("exams", []), log: store.get("log", []), logCleared: store.get("logCleared", 0), srs: Engine.legacySrs(hist)};
 }
-// Pro Karte gewinnt der jüngere Stand; Prüfungen werden vereinigt
 function merge(remote){
   let pulled = false, push = false;
-  const rs = remote.srs || {};
-  for(const [k, r] of Object.entries(rs)){ const l = srs[k]; if(!l || ru(r) > ru(l)){ srs[k] = r; pulled = true; } }
-  for(const [k, l] of Object.entries(srs)){ if(ru(l) && (!rs[k] || ru(l) > ru(rs[k]))) push = true; }
+  const mh = Engine.mergeHist(hist, remote.hist || {}), H2 = mh.hist;
+  if(mh.pulled) pulled = true; if(mh.push) push = true;
+  if(remote.srs && Engine.absorbLegacy(H2, remote.srs)){ pulled = true; push = true; }   // Antworten von einem Gerät mit alter Version
+  if(remote.v !== 2) push = true;
+  let st = settings; const rs = remote.settings;
+  if(rs && rs.examAt && (rs.u || 0) > (settings.u || 0)){ st = rs; pulled = true; }
+  else if((settings.u || 0) > ((rs && rs.u) || 0)) push = true;
   const m = new Map(), le = store.get("exams", []);
   for(const e of remote.exams || []) m.set(e.t, e);
   for(const e of le){ const r = m.get(e.t); if(!r){ m.set(e.t, e); push = true; } else if((e.u || 0) > (r.u || 0)){ m.set(e.t, e); push = true; } }
@@ -775,16 +1214,17 @@ function merge(remote){
   if(lc !== (remote.logCleared || 0)) push = true;
   const lm = new Map(), ll = store.get("log", []);
   for(const e of remote.log || []) if(e.t > lc) lm.set(e.id, e);
-  const remoteIds = new Set(lm.keys());
   for(const e of ll){ if(e.t <= lc) continue; const r = lm.get(e.id); if(!r){ lm.set(e.id, e); push = true; } else if((e.u || 0) > (r.u || 0)){ lm.set(e.id, e); push = true; } }
   const lg = [...lm.values()].sort((a, b) => a.t - b.t).slice(-LOG_MAX);
-  if(lg.length !== ll.length || lg.some((e, i) => e.id !== ll[i].id || e.ov !== ll[i].ov)) pulled = true;
-  applying = true; store.set("srs", srs); store.set("exams", ex); store.set("log", lg); store.set("logCleared", lc); applying = false;
+  if(lg.length !== ll.length || lg.some((e, i) => e.id !== ll[i].id || e.ov !== ll[i].ov || e.fl !== ll[i].fl)) pulled = true;
+  applying = true; hist = H2; settings = st;
+  store.set("hist", hist); store.set("settings", settings); store.set("exams", ex); store.set("log", lg); store.set("logCleared", lc);
+  applying = false;
   return {pulled, push};
 }
-// Sparsam mit GitHub: höchstens ein Abgleich pro Minute beim Üben, sofort beim Verlassen der App.
+// Sparsam mit GitHub: höchstens ein Abgleich alle zwei Minuten beim Üben, sofort beim Verlassen der App.
 // Unveränderter Gist wird per ETag erkannt (Antwort 304 zählt nicht gegen das GitHub-Limit).
-const SYNC_GAP = 60e3;
+const SYNC_GAP = 120e3;
 let syncCache = store.get("syncCache", null);       // {gist, etag, remote}
 let syncEvents = store.get("syncEvents", []);       // Diagnose: letzte Anfragen
 let syncDirty = false, syncLastTry = 0, syncRetry = null;
@@ -869,11 +1309,11 @@ function syncOnVisibility(){
   else if(Date.now() - syncLastTry > 30e3) doSync(false);                                            // beim Zurückkommen holen
 }
 function refreshAfterPull(){
-  renderStats();
   const scr = document.querySelector(".screen.on");
   if(scr && scr.id === "home") renderHome();
+  if(scr && scr.id === "progress") renderProgress();
   if(scr && scr.id === "logScreen") renderLog();
-  if(scr && scr.id === "train" && !cur) buildQueue();
+  if(scr && scr.id === "train"){ if(!cur) next(); else renderTrainHead(); }
 }
 function msg(text, cls){ const m = $("syncMsg"); m.textContent = text || ""; m.className = cls || ""; }
 function ago(t){ if(!t) return "noch nie"; const d = Date.now() - t; return d < 60e3 ? "gerade eben" : "vor " + fmt(d); }
@@ -939,7 +1379,7 @@ $("syncCopy").onclick = async () => {
   const v = $("syncCode").value;
   let ok = false;
   try{ await navigator.clipboard.writeText(v); ok = true; }catch(e){}
-  if(!ok){ const el = $("syncCode"); el.removeAttribute("readonly"); el.select(); try{ ok = document.execCommand("copy"); }catch(e){} el.setAttribute("readonly", ""); }
+  if(!ok){ const e = $("syncCode"); e.removeAttribute("readonly"); e.select(); try{ ok = document.execCommand("copy"); }catch(x){} e.setAttribute("readonly", ""); }
   msg(ok ? "Code kopiert – jetzt z. B. per Messenger an dich selbst schicken." : "Kopieren ging nicht – Code lange antippen und markieren.", ok ? "ok" : "err");
 };
 let unpairArmed = null;
@@ -953,34 +1393,51 @@ $("syncUnpair").onclick = () => {
 // ---------- Fehlerprotokoll
 const APP_VERSION = "/*VERSION_NAME*/", APP_CODE = Number("/*VERSION_CODE*/"), LOG_MAX = 600;
 const DEVICE = Math.min(screen.width, screen.height) >= 600 ? "Tablet" : "Handy";
-function addLog({m, v, a, q, h, ov}){
-  const now = Date.now(), id = now.toString(36) + Math.random().toString(36).slice(2, 7);
-  const log = store.get("log", []);
-  log.push({id, t: now, u: now, d: DEVICE, m, n: v.n, e: v.e, a: a || "", q: q || "", h: !!h, ov: !!ov});
-  store.set("log", log.slice(-LOG_MAX));
-  return id;
+function logEntry(o, now){
+  return {id: now.toString(36) + Math.random().toString(36).slice(2, 7), t: now, u: now, d: DEVICE, m: o.m, n: o.v.n, e: o.v.e,
+          a: o.a || "", q: o.q || "", h: !!o.h, k: o.k || "", p: o.p || "", fl: false};
 }
-function markLogOverride(id){
+function addLogs(list){
+  if(!list.length) return [];
+  const log = store.get("log", []), now = Date.now(), ids = [];
+  list.forEach((o, i) => { const e = logEntry(o, now + i); log.push(e); ids.push(e.id); });
+  store.set("log", log.slice(-LOG_MAX));
+  return ids;
+}
+const addLog = o => addLogs([o])[0];
+function flagLog(id){
   if(!id) return;
   const log = store.get("log", []), e = log.find(x => x.id === id);
-  if(e){ e.ov = true; e.u = Date.now(); store.set("log", log); }
+  if(e){ e.fl = true; e.u = Date.now(); store.set("log", log); }
 }
-const pad = n => String(n).padStart(2, "0");
 const dt = t => { const d = new Date(t); return `${pad(d.getDate())}.${pad(d.getMonth()+1)}. ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
-function logReal(){ return store.get("log", []).filter(e => !e.ov); }
+function kindOf(e){
+  if(e.k) return e.k;
+  if(e.m === "Karte") return "n";
+  const i = DATA.findIndex(v => v.n === e.n && v.e === e.e);
+  return i < 0 ? "" : (Engine.classify(Engine.unitOf(i), e.a).e || "");
+}
 function topErrors(n){
   const c = new Map();
-  for(const e of logReal()){ const k = e.e + "|" + e.n; c.set(k, (c.get(k) || 0) + 1); }
+  for(const e of store.get("log", [])){ const k = e.e + "|" + e.n; c.set(k, (c.get(k) || 0) + 1); }
   return [...c.entries()].sort((a, b) => b[1] - a[1]).slice(0, n).map(([k, cnt]) => { const [e, a] = k.split("|"); return `${cnt}× ${e} (${a})`; });
 }
 function logExport(){
-  const log = store.get("log", []), d = new Date();
+  const log = store.get("log", []), d = new Date(), now = Date.now(), S = summary(now);
   const devs = [...new Set(log.map(e => e.d))].join(" + ") || DEVICE;
   const L = [];
   L.push(`Vokabeltrainer ${APP_VERSION} – Fehlerprotokoll`);
   L.push(`Exportiert: ${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())} · ${log.length} Einträge · Geräte: ${devs}`);
+  L.push(`Prüfung: ${fmtWhen(settings.examAt)} · Prognose ${S.pct} % (Note ${Engine.note(S.pct)}) · 1,0-Chance ${Math.round(100 * Engine.chance(S.rs, 30, 0.95))} % · heute geschafft ${S.done}/${UNITS.length}`);
+  L.push("Lernstufen: " + ORDER.map(s => `${Engine.STAGES[s]} ${S.counts[s]}`).join(" · "));
+  const ec = Engine.errorsByType(hist, now - 7 * DAY);
+  L.push("Fehlerarten (7 Tage): " + Object.entries(ec).map(([k, n]) => `${Engine.ERR[k]} ${n}`).join(" · "));
+  const days = Engine.daily(hist, now, 7);
+  if(days.length) L.push("Verlauf: " + days.map(x => { const dd = new Date(x.t); return `${pad(dd.getDate())}.${pad(dd.getMonth() + 1)}. ${x.answers} Antw., 1. Versuch ${x.words ? Math.round(100 * x.firstOk / x.words) : 0} %, geschafft ${x.done}`; }).join(" | "));
   if(!log.length && !syncEvents.length) return L.join("\n") + "\n\nKeine Fehler aufgezeichnet.";
-  L.push("", "Häufigste Fehler (ohne „Zählt doch“):", ...topErrors(15));
+  L.push("", "Häufigste Fehler:", ...topErrors(15));
+  const fl = log.filter(e => e.fl);
+  if(fl.length){ L.push("", `Gemeldete Bewertungen (${fl.length}):`); for(const e of fl.slice(-20).reverse()) L.push(`${dt(e.t)} · ${e.e} · „${e.a}“ · ${e.m}`); }
   if(syncEvents.length){
     L.push("", `Sync-Ereignisse auf diesem Gerät (${DEVICE}, letzte ${Math.min(15, syncEvents.length)}):`);
     for(const e of syncEvents.slice(-15).reverse()) L.push(`${dt(e.t)} · ${e.m} · ${e.s}` + (e.r !== "" ? ` · Rest ${e.r}` : "") + (e.n ? ` · ${e.n}` : ""));
@@ -988,29 +1445,30 @@ function logExport(){
   L.push("", "Alle Einträge (neueste zuerst):");
   for(const e of [...log].reverse()){
     const ans = e.m === "Karte" ? `nicht gewusst (Karteikarte ${e.q})` : `„${e.a.trim() || "leer"}“`;
-    const extra = (e.h ? " · mit Tipp" : "") + (e.ov ? " · [Zählt doch]" : "");
+    const k = kindOf(e), kind = k ? " · " + (Engine.ERR[k] || k) + (e.p ? " ↔ " + fullE(e.p) : "") : "";
+    const extra = (e.h ? " · mit Tipp" : "") + (e.ov ? " · [Zählt doch]" : "") + (e.fl ? " · [gemeldet]" : "");
     const q = e.m === "Karte" ? "" : ` · Abfrage: ${e.q}`;
-    L.push(`${dt(e.t)} · ${e.d} · ${e.m} · ${e.n} · gesucht: ${e.e} · meine Antwort: ${ans}${extra}${q}`);
+    L.push(`${dt(e.t)} · ${e.d} · ${e.m} · ${e.n} · gesucht: ${e.e} · meine Antwort: ${ans}${kind}${extra}${q}`);
   }
   return L.join("\n");
 }
 function renderLog(){
-  const log = store.get("log", []), real = logReal();
-  const words = new Set(real.map(e => e.e + e.n)).size;
-  $("logSum").textContent = log.length ? `${real.length} Fehler bei ${words} Vokabeln` + (log.length > real.length ? ` · ${log.length - real.length}× „Zählt doch“` : "") : "Noch keine Fehler";
+  const log = store.get("log", []);
+  const words = new Set(log.map(e => e.e + e.n)).size, fl = log.filter(e => e.fl).length;
+  $("logSum").textContent = log.length ? `${log.length} Fehler bei ${words} Vokabeln` + (fl ? ` · ${fl} gemeldet` : "") : "Noch keine Fehler";
   const top = topErrors(5);
   $("logTop").textContent = top.length ? "Am häufigsten:\n" + top.join("\n") : "Sobald du etwas falsch beantwortest, erscheint es hier.";
   $("logText").value = logExport();
   $("logClear").style.display = log.length ? "" : "none";
 }
 function renderHomeLog(){
-  const n = logReal().length;
+  const n = store.get("log", []).length;
   $("homeLog").textContent = n ? `${n} Fehler aufgezeichnet · zum Kopieren und Auswerten` : "Noch keine Fehler";
   $("logDot").style.visibility = n ? "visible" : "hidden";
 }
-async function copyText(text, el){
-  try{ await navigator.clipboard.writeText(text); return true; }catch(e){}
-  try{ el.removeAttribute("readonly"); el.focus(); el.select(); const ok = document.execCommand("copy"); el.setAttribute("readonly", ""); el.blur(); return ok; }catch(e){ return false; }
+async function copyText(text, e){
+  try{ await navigator.clipboard.writeText(text); return true; }catch(x){}
+  try{ e.removeAttribute("readonly"); e.focus(); e.select(); const ok = document.execCommand("copy"); e.setAttribute("readonly", ""); e.blur(); return ok; }catch(x){ return false; }
 }
 $("goLog").onclick = () => { show("logScreen"); $("logMsg").textContent = ""; renderLog(); };
 $("logHome").onclick = () => show("home");
@@ -1024,7 +1482,7 @@ $("logClear").onclick = () => {
   if(!clearArmed){ b.textContent = "Sicher? Nochmal tippen"; clearArmed = setTimeout(() => { clearArmed = null; b.textContent = "Leeren"; }, 2500); return; }
   clearTimeout(clearArmed); clearArmed = null; b.textContent = "Leeren";
   store.set("logCleared", Date.now()); store.set("log", []); renderLog();
-  $("logMsg").textContent = "Protokoll geleert" + (sync ? " – auch auf den gekoppelten Geräten." : ".");
+  $("logMsg").textContent = "Protokoll geleert" + (sync ? " – auch auf den gekoppelten Geräten." : ".") + " Dein Lernstand bleibt erhalten.";
 };
 
 // ---------- Updates (neueste Version liegt öffentlich im Repo Mymaxyt/voctrainer)
@@ -1056,7 +1514,7 @@ async function checkUpdate(manual){
 $("updCheck").onclick = () => checkUpdate(true);
 $("updBtn").addEventListener("click", () => { $("updHow").style.display = ""; });   // Link öffnet den Browser, der die APK lädt
 window.syncReady = true;
-renderChips(); buildQueue(); show("home"); renderSync(); renderHomeLog(); renderUpdate(); doSync(false); checkUpdate(false);
+renderChips(); renderModes(); renderExamTile(); show("home"); renderSync(); renderHomeLog(); renderUpdate(); doSync(false); checkUpdate(false);
 </script>
 </body>
 </html>

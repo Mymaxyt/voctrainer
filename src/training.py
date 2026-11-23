@@ -1,0 +1,465 @@
+# Übungssätze und Lückentexte (eigene Texte, nicht aus dem Buch).
+# T: je Eintrag (Index wie vocab.json) zwei Lückensätze fürs Training. Die Lücke ___ wird mit dem Lückenwort g
+#    des Eintrags gefüllt. Die Prüfungssätze s in vocab.json kommen hier absichtlich NICHT vor – sie bleiben
+#    für die Prüfungssimulation, damit dort nicht auswendig gelernte Sätze abgefragt werden.
+# TEXTS: ein Lückentext je Buchaufgabe, nur für die Prüfungssimulation. [[i]] = Lücke für Eintrag i.
+
+T = {
+0: ("Goods that are transported by ship, train, lorry or plane are called ___.",
+    "On some long-haul routes, the airline earns more from carrying ___ than from carrying passengers."),
+1: ("Supermarkets usually put washing-up liquid, bleach and other ___ products in the same aisle.",
+    "Procter & Gamble is famous for ___ goods such as detergents, which people use at home every day."),
+2: ("Kettles, toasters and microwaves are small kitchen ___.",
+    "Miele makes domestic ___ such as ovens and dishwashers."),
+3: ("In the fashion business, clothing is often called ___.",
+    "Nike sells footwear, sports equipment and athletic ___ such as shirts and shorts."),
+4: ("Tea, coffee, juice and other drinks are called ___ in business English.",
+    "The café's menu lists hot ___ like cappuccino and cold ones like iced tea."),
+5: ("The new office building has excellent sports ___, including a gym and a swimming pool.",
+    "Rooms, buildings and equipment that are provided for a particular purpose are called ___."),
+6: ("Land and buildings are called property in British English and ___ in American English.",
+    "Prices in the London ___ market have risen sharply because so few new homes are being built."),
+7: ("A company that buys and sells shares for its clients is called a ___ firm.",
+    "Charles Schwab's ___ business earns money from the fees that investors pay when they buy or sell shares."),
+8: ("Many ___ are owned by the state because water and power are essential public services.",
+    "Our monthly costs include rent, insurance and ___ such as heating and electricity."),
+9: ("Cotton, wood and crude oil are ___ that factories turn into products.",
+    "The price of ___ such as copper and steel has a big impact on a carmaker's costs."),
+10: ("Products that have completed the whole manufacturing process and are ready to be sold are called ___.",
+     "The warehouse stores ___, such as packed televisions, until they are shipped to retailers."),
+11: ("Intel spends billions on chip ___ plants, which people in the industry call 'fabs'.",
+     "In the steel industry, cutting, bending and welding metal parts is known as metal ___."),
+12: ("Washing machines, cars and sofas are examples of ___, because they last for several years.",
+     "When the economy is weak, people delay buying expensive ___ such as new kitchens and cars."),
+13: ("Your electricity bill depends a lot on how efficient your ___ are, especially the fridge and the washing machine.",
+     "Energy labels on ___ tell shoppers how much electricity a fridge or dishwasher uses per year."),
+14: ("Products that are used up quickly, such as food or shampoo, are called ___.",
+     "Supermarkets mainly sell ___ like milk, toothpaste and washing powder, which customers buy again and again."),
+15: ("Nestlé sells more ___ than any other company in the world, from chocolate to coffee and bottled water.",
+     "Airlines now charge economy passengers for ___ on short flights, even for a sandwich and a cup of tea."),
+16: ("Instead of just selling hardware, the IT firm now offers complete ___ that combine software, consulting and support.",
+     "Our ___ team helps companies find the right mix of cloud services, software and training."),
+17: ("The shareholders elect the ___, which appoints the CEO and supervises the management.",
+     "Two new non-executive directors have joined the ___ to advise the company on its international strategy."),
+18: ("The CEO, the CFO and the COO form the company's ___, which runs the business day to day.",
+     "Decisions about daily operations are taken by the ___, not by the Board."),
+19: ("Investors who provide money for risky start-ups are called ___ capitalists.",
+     "Opening a restaurant is a risky business ___: many fail in their first year."),
+20: ("In a free ___ economy, private companies compete with little interference from the government.",
+     "The software is designed for large ___ customers such as banks and airlines rather than for home users."),
+21: ("After years of borrowing, the airline's ___ had grown to more than ten billion euros.",
+     "The government wants to reduce the national ___, which has reached 60% of GDP."),
+22: ("In a partnership, each partner has unlimited ___ for the firm's debts.",
+     "The company accepted ___ for the accident and paid compensation to the injured workers."),
+23: ("She left her job at the bank and became ___; now she runs her own small accounting business.",
+     "As a ___ electrician, he has to pay for his own health insurance and pension."),
+24: ("The magazine has no full-time photographers; it buys pictures from a ___ who also works for several other publications.",
+     "A ___ is paid per project and usually works for several different clients at the same time."),
+25: ("She is a partner in a consulting ___ with offices in Berlin and Vienna.",
+     "He started his career at a London accountancy ___."),
+26: ("A business owned by two or more people who share the profits and the risks is called a ___.",
+     "The two lawyers went into ___ and opened an office together."),
+27: ("When two companies agree to join together as equals, the result is called a ___.",
+     "The ___ of Daimler and Chrysler in 1998 was described as a 'marriage of equals'."),
+28: ("Facebook's ___ of Instagram in 2012 cost about one billion dollars.",
+     "In an ___, one company buys another, which then loses its independence."),
+29: ("Our five biggest customers bring in 60% of our sales, so we treat them as ___ and give each one a personal sales manager.",
+     "The sales director personally looks after the company's ___, such as Tesco and Carrefour."),
+30: ("The CEO decides on strategy, while the ___ makes sure that production and logistics run smoothly every day.",
+     "She was promoted from head of production to ___, the second most senior position in the company after the CEO."),
+31: ("To develop the new car faster, the company created ___ made up of engineers, designers and marketing staff.",
+     "In ___, people from different departments work together on one project."),
+32: ("The new strategy did not come from the boardroom but from the ___: ordinary employees suggested most of the changes.",
+     "The campaign started as a ___ movement among shop-floor workers."),
+33: ("The people who report to a manager are his or her ___.",
+     "She delegates routine tasks to her ___ so that she can concentrate on strategy."),
+34: ("The company wants to grow in the market where it is already active, so its strategy is market ___ rather than consolidation or withdrawal.",
+     "After years of standing still, the firm is investing in the ___ of its home market with new products and services."),
+35: ("After two years of rapid expansion, the company needs a period of ___ to strengthen its existing position.",
+     "Instead of entering new markets, the firm decided on ___: it closed weak branches and focused on its strongest ones."),
+36: ("The supermarket chain announced its complete ___ from the US market after ten years of losses.",
+     "Expansion, consolidation and ___ are three possible strategies for a company in a difficult market."),
+37: ("Before opening a store in Spain, the company carried out ___ to find out what Spanish shoppers want.",
+     "Questionnaires, interviews and focus groups are common methods of ___."),
+38: ("Unlike a profit-making unit, a ___ is only judged on how well it keeps its spending under control.",
+     "Each department has its own ___ number, so all expenses can be charged to the right budget."),
+39: ("Shareholders were disappointed because ___ slowed from 15% to only 3% this year.",
+     "The company has achieved steady ___ for ten years, with profits rising every single quarter."),
+40: ("In a flat organisation, there are only a few levels in the ___.",
+     "Decisions have to pass through every level of the ___ before they reach the CEO."),
+41: ("Good salespeople ask questions first, because they must understand ___ before they recommend a product.",
+     "The company redesigned its website to focus on ___ instead of on its own products."),
+42: ("Unilever has sold several food brands to concentrate its ___ on beauty and personal care.",
+     "The BCG matrix helps managers analyse their ___ and decide where to invest."),
+43: ("Although the company also sells insurance, its ___ is still car manufacturing, which brings in 80% of its profit.",
+     "Many conglomerates have sold off unrelated divisions to focus on their ___."),
+44: ("For a small winemaker, selling directly to restaurants is often the most profitable ___.",
+     "A ___ is the route that a product takes from the producer to the final customer."),
+45: ("Google's ___ was 'to organize the world's information and make it universally accessible and useful'.",
+     "Many employees have never read their company's ___, even though it hangs on the wall in reception."),
+46: ("If a company sells 30 out of every 100 cars sold in a country, its ___ is 30%.",
+     "Cheap new competitors from China have taken ___ away from the established brands."),
+47: ("Critics say that managers who focus only on ___ neglect employees and the environment.",
+     "The new CEO promised to create ___ by cutting costs and paying higher dividends."),
+48: ("Customers who always buy the same coffee, even when others are cheaper, show strong ___.",
+     "Supermarket own labels are cheaper, but many shoppers stay with their favourite products out of ___."),
+49: ("Always ___ your spelling before you send an email to a client.",
+     "The accountant will ___ the invoices to make sure that the amounts are correct."),
+50: ("The event manager has to ___ the caterers, the technicians and the speakers so that everything happens at the right time.",
+     "Someone needs to ___ the activities of the sales and production departments, or customers will receive late deliveries."),
+51: ("At the start of the project, the team leader will ___ a specific role to each team member.",
+     "Can you ___ this customer complaint to someone in the service department?"),
+52: ("It took the company two years to ___ the new IT system in all its branches.",
+     "Having a good plan is easy; the hard part is to ___ it."),
+53: ("The founding family still owns 51% of the shares, so it can ___ the company.",
+     "The new CEO wants to ___ every important decision himself, so the division managers have lost a lot of power."),
+54: ("Security staff must ___ that nobody enters the building without a pass.",
+     "Regular maintenance helps to ___ that the machines never break down during production."),
+55: ("McDonald's has had to ___ its menu to local tastes in India, where it serves no beef.",
+     "When the company moved into Asia, it had to ___ its marketing to a very different culture."),
+56: ("The software allows us to ___ the temperature in the warehouse 24 hours a day.",
+     "The bank will ___ the account over the next six months to detect any unusual payments."),
+57: ("After the trial period, we will ___ the results and decide whether to continue the project.",
+     "The panel will ___ each candidate's presentation before choosing the winner."),
+58: ("Supply and demand ___ the price of oil on the world market.",
+     "An investigation is under way to ___ the cause of the fire at the factory."),
+59: ("A survey asking 2,000 people how many times a week they shop produces ___ data.",
+     "___ research uses large samples and statistics, while focus groups explore opinions in depth."),
+60: ("Focus groups and in-depth interviews are typical methods of ___ research.",
+     "The ___ part of the study tried to find out why customers feel the way they do about the brand."),
+61: ("The person who finally uses a product is called the ___, even if someone else bought it.",
+     "The manufacturer sells its printers through dealers, but its call centre gives technical support directly to the ___."),
+62: ("Consumer magazines test products for quality and ___, so readers know what is worth buying.",
+     "The restaurant isn't cheap, but with such big portions it is excellent ___."),
+63: ("Don't just list the technical details: tell the customer about the ___, for example how much time the product will save.",
+     "The ___ of buying a hybrid car include lower fuel costs and lower taxes."),
+64: ("The latest model has several new safety ___, including automatic emergency braking.",
+     "Engineers think about a product's ___, while customers think about how it will help them."),
+65: ("Nobody else may use the name 'Nike' or its tick logo, because both are protected by ___ law.",
+     "The company went to court because a competitor had copied its ___."),
+66: ("If a shop buys a jacket for €50 and sells it for €75, the ___ is 50%.",
+     "Restaurants make most of their profit from drinks, where the ___ can be several hundred per cent."),
+67: ("At the ___, total revenue exactly covers total costs, so the company makes neither a profit nor a loss.",
+     "If fixed costs rise, the company has to sell more units to reach its ___."),
+68: ("Apple's main ___ are smartphones, tablets, computers and watches.",
+     "The company has decided to drop two of its ___ and concentrate on baby care."),
+69: ("The complete range of goods that a company sells, across all its brands and categories, is called its ___.",
+     "By adding pet food to its ___, the company hopes to reach new customers."),
+70: ("Many people use ___ like Tempo or Tesa instead of the general words for the products.",
+     "Unilever sells the same ice cream under different ___ in different countries, for example Langnese in Germany and Wall's in Britain."),
+71: ("Because of strong ___, many Coca-Cola drinkers refuse to buy Pepsi even when it is on special offer.",
+     "When customers keep buying a product they are happy with, this is called ___."),
+72: ("The sponsorship deal is designed to build ___ in markets where nobody has heard of the company yet.",
+     "Our survey shows that ___ is high: 85% of people recognise our logo."),
+73: ("With a share of over 90%, Google is the clear ___ in internet search.",
+     "The company with the biggest sales in its sector is called the ___."),
+74: ("Samsung and Apple together have more than half of the global ___ in smartphones.",
+     "The price war helped the supermarket to win ___ from its rivals."),
+75: ("The new CEO closed loss-making stores to improve the chain's ___.",
+     "Sales have grown quickly, but ___ is low because costs have grown even faster."),
+76: ("The start-up has customers, but it is still ___ because its costs are higher than its revenue.",
+     "The newspaper has been ___ for three years and may have to close."),
+77: ("People who queue outside the store to buy the newest phone on its first day are typical ___.",
+     "The first buyers of a new technology, who are happy to pay a high price, are called ___."),
+78: ("Customers can easily switch to a competitor because there are so many ___ on the market.",
+     "It is hard to stand out when the market is full of ___ from dozens of brands."),
+79: ("During the recession, many firms cut their ___, so TV channels lost a lot of income.",
+     "The marketing director is responsible for planning the ___ for TV, print and online campaigns."),
+80: ("When all brands in a market do the same job, companies use packaging and image to ___.",
+     "Car makers ___ through design, safety and brand image, because all cars basically get you from A to B."),
+81: ("Sales stop growing when the market ___ and almost everyone who wants the product already has one.",
+     "Once the smartphone market ___, manufacturers can only grow by taking customers from each other."),
+82: ("Fashion companies must react quickly because ___ change from season to season.",
+     "The brand failed because it did not notice that ___ had moved towards healthier food."),
+83: ("The medicine was ___ after it was found to cause serious side effects.",
+     "Because of a safety problem, the toy was ___ just two weeks after its launch."),
+84: ("The first step in marketing is to identify ___: what do ordinary shoppers want and what problems do they have?",
+     "Changing ___, for example the demand for vegan food, create opportunities for new products."),
+85: ("Surveys can reveal ___, for example a demand for a product that nobody sells yet.",
+     "Small companies often succeed by filling ___ that big companies have ignored."),
+86: ("Before spending money on a survey, check ___ such as trade magazines and official statistics.",
+     "Secondary research means collecting data from ___ rather than asking people yourself."),
+87: ("In benchmarking, a company watches ___ closely and compares their performance with its own.",
+     "Market intelligence includes information about customers, suppliers and ___."),
+88: ("To get reliable results, a market research company interviews ___, not just friends and colleagues.",
+     "The polling company questioned ___ of different ages, incomes and regions."),
+89: ("With only 20 people in the sample, the results are not ___.",
+     "The research agency guarantees that its data is ___ because every survey has at least 1,000 participants."),
+90: ("The council is ___ to find out what residents think about the new bus routes.",
+     "We are currently ___ among our customers, so please fill in the questionnaire."),
+91: ("The customer's most important ___ is that the new machine fits into the existing production line.",
+     "The supplier failed to meet a key ___ of the contract: delivery within 48 hours."),
+92: ("A product's ___ is the one feature that makes it different from all competing products.",
+     "Volvo's ___ has always been safety."),
+93: ("The engineers checked that the finished part met the exact ___ in the contract.",
+     "A detailed technical ___ lists the size, weight, materials and performance of a product."),
+94: ("Lower energy bills are a real ___ for anyone who buys this heat pump.",
+     "Explain one clear ___ to the customer: 'This printer will save you €200 a year.'"),
+95: ("The most talked-about ___ of the new phone is its folding screen.",
+     "A built-in camera is a standard ___ on all our laptops."),
+96: ("Its curved shape is a typical ___ that makes the Coca-Cola bottle recognisable even in the dark.",
+     "Reliability is a ___ that people associate with German cars."),
+97: ("The garage gave me an ___ of €400 for the repair, but said the final cost could be higher.",
+     "This is only a rough ___; we can give you a fixed price after we have inspected the building."),
+98: ("We asked three suppliers for a ___ and chose the one with the lowest fixed price.",
+     "The ___ is a binding offer: the price of €12,400 is fixed for 30 days."),
+99: ("The project was cancelled because it was 40% over ___.",
+     "Each department must stay within its annual ___."),
+100: ("Many online shops pay a specialist company to handle order ___: storing, packing and shipping the goods.",
+      "The new ___ centre can process 100,000 parcels a day."),
+101: ("The brand sells its products through only one ___ in each city to keep them exclusive.",
+      "A shop, market stall or kiosk where goods are sold is a retail ___."),
+102: ("The salesperson phoned every ___ on the list to arrange a meeting.",
+      "Someone who has shown interest in your product but has not bought anything yet is a ___."),
+103: ("The company rented a huge ___ in Times Square to advertise its new film.",
+      "A large board for advertisements next to a road is called a ___."),
+104: ("A good after-sales service encourages ___, because satisfied customers come back.",
+      "Printer manufacturers make most of their money from ___ of ink cartridges."),
+105: ("When the bank offers insurance to a customer who has just opened an account, that is ___.",
+      "Online shops use ___ when they show the message 'Customers who bought this also bought …'."),
+106: ("A wholesaler is a ___ between the manufacturer and the retailer.",
+      "Prices are high because every ___ in the chain adds his own profit."),
+107: ("The wholesaler keeps its stock in a huge ___ near the motorway.",
+      "Goods are stored in a ___ until they are delivered to the shops."),
+108: ("Football clubs earn millions from ___ such as shirts, scarves and mugs.",
+      "Star Wars toys, T-shirts and posters are a famous example of film ___."),
+109: ("The supermarket's checkout staff are trained to say hello to every ___.",
+      "A ___ is someone who buys goods or standard services from a shop or business."),
+110: ("The architect discussed the plans for the new house with her ___.",
+      "Every ___ of the bank's private banking department has a personal adviser."),
+111: ("The mail-order company's ___ lists every product it sells, with prices and order numbers.",
+      "IKEA's printed ___ was once one of the most widely distributed books in the world."),
+112: ("The hotel's glossy ___ is full of photos of the pool and the beach but doesn't mention prices.",
+      "At the trade fair, we handed out a colourful ___ describing our new range of services."),
+113: ("Advertising is just one part of ___; others include PR, sponsorship and special offers.",
+      "Sales ___, for example 'buy one, get one free', is used to increase sales quickly."),
+114: ("Paying for space on TV, radio, websites or billboards to show your message is called ___.",
+      "The government has banned ___ for cigarettes."),
+115: ("The car company filmed a new TV ___ in the mountains of Norway.",
+      "The radio station plays a ___ every fifteen minutes."),
+116: ("The 20-second TV ___ for the new yoghurt will be shown during the evening news.",
+      "We booked a radio ___ for every morning during the summer sale."),
+117: ("Roger Federer's ___ of the Swiss watch brand helped to make it popular in Asia.",
+      "When a celebrity says publicly that they use and like a product, this is called an ___."),
+118: ("The airline's ___ of the World Cup put its name in front of billions of viewers.",
+      "Many arts festivals could not survive without company ___."),
+119: ("We appointed a sales ___ to represent our company in Japan on a long-term basis.",
+      "The company has no office in Mexico; instead, the same local ___ has represented it there for twenty years."),
+120: ("An insurance ___ compares offers from different insurers and arranges a single contract for you.",
+      "The ___ earned a commission on every share he bought and sold for his clients."),
+121: ("The colour purple is an important part of Milka's ___.",
+      "After the merger, the new company needed a completely new ___, including a name and a logo."),
+122: ("A small shop that is open late and sells basic food and household goods is called a ___.",
+      "Prices at the ___ at the petrol station are higher than at the supermarket, but it is open 24 hours."),
+123: ("Advertising letters and leaflets sent by post to people's homes are called ___.",
+      "The insurance company sent 100,000 personalised letters by ___ to people who had just moved house."),
+124: ("Online shopping has become the most important ___ for books.",
+      "The company chose vending machines as a new ___ for its snacks."),
+125: ("A special ___ at the entrance of the supermarket attracts customers' attention to the new product.",
+      "The manufacturer pays the retailer to put up an ___ for its products near the checkout."),
+126: ("The company sent a ___ to newspapers announcing the opening of its new factory.",
+      "A ___ is a written statement given to journalists."),
+127: ("When a famous actor drinks a particular brand of beer in a film, it is usually ___.",
+      "TV series earn extra money from ___, for example by showing the main characters using a certain phone."),
+128: ("The company's ___ team organised a press conference after the accident.",
+      "After the scandal, the bank hired a ___ agency to repair its reputation with the media."),
+129: ("___ includes receiving raw materials and packaging from suppliers and storing them until production needs them.",
+      "Good ___ makes sure that parts from 500 suppliers arrive at the factory just in time."),
+130: ("Forklift trucks and conveyor belts are typical equipment for ___ in a factory.",
+      "Robots now do much of the ___ inside the warehouse, moving goods from the shelves to the packing stations."),
+131: ("___ covers storing finished products and delivering them to wholesalers, retailers and end users.",
+      "The company outsources its ___ to a parcel service that delivers the finished goods to customers."),
+132: ("Online clothing shops have high costs for ___ because many people order several sizes and send back the ones that don't fit.",
+      "Goods that buyers send back to the seller are called ___."),
+133: ("The distribution chain goes from the manufacturer to the wholesaler, the retailer and finally the ___.",
+      "The software company never meets the ___ because it only sells to IT departments."),
+134: ("Amazon operates huge ___ all over Europe to store its products close to customers.",
+      "The company closed two of its regional ___ and now stores all its stock in one central building."),
+135: ("The brand's products are available in over 2,000 ___ around the world, from department stores to airport shops.",
+      "Supermarkets, kiosks and petrol stations are all ___ where consumers can buy our snacks."),
+136: ("The price is ___, so the buyer must collect the goods from our factory and pay for transport and insurance.",
+      "Under an ___ agreement, the seller's only duty is to have the goods ready at its own premises."),
+137: ("Under ___ terms, the seller pays for transport to the port and for loading, but the buyer pays for the sea journey.",
+      "The price is quoted ___ Hamburg, which means our responsibility ends when the goods are on the ship."),
+138: ("If the price is ___ New York, the seller pays for the goods, the insurance and the sea transport to New York.",
+      "With a ___ price, the buyer only takes over the costs once the ship has arrived at the destination port."),
+139: ("Shareholders of both banks voted in favour of the plan to ___.",
+      "Rather than compete, the two small breweries decided to ___ into one company."),
+140: ("Western carmakers formed ___ with Chinese partners because they were not allowed to enter the market alone.",
+      "Many ___ fail because the partner companies have different goals."),
+141: ("Instagram is a ___ of Meta, which owns 100% of the company.",
+      "Audi is a ___ of the Volkswagen Group."),
+142: ("Farmers in the EU receive a ___ for every hectare of land they farm.",
+      "Without a government ___, the solar company would have gone bankrupt."),
+143: ("Entrepreneurs complain that there is too much ___: they need dozens of forms and permits to open a café.",
+      "The new government promised to cut ___ for small businesses."),
+144: ("The US placed ___ of 25% on imported steel, which made it more expensive for American buyers.",
+      "Taxes that a government charges on imported goods are called ___."),
+145: ("Instead of taxing imports, the government set ___ that limit the amount of sugar that can be imported each year.",
+      "The EU used ___ to restrict the number of Chinese textiles entering Europe."),
+146: ("A strong euro makes European exports more expensive, so companies watch ___ closely.",
+      "Tourists check the ___ before they change money at the airport."),
+147: ("When the firm went bankrupt, its ___ such as buildings and machines were sold to pay its debts.",
+      "Everything that a company owns and that has value appears on the balance sheet as ___."),
+148: ("The designer earns money through ___: other companies pay royalties to put his name on perfumes and sunglasses.",
+      "___ is a cheap way to enter a foreign market, because the local partner pays all the production costs."),
+149: ("In ___, the head office controls the business closely, and every shop must look and operate in the same way.",
+      "Subway grew to over 40,000 restaurants through ___, with local owners running each shop under the Subway name."),
+150: ("The simplest form of international business is ___: buying goods from abroad and selling goods abroad.",
+      "His family runs a small ___ business that sells German machines to Brazil and brings coffee back."),
+151: ("Sony and Ericsson created a ___ to make mobile phones, sharing the costs and the profits.",
+      "In a ___, two companies set up a new business together and share its risks."),
+152: ("Several airlines cooperate in a ___: they share routes and lounges, but each one keeps its own costs and risks.",
+      "A ___ is a loose, long-term agreement between two firms to cooperate, without forming a new company."),
+153: ("Many banks save money by ___ their call centres to India.",
+      "___ means paying another company to do work that you used to do yourself."),
+154: ("Toyota's US factory is run by a ___ that is 100% owned by the Japanese parent company.",
+      "Setting up a ___ is the most expensive way to enter a market abroad, but the parent company keeps full control."),
+}
+
+TEXTS = [
+{"id": "1.1", "title": "Ein Blick in den Wirtschaftsteil", "text":
+ "Every morning, the business section of the newspaper shows how many different industries keep an economy running. "
+ "Shipping companies report on the cost of moving [[0]] across the oceans, while a big supermarket group explains that sales of cleaning products and other [[1]] goods have risen. "
+ "An electronics chain is advertising discounts on fridges, cookers and other kitchen [[2]], and a fashion retailer says that its online sales of [[3]] doubled at Christmas. "
+ "Further down the page, a soft-drinks maker announces that it will launch three new [[4]] next summer. "
+ "A hotel group has spent 20 million euros on new conference [[5]], including meeting rooms and a fitness centre. "
+ "In the [[6]] section, agents complain that house prices are falling for the first time in ten years. "
+ "An online [[7]] firm reports that more young people are buying shares than ever before. "
+ "Finally, the companies that supply electricity, gas and water warn that the [[8]] will raise customers' bills again in January."},
+{"id": "1.5", "title": "Vom Rohstoff zur Lösung", "text":
+ "Manufacturing starts with [[9]] such as iron ore, cotton or crude oil. Factories process them until they become [[10]] that can be sent to shops. "
+ "In the chip industry, this production stage has a special name, [[11]], and the factories are known as 'fabs'. "
+ "Economists divide the things people buy into two groups. [[12]], for example cars or furniture, are bought rarely and used for many years; washing machines, fridges and other [[13]] belong to this group too. "
+ "[[14]], on the other hand, such as shampoo or petrol, are used up quickly and bought again and again. "
+ "A typical example is the [[15]] industry, which sells everything from bread to bottled water. "
+ "Today, many manufacturers no longer sell just products: they offer [[16]], combining machines, software and services that solve a customer's problem."},
+{"id": "1.6", "title": "Wer führt ein Unternehmen?", "text":
+ "In a public limited company, the shareholders elect the [[17]] of Directors, which supervises the company and appoints the CEO. "
+ "The CEO and the other top managers form the [[18]], which runs the business day to day. "
+ "Young companies often need [[19]] capital from investors who are prepared to take big risks, and supporters of free [[20]] believe that the state should interfere as little as possible in this process. "
+ "Every company has to borrow money from time to time, but too much [[21]] can become dangerous. "
+ "In a limited company, the owners' [[22]] is limited to the money they have put into the business, so they cannot lose their private homes. "
+ "Not everyone works for a big company, of course. A plumber who runs his own business is [[23]], and a journalist who writes for several magazines at the same time is a [[24]]. "
+ "Lawyers often work in a small law [[25]], and when two or more of them own it together and share the profits, it is a [[26]]. "
+ "Companies also grow by joining with others: a [[27]] is when two companies agree to combine as equals, while an [[28]] is when one company buys another."},
+{"id": "3.1", "title": "Eine neue Struktur", "text":
+ "After a difficult year, the company reorganised its sales department. Its twenty largest customers are now handled as [[29]], each with a dedicated manager. "
+ "The new [[30]] is responsible for the day-to-day running of production and logistics and reports directly to the CEO. "
+ "Projects are no longer run by single departments but by [[31]] with members from sales, finance and engineering. "
+ "The CEO also wants more ideas to come from the [[32]] instead of from the boardroom, so managers are now expected to ask their [[33]] for suggestions every month. "
+ "In terms of strategy, the board discussed three options. Market [[34]] would mean growing by selling to new customer groups. "
+ "[[35]] would mean strengthening the company's existing position without expanding. "
+ "The last option, complete [[36]] from the loss-making Asian market, was rejected."},
+{"id": "3.4", "title": "Strategiesitzung", "text":
+ "At this year's strategy meeting, the board first looked at the company's [[45]], which says that the firm wants to 'make healthy food affordable for everyone'. "
+ "Recent [[37]], based on a questionnaire answered by 3,000 shoppers, showed that [[41]] have changed: people want more vegan food. "
+ "The [[42]] will therefore be extended with a new vegan range, but the [[43]], dairy, which brings in most of the profit, will remain the focus. "
+ "Online sales are becoming an important [[44]], and the company's [[46]] in online grocery has already reached 12%. "
+ "Investors are happy with [[39]] of 9% a year, and the CEO promised to increase [[47]] through a higher dividend. "
+ "To save money, the IT department, which is a [[38]], will be reorganised, and the [[40]] will be made flatter by removing one level of middle management. "
+ "Finally, a new rewards programme is intended to strengthen [[48]], so that existing buyers stay with the company instead of switching to cheaper rivals."},
+{"id": "3.6", "title": "Was Manager tun", "text":
+ "Before a new product is launched, the marketing team must [[58]] the right price, often with the help of market research. "
+ "The project manager will then [[51]] each task to a member of the team and [[50]] the work of the different departments so that everybody works together effectively. "
+ "Once the plan has been approved, the team has to [[52]] it. "
+ "During the first six months, managers [[56]] the sales figures continuously, and the accountants [[49]] every invoice before it is paid to make sure that the amounts are correct. "
+ "The finance director wants to [[53]] all spending, so every purchase over €1,000 needs her approval. "
+ "Strict quality rules [[54]] that no faulty product ever leaves the factory. "
+ "If the market changes, the company must be able to [[55]] its plans quickly. "
+ "After six months, the board will [[57]] the results of the launch and decide whether to continue."},
+{"id": "7.1", "title": "Eine neue Kaffeemaschine", "text":
+ "Before launching its new coffee machine, the company did two kinds of research. A large online survey produced [[59]] data, such as how many cups people drink a day, "
+ "while focus groups provided [[60]] information about people's feelings and attitudes. "
+ "The research made it clear that the [[61]], the person who actually makes the coffee at home, cares most about simple handling. "
+ "Most buyers also want good [[62]]: a fair price for the quality they get. "
+ "The sales team was told to explain the [[63]] for the customer, such as saving time in the morning, rather than just listing [[64]] like the 19-bar pump or the built-in milk frother. "
+ "The product name was registered as a [[65]] so that competitors cannot copy it. "
+ "Retailers will add a [[66]] of about 30% to the price they pay. "
+ "According to the finance department, the company has to sell 50,000 machines to reach the [[67]], the point where costs and revenue are equal."},
+{"id": "7.2", "title": "Ein Konsumgüterriese", "text":
+ "The company sells around 300 different items, which are organised into 12 [[68]], such as hair care, baby care and pet food. "
+ "Together they form a very wide [[69]], which reduces the risk of depending on one market. "
+ "Many of its [[70]], such as Ariel or Pampers, are known all over the world. "
+ "Satisfied customers tend to buy the same items again, so the company enjoys strong [[71]]. "
+ "When it enters a new country, it spends heavily on advertising to build [[72]], because people will not buy what they have never heard of. "
+ "In most of its categories it is the [[73]], with a [[74]] of more than 30%. "
+ "Instead of trying to sell more and more, the management now concentrates on [[75]]: increasing sales where it pays off and cutting costs everywhere else."},
+{"id": "7.3", "title": "Das Leben eines Produkts", "text":
+ "In the introduction stage, production costs are high and sales are low, so the company is usually still [[76]]. "
+ "The first buyers are [[77]], who are happy to pay a high price to own something new. "
+ "In the growth stage, sales rise quickly, but competitors soon arrive with [[78]]. "
+ "Companies now spend a lot of money on promotion, and their [[79]] are at their highest. "
+ "In the maturity stage, competition is strong, so manufacturers try to [[80]] through new designs, special features or better packaging. "
+ "Sales stop growing when the market [[81]] and almost everybody who wants one already has it. "
+ "Finally, in the decline stage, sales fall, often because [[82]] have changed and people prefer newer alternatives. In the end, it is [[83]]."},
+{"id": "7.4", "title": "Herausfinden, was Leute wollen", "text":
+ "Good market research starts with [[84]]: what do ordinary shoppers want, and which problems do they have? "
+ "It can also reveal [[85]], where there is demand but no product yet. "
+ "Desk research uses [[86]] such as government statistics, newspapers and trade journals, which are cheap and quick to find. "
+ "In benchmarking, a company studies [[87]] to learn from what they do better. "
+ "Field research usually means [[90]]: asking people questions in the street, by phone or online. "
+ "To get useful results, the researchers must interview [[88]], that is, people of different ages, incomes and regions, "
+ "and the sample must be large enough for the results to be [[89]]."},
+{"id": "7.5", "title": "Eine Maschine verkaufen", "text":
+ "A food producer needs a new packaging machine. Its main [[91]] is that the machine must pack 200 bags a minute. "
+ "The salesperson explains that her company's [[92]] is a guaranteed delivery time of four weeks: no other supplier can offer that. "
+ "She sends the technical [[93]], which lists the size, speed and power consumption of the machine. "
+ "The biggest [[94]] for the customer is that the machine needs very little energy, which saves money. "
+ "Its most innovative [[95]] is a camera that checks every bag. "
+ "A typical [[96]] of all the company's machines is their bright green colour, which makes them easy to recognise. "
+ "At first, she gives the customer a rough [[97]] of €150,000. After visiting the factory, she sends a formal [[98]] with a fixed price of €148,500. "
+ "That is just within the customer's [[99]] for the project."},
+{"id": "8.1", "title": "Sportschuhe verkaufen", "text":
+ "A sports-shoe company sells online and through its own shops. For its web shop, a logistics partner takes care of order [[100]]: picking, packing and shipping every pair. "
+ "Last month, the company opened a new retail [[101]] in the city centre. "
+ "Its sales team calls every [[102]] who left an email address at a trade fair, hoping to turn them into customers. "
+ "To attract attention, the company has put up a giant [[103]] next to the main road into the city. "
+ "Bonus points encourage [[104]], because customers who come back are cheaper to keep than new ones are to find. "
+ "Shop staff are trained in [[105]]: anyone who buys running shoes is offered socks and a sports bag as well. "
+ "Some products come from a [[106]], who buys them from small manufacturers in Portugal and sells them on. "
+ "All stock is kept in a central [[107]] near the motorway. "
+ "The company also earns money from [[108]]: T-shirts and caps connected with a famous film about a marathon runner."},
+{"id": "8.2", "title": "Marketing eines Reiseveranstalters", "text":
+ "A travel company deals with two kinds of buyers. A walk-in [[109]] buys a standard holiday in one of its shops, while a business [[110]] gets a personal adviser who organises tailor-made trips. "
+ "Every year the company sends out a thick [[111]] that lists all its holidays with prices, and its shops hand out a colourful [[112]] with photos but no prices. "
+ "Its [[113]] mix, meaning everything it does to make people aware of its offers, includes several elements. "
+ "[[114]] in newspapers and online is the most expensive part. "
+ "The company has made a 60-second TV [[115]], which was also cut into a 20-second [[116]] for radio. "
+ "A famous surfer appears in the campaign, and his [[117]] of the brand has made it popular with young people. "
+ "The company's [[118]] of a music festival gives it a large audience every summer. "
+ "In Brazil, an [[119]] has represented the company for many years, and when travellers need cover for their trips, an insurance [[120]] compares the offers of different insurers for them."},
+{"id": "8.3", "title": "Ein Snack kommt auf den Markt", "text":
+ "A small company is launching a new energy snack. A designer has created a strong [[121]] for it, with a bright orange logo and a simple slogan. "
+ "The snack will first be sold in every [[122]] at petrol stations, where people buy snacks late at night or on the way to work. "
+ "Later, supermarkets will become the main [[124]]. In the supermarkets, an eye-catching [[125]] near the checkout will present the snack. "
+ "The company has also sent leaflets with free samples to 20,000 homes by [[123]]. "
+ "A [[126]] informed journalists about the launch, and the [[128]] team is organising interviews with the founders to build a positive image in the media. "
+ "Finally, the snack will appear in a popular TV series, where the main character eats one in every episode: a clever example of [[127]]."},
+{"id": "8.8", "title": "Vom Lieferanten zum Kunden", "text":
+ "A furniture manufacturer's supply chain has several parts. [[129]] covers everything from ordering wood and screws to receiving them from suppliers. "
+ "Inside the factory, [[130]] moves wood, screws and parts from the stores to the machines and the workplaces. "
+ "[[131]] takes care of the finished furniture on its way to the customer. "
+ "Because the company also sells online, it has to deal with [[132]], goods that buyers send back. "
+ "The products are kept in three regional [[134]] and sold through more than 400 [[135]], from small furniture shops to large department stores, before they finally reach the [[133]]. "
+ "For export, the company offers different delivery terms. If a customer buys [[136]], he collects the furniture from the factory himself. "
+ "Under [[137]] terms, the company pays until the goods are loaded onto the ship in Hamburg. "
+ "Under [[138]] terms, it also pays for the sea transport and the insurance until the goods arrive at the port of destination."},
+{"id": "2.1", "title": "Global werden", "text":
+ "Two European airlines have decided to [[139]] in order to compete with larger rivals. "
+ "In Asia, both had already formed [[140]] with local partners, because foreign firms are not allowed to fly there alone. "
+ "Each airline also owns a catering company, which is a [[141]] run separately from the parent company. "
+ "In the past, one of the airlines survived only because the government paid it a [[142]]. "
+ "Managers complain that [[143]], meaning endless forms and permits, slows down every new project. "
+ "Trade policy is another problem: some countries put [[144]] on imported aircraft parts, which makes them more expensive, and others use [[145]] to limit the number of foreign flights each week. "
+ "Because the airlines earn money in dollars but pay many costs in euros, changes in [[146]] have a big effect on profits. "
+ "After the deal, the new airline's [[147]] will include 400 aircraft, several hotels and over two billion euros in cash."},
+{"id": "2.4", "title": "Wege in einen Auslandsmarkt", "text":
+ "A German drinks company wants to sell its lemonade in Asia. The simplest option is [[150]]: producing at home and selling abroad, perhaps through local agents. "
+ "With [[148]], a local bottler would produce the lemonade under the German brand and pay a fee for every bottle. "
+ "[[149]] would give the company much more control: local partners would run their own shops, but they would have to follow every rule from head office and use the company's name and design. "
+ "Another possibility is a [[151]] with a Japanese drinks group, in which the two firms would set up a new company together and share its costs and risks. "
+ "A looser option is a [[152]], in which both firms would cooperate on marketing but keep their costs and risks separate. "
+ "To save money, the company could also use [[153]] and let a contract manufacturer in Vietnam produce the bottles. "
+ "The most expensive option is to set up a [[154]], a company in Asia that the German parent company owns completely."},
+]

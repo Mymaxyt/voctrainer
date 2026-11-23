@@ -1,6 +1,6 @@
 {
-  "versionCode": 15,
-  "versionName": "1.14",
-  "notes": "Update installiert sich nach dem Download von selbst – kein Antippen der APK mehr",
+  "versionCode": 16,
+  "versionName": "1.15",
+  "notes": "Lernplan nach Lernforschung (jedes Wort täglich, Fehlerwörter nach 1 und 10 Minuten wieder), 310 neue Lückensätze, 17 Lückentexte, Fehlerarten mit Buchstabenvergleich, Fortschritt mit Prognose für den Prüfungstag",
   "apk": "https://raw.githubusercontent.com/Mymaxyt/voctrainer/main/dist/Vokabeltrainer.apk"
 }
