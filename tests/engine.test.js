@@ -147,6 +147,7 @@ test("Übernahme aus 1.14", () => {
     { id: "1", t: T0 - 3 * HOUR, m: "Schreiben", n: ap.n, e: ap.e, a: "apperal", ov: false },
     { id: "2", t: T0 - 2 * HOUR, m: "Schreiben", n: mh.n, e: mh.e, a: "material handling", ov: true },
     { id: "3", t: T0 - 9 * DAY, m: "Schreiben", n: ap.n, e: ap.e, a: "x", ov: false },
+    { id: "4", t: T0 - 3 * DAY, m: "Schreiben", n: "1.1-2", e: "household (product)", a: "household products", ov: true },
   ];
   const h = Engine.migrate(srs, log, T0 - 8 * DAY, T0);
   const A = h[U("apparel").k], M = h[U("materials handling").k], F = h[U("freight").k];
@@ -155,6 +156,7 @@ test("Übernahme aus 1.14", () => {
   assert.deepStrictEqual(M, [[T0 - 2 * HOUR, 1, "l", "f"]]);          // "Zählt doch" bleibt ein Fehler
   assert.deepStrictEqual(Engine.daily(h, T0), []);                   // alte Tage sind unvollständig → nicht im Verlauf
   assert.deepStrictEqual(F, [[T0 - DAY, 3, "l"]]);
+  assert.strictEqual(h[U("household (product)").k], undefined);       // damals falsch, heute erlaubt → kein Fehler
   assert.strictEqual(Engine.stage(F), 1);
 });
 

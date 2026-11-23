@@ -312,7 +312,8 @@ function migrate(srs, log, logCleared, now){
     for(const e of L){                      // Modus "l": stammt aus der Zeit vor 1.15 (zählt als getippt, nicht im Satz)
       const m = e.m === "Karte" ? "k" : "l";
       const c = m === "k" ? {e: "n"} : classify(u, e.a);
-      const a = [e.t, 1, m, c.e || "n"]; if(c.p) a.push(c.p); add(u, a);
+      if(c.e === null) continue;            // gilt inzwischen als richtig (z. B. "household products")
+      const a = [e.t, 1, m, c.e]; if(c.p) a.push(c.p); add(u, a);
     }
     const u0 = r.u || (r.due && r.r ? r.due - HOUR : 0);
     const times = L.map(e => e.t), first = Math.min(u0 || now, ...times);
