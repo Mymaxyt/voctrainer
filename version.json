@@ -1,6 +1,6 @@
 {
-  "versionCode": 16,
-  "versionName": "1.15",
-  "notes": "Lernplan nach Lernforschung (jedes Wort täglich, Fehlerwörter nach 1 und 10 Minuten wieder), 310 neue Lückensätze, 17 Lückentexte, Fehlerarten mit Buchstabenvergleich, Fortschritt mit Prognose für den Prüfungstag",
+  "versionCode": 17,
+  "versionName": "1.15.1",
+  "notes": "Lernplan übersichtlicher: oben Tagesfortschritt und Abfrageart (Gemischt, Lückensätze, Deutsch → Englisch). Karteikarten haben jetzt einen eigenen Bereich auf der Startseite.",
   "apk": "https://raw.githubusercontent.com/Mymaxyt/voctrainer/main/dist/Vokabeltrainer.apk"
 }

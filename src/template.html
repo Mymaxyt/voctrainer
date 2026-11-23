@@ -48,6 +48,7 @@ h1{font-size:20px;margin:0;font-weight:700;letter-spacing:-.01em}
 body.typing .seg, body.typing .chips, body.typing .tools, body.typing .legend, body.typing .specialbar{display:none}
 body.typing{padding-top:10px}
 body.typing .segbar{margin-bottom:10px}
+body.typing .daybox{margin:4px 0 8px}
 body.typing #writeMode{margin-top:0;gap:10px}
 body.typing #exam{gap:8px}
 body.typing #exam .qbox{padding:12px 14px 14px}
@@ -65,6 +66,10 @@ body.typing .chapline{display:block}
 .seg button{flex:1;border:0;background:transparent;color:var(--muted);padding:9px 4px;border-radius:9px;font-size:15px;font-weight:600;min-width:0}
 .seg button.on{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .seg.small{margin:6px 0 2px}
+.seg.fmt button{flex:1 1 auto;font-size:14px;padding:9px 8px;white-space:nowrap}
+.daybox{margin:12px 0 12px}
+.dayline{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:2px 10px;font-size:13px;color:var(--muted);margin-bottom:7px;font-variant-numeric:tabular-nums}
+.dayline b{color:var(--text);font-size:16px;font-weight:700}
 .seg.small button{font-size:13px;padding:7px 2px}
 .chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;user-select:none;-webkit-user-select:none}
 .chips::-webkit-scrollbar{display:none}
@@ -246,7 +251,7 @@ body.typing .textbox{font-size:16px;max-height:calc(var(--vvh, 100vh) - 190px)}
 @media (min-width:700px){
   body{max-width:860px;margin:0 auto;width:100%;padding:24px 32px 28px}
   #home.on{display:grid;grid-template-columns:1fr 1fr;align-content:start;gap:18px}
-  #home .hero, #home .tile.small, #home .ready, #home .intro{grid-column:1/-1}
+  #home .hero, #home .tile.small, #home .ready, #home .intro, #home .examtile{grid-column:1/-1}
   .hero h1{font-size:34px}
   .word{font-size:36px} .word.long{font-size:27px}
   .qbox .word{font-size:28px} .sentence{font-size:24px}
@@ -266,6 +271,7 @@ body.typing .textbox{font-size:16px;max-height:calc(var(--vvh, 100vh) - 190px)}
   .seg{margin-bottom:6px} .seg button{padding:6px}
   .legend{display:none}
   .segbar{margin-bottom:8px}
+  .daybox{margin:6px 0 8px}
   .chip{padding:5px 11px}
   .tools{margin-top:6px} .tool{padding:6px}
   .stage{min-height:0;margin:6px 0}
@@ -321,7 +327,12 @@ body.typing .textbox{font-size:16px;max-height:calc(var(--vvh, 100vh) - 190px)}
     <span class="d">Jedes Wort heute einmal ohne Hilfe richtig – Fehlerwörter kommen nach 1 und 10 Minuten wieder</span>
     <span class="m" id="homeTrain"></span>
   </button>
-  <div class="tile">
+  <button class="tile" id="goCards">
+    <span class="t">Karteikarten</span>
+    <span class="d">Zum Aufwärmen: Karte umdrehen und selbst einschätzen. Zählt nicht für den Fortschritt.</span>
+    <span class="m" id="homeCards"></span>
+  </button>
+  <div class="tile examtile">
     <span class="t">Prüfungssimulation</span>
     <span class="d" id="examDesc">Englische Lückensätze, die im Training nie vorkommen. Die Auswertung kommt erst am Ende.</span>
     <div class="seg small" id="examKinds"><button data-k="s30">30 Sätze</button><button data-k="all">Alle 155</button><button data-k="text">Lückentext</button></div>
@@ -468,31 +479,12 @@ body.typing .textbox{font-size:16px;max-height:calc(var(--vvh, 100vh) - 190px)}
 </section>
 
 <section id="train" class="screen">
-<header class="nav"><button class="backbtn" id="trainHome">‹ Start</button><span id="count"></span></header>
-<div class="segbar" id="trainStages" role="img"></div>
-<div class="legend" id="legend"></div>
+<header class="nav"><button class="backbtn" id="trainHome">‹ Start</button><h1>Lernplan</h1></header>
+<div class="daybox"><div class="dayline"><span id="count"></span><span id="countMore"></span></div><div class="meter" id="trainMeterBox" role="img"><i id="trainMeter"></i></div></div>
 <div class="chapline" id="chapline"></div>
-<div class="seg" id="modes"><button data-m="plan">Plan</button><button data-m="c">Lücken</button><button data-m="w">Schreiben</button><button data-m="k">Karten</button></div>
+<div class="seg fmt" id="modes" aria-label="Abfrage"><button data-m="plan">Gemischt</button><button data-m="c">Lückensätze</button><button data-m="w">Deutsch → Englisch</button></div>
 <div class="chips" id="chips"></div>
-<div class="tools" id="tools"><button class="tool" id="dir">EN → DE</button></div>
 <div class="specialbar" id="specialBar" style="display:none"><span id="specialText"></span><button class="linkbtn" id="specialEnd">Liste beenden</button></div>
-
-<div id="cardMode">
-  <div class="stage" id="stage">
-    <div class="card" id="card">
-      <div class="face front"><span class="tag" id="tagF"></span><span class="weak" id="weakF"></span><span class="side">Vorderseite</span>
-        <div class="word" id="front"></div><div class="syn" id="synF"></div><div class="hint">Tippen zum Umdrehen</div></div>
-      <div class="face back"><span class="tag" id="tagB"></span><span class="side">Lösung</span>
-        <div class="word" id="back"></div><div class="sub" id="backSub"></div>
-        <div class="hint">← Nochmal · Gewusst →</div></div>
-    </div>
-  </div>
-  <div class="actions" id="actions">
-    <button class="btn bad" id="no">Nochmal</button>
-    <button class="btn good" id="yes">Gewusst</button>
-  </div>
-  <p class="muted" style="text-align:center;margin:8px 0 0">Karten sind zum Aufwärmen – für den Fortschritt zählen nur getippte Antworten.</p>
-</div>
 
 <div id="writeMode">
   <div class="qbox"><div class="qhead"><span class="tag" id="tagW"></span><span class="weak" id="weakW"></span><span class="kind" id="kindW"></span><span class="side" id="sideW">Englisch schreiben</span></div>
@@ -515,6 +507,37 @@ body.typing .textbox{font-size:16px;max-height:calc(var(--vvh, 100vh) - 190px)}
   <button class="btn main" id="doneBonus">Bonus: schwächste Wörter üben</button>
   <button class="btn ghost" id="doneText2">Lückentext-Prüfung</button>
   <button class="btn ghost" id="doneProgress">Fortschritt ansehen</button>
+</div>
+</section>
+
+<section id="cards" class="screen">
+<header class="nav"><button class="backbtn" id="cardsHome">‹ Start</button><h1>Karteikarten</h1></header>
+<div class="daybox"><div class="dayline"><span id="cardCount"></span><span id="cardMore"></span></div><div class="meter" id="cardMeterBox" role="img"><i id="cardMeter"></i></div></div>
+<div class="seg fmt" id="cardDir" aria-label="Richtung"><button data-d="0">Englisch → Deutsch</button><button data-d="1">Deutsch → Englisch</button></div>
+<div class="chips" id="cardChips"></div>
+
+<div id="cardMode">
+  <div class="stage" id="stage">
+    <div class="card" id="card">
+      <div class="face front"><span class="tag" id="tagF"></span><span class="weak" id="weakF"></span><span class="side">Vorderseite</span>
+        <div class="word" id="front"></div><div class="syn" id="synF"></div><div class="hint">Tippen zum Umdrehen</div></div>
+      <div class="face back"><span class="tag" id="tagB"></span><span class="side">Lösung</span>
+        <div class="word" id="back"></div><div class="sub" id="backSub"></div>
+        <div class="hint">← Nochmal · Gewusst →</div></div>
+    </div>
+  </div>
+  <div class="actions" id="actions">
+    <button class="btn bad" id="no">Nochmal</button>
+    <button class="btn good" id="yes">Gewusst</button>
+  </div>
+  <p class="muted" style="text-align:center;margin:8px 0 0">Karten sind zum Aufwärmen – für den Fortschritt zählen nur getippte Antworten im Lernplan.</p>
+</div>
+
+<div class="done" id="cardDone">
+  <h2>Runde geschafft!</h2>
+  <p id="cardDoneText"></p>
+  <button class="btn main" id="cardAgain">Neue Runde</button>
+  <button class="btn ghost" id="cardToPlan">Weiter mit dem Lernplan</button>
 </div>
 </section>
 
@@ -600,37 +623,51 @@ function stageLegend(box, counts, withNumbers){
 // ---------- Training
 let chap = store.get("chap", "all"), dirRev = store.get("dirRev", false);
 let tmode = store.get("tmode", "plan");
-if(!["plan", "c", "w", "k"].includes(tmode)) tmode = "plan";
-let cur = null, pending = null, hintLevel = 0, recent = [], special = null, bonus = false, cardQ = null, busy = false, flipped = false, waitTimer = null;
+if(!["plan", "c", "w"].includes(tmode)) tmode = "plan";            // Karten haben seit 1.15.1 einen eigenen Bereich
+let cur = null, pending = null, hintLevel = 0, recent = [], special = null, bonus = false, waitTimer = null;
+let cardQ = null, cardCur = null, busy = false, flipped = false;
 const seed = Math.random().toString(36).slice(2, 8);
 const inChap = u => chap === "all" || u.chaps.includes(chap);
 const pool = () => UNITS.filter(inChap);
 
 function renderTrainHead(){
-  const now = Date.now(), I = infos(now), P = pool(), counts = [0, 0, 0, 0, 0];
-  let done = 0, due = 0;
-  for(const u of P){ const i = I.get(u.k); counts[i.stage]++; if(i.today.done) done++; if(i.today.learning) due++; }
-  stageBar($("trainStages"), counts, false);
-  const lg = $("legend"); stageLegend(lg, counts, true);
-  if(due) lg.prepend(el("span", null, `${due} Wiederholung${due > 1 ? "en" : ""} offen`));
-  const c = $("count"); c.textContent = "";
-  if(special){ c.append(el("small", null, "Liste"), document.createTextNode(`${special.total - special.left.length} / ${special.total}`)); }
-  else if(tmode === "k"){ c.append(el("small", null, "Karten"), document.createTextNode(cardQ ? `${cardQ.done} / ${cardQ.total}` : "")); }
-  else { c.append(el("small", null, "Heute geschafft"), document.createTextNode(`${done} / ${P.length}`)); }
+  const now = Date.now(), I = infos(now), P = pool();
+  let done = 0, learn = 0;
+  for(const u of P){ const i = I.get(u.k); if(i.today.done) done++; else if(i.today.learning) learn++; }
+  const c = $("count"), more = $("countMore"); c.textContent = "";
+  let part;
+  if(special){
+    const got = special.total - special.left.length;
+    c.append("Liste: ", el("b", null, String(got)), ` von ${special.total}`); more.textContent = special.title; part = got / special.total;
+  } else {
+    const open = P.length - done - learn;
+    c.append("Heute geschafft: ", el("b", null, String(done)), ` von ${P.length}`);
+    more.textContent = [learn ? `${learn} Fehlerwörter` : "", open ? `${open} offen` : ""].filter(Boolean).join(" · ") || "alles geschafft";
+    part = done / (P.length || 1);
+  }
+  $("trainMeter").style.width = (100 * part).toFixed(1) + "%";
+  $("trainMeterBox").setAttribute("aria-label", c.textContent);
   $("chapline").textContent = "Kapitel " + CHAPS.find(x => x[0] === chap)[1] + " · zum Wechseln Tastatur schließen";
   $("specialBar").style.display = special ? "flex" : "none";
   if(special) $("specialText").textContent = `${special.title}: noch ${special.left.length} von ${special.total}`;
 }
+// Kapitel gelten für Lernplan und Karteikarten gemeinsam
 function renderChips(){
-  $("chips").innerHTML = "";
-  for(const [id, label] of CHAPS){
-    const b = el("button", "chip" + (id === chap ? " on" : ""), label);
-    b.onclick = () => { chap = id; store.set("chap", chap); cardQ = null; renderChips(); next(); };
-    $("chips").appendChild(b);
+  for(const box of [$("chips"), $("cardChips")]){
+    box.textContent = "";
+    for(const [id, label] of CHAPS){
+      const b = el("button", "chip" + (id === chap ? " on" : ""), id === "all" ? "Alle Kapitel" : label);
+      b.onclick = () => {
+        chap = id; store.set("chap", chap); cardQ = null; renderChips();
+        const scr = document.querySelector(".screen.on");
+        if(scr && scr.id === "cards") nextCard(); else next();
+      };
+      box.appendChild(b);
+    }
   }
 }
-function renderModes(){ for(const b of $("modes").children) b.classList.toggle("on", b.dataset.m === tmode); $("tools").style.display = tmode === "k" ? "" : "none"; }
-for(const b of $("modes").children) b.onclick = () => { if(typing()) document.activeElement.blur(); tmode = b.dataset.m; store.set("tmode", tmode); cardQ = null; renderModes(); next(); };
+function renderModes(){ for(const b of $("modes").children) b.classList.toggle("on", b.dataset.m === tmode); }
+for(const b of $("modes").children) b.onclick = () => { if(typing()) document.activeElement.blur(); tmode = b.dataset.m; store.set("tmode", tmode); renderModes(); next(); };
 
 function weakText(u){
   const a = H(u), errs = a.filter(x => x[1] === 1).length, sp = a.filter(x => x[1] === 1 && x[3] === "s").length;
@@ -647,9 +684,7 @@ function next(){
   if(special){
     if(!special.left.length){ const t = special.title; special = null; renderTrainHead(); return showDone("Liste geschafft!", `${t}: jedes Wort einmal ohne Hilfe richtig. Die Wörter bleiben im Lernplan.`, null); }
     const r2 = new Set(recent.slice(-2)), k = special.left.find(x => !r2.has(x)) || special.left[0], u = Engine.unitByKey(k);
-    q = {u, m: tmode === "plan" || tmode === "k" ? Engine.modeFor(u, H(u), "open", 0) : tmode, kind: "special"};
-  } else if(tmode === "k"){
-    q = nextCard();
+    q = {u, m: tmode === "plan" ? Engine.modeFor(u, H(u), "open", 0) : tmode, kind: "special"};
   } else {
     const p = Engine.pick(pool(), infos(now), now, recent, {examAt: settings.examAt, seed, bonus});
     if(p.u) q = {u: p.u, m: tmode === "plan" ? Engine.modeFor(p.u, H(p.u), p.kind, p.step) : tmode, kind: p.kind, step: p.step};
@@ -662,11 +697,9 @@ function next(){
   cur = q; if(cur) cur.shown = now;
   renderTrainHead();
   if(!cur && typing()) document.activeElement.blur();
-  $("cardMode").style.display = cur && cur.m === "k" ? "flex" : "none";
-  $("writeMode").style.display = cur && cur.m !== "k" ? "flex" : "none";
+  $("writeMode").style.display = cur ? "flex" : "none";
   $("done").style.display = cur ? "none" : "flex";
   if(!cur){
-    if(tmode === "k") return showDone("Kartenrunde geschafft!", "Alle Karten dieser Auswahl einmal gewusst. Für den Fortschritt zählen nur getippte Antworten – weiter mit dem Lernplan.", null);
     const P = pool(), I = infos(now), done = P.filter(u => I.get(u.k).today.done).length;
     if(wait && wait.wait != null){
       waitTimer = setTimeout(next, wait.wait + 300);
@@ -674,12 +707,11 @@ function next(){
     }
     return showDone("Tagesziel geschafft!", `Alle ${P.length} Wörter${chap === "all" ? "" : " dieses Kapitels"} heute ohne Hilfe richtig. Morgen kommen sie wieder dran – der Abstand macht das Wissen stabil. Wer heute noch mehr will:`, wait);
   }
-  if(cur.m === "k") showCard(cur); else showAsk(cur);
+  showAsk(cur);
 }
 function showDone(title, text){
-  $("cardMode").style.display = "none"; $("writeMode").style.display = "none"; $("done").style.display = "flex";
+  $("writeMode").style.display = "none"; $("done").style.display = "flex";
   $("doneTitle").textContent = title; $("doneText").textContent = text;
-  $("doneBonus").style.display = tmode === "k" ? "none" : "";
   $("doneBonus").textContent = bonus ? "Weiter: schwächste Wörter" : "Bonus: schwächste Wörter üben";
 }
 $("doneBonus").onclick = () => { bonus = true; next(); };
@@ -687,36 +719,47 @@ $("doneText2").onclick = () => { examKind = "text"; store.set("examKind", examKi
 $("doneProgress").onclick = () => show("progress");
 $("specialEnd").onclick = () => { special = null; next(); };
 
-// ---------- Karteikarten (zum Aufwärmen; selbst bewertet, zählt nicht als sicher)
+// ---------- Karteikarten (eigener Bereich zum Aufwärmen; selbst bewertet, zählt nicht für den Fortschritt)
 function nextCard(){
-  if(!cardQ){ const I = infos(Date.now()); const list = shuffle(pool()).sort((a, b) => I.get(a.k).rNow - I.get(b.k).rNow); cardQ = {list, total: list.length, done: 0}; }
-  if(!cardQ.list.length) return null;
-  const u = cardQ.list[0];
-  return {u, m: "k", kind: "card"};
+  if(!cardQ){ const I = infos(Date.now()); const list = shuffle(pool()).sort((a, b) => I.get(a.k).rNow - I.get(b.k).rNow); cardQ = {list, total: list.length, done: 0, again: 0}; }
+  cardCur = cardQ.list[0] || null;
+  renderCardsHead();
+  $("cardMode").style.display = cardCur ? "flex" : "none";
+  $("cardDone").style.display = cardCur ? "none" : "flex";
+  if(cardCur) showCard(cardCur);
+  else $("cardDoneText").textContent = `Alle ${cardQ.total} Karten${chap === "all" ? "" : " dieses Kapitels"} gewusst` + (cardQ.again ? `, dabei ${cardQ.again}× „Nochmal“.` : ".") + " Ob du die Wörter wirklich schreiben kannst, zeigt der Lernplan.";
 }
-function showCard(q){
-  const card = $("card"), v = firstEntry(q.u);
+function renderCardsHead(){
+  const c = $("cardCount"); c.textContent = "";
+  for(const b of $("cardDir").children) b.classList.toggle("on", (b.dataset.d === "1") === dirRev);
+  if(!cardQ) return;
+  c.append("Runde: ", el("b", null, String(cardQ.done)), ` von ${cardQ.total} gewusst`);
+  $("cardMore").textContent = cardQ.again ? `${cardQ.again}× Nochmal` : "";
+  $("cardMeter").style.width = (100 * cardQ.done / (cardQ.total || 1)).toFixed(1) + "%";
+  $("cardMeterBox").setAttribute("aria-label", c.textContent);
+}
+function showCard(u){
+  const card = $("card"), v = firstEntry(u);
   card.classList.remove("flip", "fly-l", "fly-r"); flipped = false;
   $("tagF").textContent = $("tagB").textContent = tagOf(v);
-  $("weakF").textContent = weakText(q.u);
+  $("weakF").textContent = weakText(u);
   const f = dirRev ? v.q : v.e, b = dirRev ? v.e : v.q;
-  $("front").textContent = f; $("back").textContent = b; setSyn("synF", dirRev ? q.u : null); $("backSub").textContent = dirRev ? v.q : v.e;
+  $("front").textContent = f; $("back").textContent = b; setSyn("synF", dirRev ? u : null); $("backSub").textContent = dirRev ? v.q : v.e;
   $("front").classList.toggle("long", f.length > 32); $("back").classList.toggle("long", b.length > 32);
 }
 function answerCard(ok){
-  if(!cur || busy || cur.m !== "k") return;
+  if(!cardCur || busy) return;
   busy = true;
-  const u = cur.u, v = firstEntry(u);
+  const u = cardCur, v = firstEntry(u);
   record(u, ok ? 2 : 1, "k", "n");
   if(!ok) addLog({m: "Karte", v, a: "", q: dirRev ? "DE → EN" : "EN → DE", k: "n"});
-  recent.push(u.k);
   cardQ.list.shift();
-  if(ok) cardQ.done++; else cardQ.list.splice(Math.min(cardQ.list.length, 3 + Math.floor(Math.random() * 4)), 0, u);
+  if(ok) cardQ.done++; else { cardQ.again++; cardQ.list.splice(Math.min(cardQ.list.length, 3 + Math.floor(Math.random() * 4)), 0, u); }
   const card = $("card");
   card.classList.add(ok ? "fly-r" : "fly-l");
-  setTimeout(() => { card.style.transition = "none"; next(); void card.offsetWidth; card.style.transition = ""; busy = false; }, 240);
+  setTimeout(() => { card.style.transition = "none"; nextCard(); void card.offsetWidth; card.style.transition = ""; busy = false; }, 240);
 }
-function flip(){ if(!cur || busy) return; flipped = !flipped; $("card").classList.toggle("flip", flipped); }
+function flip(){ if(!cardCur || busy) return; flipped = !flipped; $("card").classList.toggle("flip", flipped); }
 let sx = null, sy = null;
 $("card").addEventListener("pointerdown", e => { sx = e.clientX; sy = e.clientY; });
 $("card").addEventListener("pointerup", e => {
@@ -727,7 +770,11 @@ $("card").addEventListener("pointerup", e => {
 });
 $("yes").onclick = () => answerCard(true);
 $("no").onclick = () => answerCard(false);
-$("dir").onclick = () => { dirRev = !dirRev; store.set("dirRev", dirRev); $("dir").textContent = dirRev ? "DE → EN" : "EN → DE"; if(cur && cur.m === "k") showCard(cur); };
+for(const b of $("cardDir").children) b.onclick = () => { dirRev = b.dataset.d === "1"; store.set("dirRev", dirRev); renderCardsHead(); if(cardCur) showCard(cardCur); };
+$("goCards").onclick = () => { show("cards"); nextCard(); };
+$("cardsHome").onclick = () => show("home");
+$("cardAgain").onclick = () => { cardQ = null; nextCard(); };
+$("cardToPlan").onclick = () => { special = null; bonus = false; show("train"); next(); };
 
 // ---------- Schreiben und Lückensatz
 function showAsk(q){
@@ -910,6 +957,10 @@ function renderHome(){
   stageBar($("homeStages"), S.counts, false); stageLegend($("homeLegend"), S.counts, true);
   const after = now >= settings.examAt, open = after ? UNITS.filter(u => { const i = S.I.get(u.k); return !i.today.done && !i.today.learning && i.rNow < 0.9; }).length : UNITS.length - S.done - S.learn;
   $("homeTrain").textContent = (open > 0 ? (after ? `${open} Wörter zum Auffrischen fällig` : `Heute noch ${open} Wörter offen`) : (after ? "Nichts fällig" : "Tagesziel geschafft")) + (S.learn ? ` · ${S.learn} Wiederholung${S.learn > 1 ? "en" : ""} nach Fehlern` : "");
+  const P = pool();
+  $("homeCards").textContent = cardQ && cardQ.list.length && cardQ.done
+    ? `Runde läuft: ${cardQ.done} von ${cardQ.total} gewusst`
+    : `${P.length} Karten${chap === "all" ? "" : " · Kapitel " + CHAPS.find(x => x[0] === chap)[1]} · schwächste zuerst`;
   renderExamTile();
 }
 $("goTrain").onclick = () => { special = null; bonus = false; show("train"); next(); };
@@ -998,7 +1049,6 @@ function renderProgress(){
 function startSpecial(title, keys){
   if(!keys.length) return;
   special = {title, left: shuffle(keys.slice()), total: keys.length}; bonus = false;
-  if(tmode === "k"){ tmode = "plan"; store.set("tmode", tmode); renderModes(); }
   show("train"); next();
 }
 const toLocalInput = t => { const d = new Date(t); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`; };
@@ -1164,7 +1214,6 @@ document.addEventListener("visibilitychange", () => {
   }
   if(window.syncReady){ syncOnVisibility(); if(!document.hidden && Date.now() - ((upd && upd.checked) || 0) > HOUR) checkUpdate(false); }
 });
-$("dir").textContent = dirRev ? "DE → EN" : "EN → DE";
 
 // ---------- Geräte-Sync (verschlüsselt in einem geheimen GitHub-Gist)
 const GH = "https://api.github.com/gists", GFILE = "vokabeltrainer.json";
