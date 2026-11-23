@@ -1,6 +1,6 @@
 {
-  "versionCode": 18,
-  "versionName": "1.15.2",
-  "notes": "Prüfung: Enter springt nur noch zur nächsten Lücke und gibt nie ab. Abgeben nur über den Knopf, mit zweitem Tippen zur Bestätigung.",
+  "versionCode": 19,
+  "versionName": "1.16",
+  "notes": "Alle Lücken zeigen jetzt einen Strich pro Buchstabe, dahinter steht ein englischer Hinweis in Klammern. Anfangsbuchstaben nur als Tipp oder Prüfungsoption.",
   "apk": "https://raw.githubusercontent.com/Mymaxyt/voctrainer/main/dist/Vokabeltrainer.apk"
 }

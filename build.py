@@ -22,6 +22,7 @@ def load_data():
     tr = load_training()
     for i, v in enumerate(data):
         v["t"] = [list(s) if isinstance(s, tuple) else s for s in tr.T[i]]
+        v["h"] = tr.H[i]
     return data, tr.TEXTS
 
 def js(obj):

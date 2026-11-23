@@ -73,6 +73,18 @@ test("Buchstabenvergleich", () => {
   assert.strictEqual(Engine.align("Apperal", "apparel").filter(o => o[0] === "~").length, 2);
 });
 
+test("Lücke als Striche", () => {
+  const show = r => r.words.map(w => w.map(x => x.fix != null ? x.fix : (x.v || "_")).join("")).join(" ") + (r.extra ? " +" + r.extra : "");
+  assert.strictEqual(show(Engine.slots("materials handling", "")), "_________ ________");
+  assert.strictEqual(show(Engine.slots("materials handling", "materials h")), "materials h_______");
+  assert.strictEqual(show(Engine.slots("materials handling", "materialshandling")), "materials handling");
+  assert.strictEqual(show(Engine.slots("cross-selling", "", true)), "c____-s______");
+  assert.strictEqual(show(Engine.slots("import/export", "importexport")), "import/export");
+  assert.strictEqual(show(Engine.slots("fob", "fobs")), "fob +s");
+  assert.ok(Engine.slots("fob", "", true).words[0][0].hint);
+  assert.strictEqual(Engine.slots("fob", "f", true).words[0][0].hint, undefined);
+});
+
 test("Lernstufen", () => {
   const st = a => Engine.stage(a);
   assert.strictEqual(st([]), 0);

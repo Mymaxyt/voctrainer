@@ -61,6 +61,13 @@ for i, pair in sorted(tr.T.items()):
         a = article(sent.split("___")[0], ans)
         if a: hints.append(f"{i} {v['e']}: {a}: {sent}")
 
+# Hinweise in Klammern
+if sorted(getattr(tr, "H", {})) != list(range(len(data))): errors.append("H hat nicht genau die Einträge 0–%d" % (len(data) - 1))
+for i, h in sorted(getattr(tr, "H", {}).items()):
+    lk = leaks(forms(data[i]), h)
+    if lk: errors.append(f"{i} {data[i]['e']}: Hinweis verrät das Lösungswort ({', '.join(sorted(lk))}): {h}")
+    if not h.strip() or len(h) > 45: errors.append(f"{i} {data[i]['e']}: Hinweis leer oder zu lang: {h}")
+
 # Lückentexte
 used = {}
 for t in tr.TEXTS:

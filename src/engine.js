@@ -202,6 +202,24 @@ function align(typed, target){
   return ops.reverse();
 }
 
+// ---------- Lücke als Striche: ein Strich je Buchstabe; Wortgrenzen, Bindestriche und / bleiben sichtbar.
+// Getippte Buchstaben füllen die Striche von links (Leerzeichen und Bindestriche beim Tippen egal),
+// mit first = true stehen die Anfangsbuchstaben schon da. Zu viele Buchstaben landen in extra.
+const LETTER = /[A-Za-z0-9&]/;
+function slots(g, typed, first){
+  const L = [...String(typed || "")].filter(ch => LETTER.test(ch));
+  let k = 0;
+  const words = String(g || "").trim().split(/\s+/).filter(Boolean).map(w => {
+    let start = true;
+    return [...w].map(ch => {
+      if(!LETTER.test(ch)){ start = true; return {fix: ch}; }
+      const it = k < L.length ? {v: L[k++]} : first && start ? {v: ch, hint: true} : {v: ""};
+      start = false; return it;
+    });
+  });
+  return {words, extra: L.slice(k).join("")};
+}
+
 // ---------- Lernstufen (Fakten aus dem Verlauf)
 const TYPED = "wctxl", CTX = "ctx";
 const isTyped = a => TYPED.includes(a[2]);
@@ -408,7 +426,7 @@ function daily(hist, now, n){
 }
 
 return {MIN, HOUR, DAY, P, STAGES, ERR, init, norm, accepted, forms, unitOf, unitByKey, get units(){ return UNITS; },
-        isRight, classify, closest, align, dist, memory, recall, retr, stage, today, info, pick, modeFor, sentence, promptEntry,
+        isRight, classify, closest, align, dist, slots, memory, recall, retr, stage, today, info, pick, modeFor, sentence, promptEntry,
         chance, note, dayStart, dayKey, migrate, tidy, mergeHist, legacySrs, absorbLegacy, errorsByType, confusions, daily, isTyped, okTyped};
 })();
 if(typeof module !== "undefined") module.exports = Engine;

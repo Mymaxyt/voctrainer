@@ -180,9 +180,17 @@ header.nav h1{flex:none}
 .gap.filled{font-family:inherit;letter-spacing:0;color:var(--text)}
 .gap.ok{font-family:inherit;letter-spacing:0;color:var(--good);border-bottom-color:var(--good)}
 .gap.no{font-family:inherit;letter-spacing:0;color:var(--bad);border-bottom-color:var(--bad)}
-.textbox .gap{min-width:2.2em;border-bottom-color:var(--line);color:var(--muted)}
-.textbox .gap.on{border-bottom-color:var(--accent);color:var(--accent);background:var(--surface2);border-radius:4px 4px 0 0}
-.textbox .gap.filled{color:var(--text)}
+.gap.slots{display:inline;min-width:0;padding:0;border:0;letter-spacing:0;font-family:inherit;font-weight:700;color:var(--accent)}
+.slots .w{display:inline-block;white-space:nowrap;margin:0 .1em}
+.slots i{display:inline-block;min-width:.58em;margin:0 .13em;border-bottom:2px solid currentColor;text-align:center;font-style:normal;
+  font-family:ui-monospace,Menlo,monospace;font-size:.88em;line-height:1.25;color:var(--text)}
+.slots i.h{color:var(--accent)}
+.slots i.x{color:var(--bad);border-bottom-color:var(--bad)}
+.slots .fx{font-family:ui-monospace,Menlo,monospace;font-size:.88em;margin:0 .04em;color:var(--text)}
+.clue{color:var(--muted);font-size:.82em;font-style:italic;font-weight:400}
+.gnum{color:var(--muted);font-size:.8em;font-weight:600}
+.textbox .gap.slots{color:var(--line);border-radius:4px;padding:1px 2px}
+.textbox .gap.slots.on{color:var(--accent);background:var(--surface2)}
 .textbox{max-height:calc(var(--vvh, 100vh) - 250px);min-height:120px;overflow-y:auto;font-size:18px;line-height:1.7}
 body.typing .textbox{font-size:16px;max-height:calc(var(--vvh, 100vh) - 190px)}
 #exam .qbox{padding:14px 18px 22px}
@@ -337,7 +345,7 @@ body.typing .textbox{font-size:16px;max-height:calc(var(--vvh, 100vh) - 190px)}
     <span class="d" id="examDesc">Englische Lückensätze, die im Training nie vorkommen. Die Auswertung kommt erst am Ende.</span>
     <div class="seg small" id="examKinds"><button data-k="s30">30 Sätze</button><button data-k="all">Alle 155</button><button data-k="text">Lückentext</button></div>
     <select class="select" id="textPick" aria-label="Lückentext auswählen"></select>
-    <label class="opt"><input type="checkbox" id="optLetters"> Anfangsbuchstaben als Hilfe zeigen</label>
+    <label class="opt"><input type="checkbox" id="optLetters"> Zusätzlich Anfangsbuchstaben zeigen (zählt als „mit Hilfe“)</label>
     <span class="m" id="homeExam"></span>
     <button class="btn main" id="goExam">Prüfung starten</button>
   </div>
@@ -788,8 +796,9 @@ function showAsk(q){
   if(q.m === "w") $("prompt").textContent = v.q;
   else {
     const [a, b] = q.sent.s.split("___"), s = $("cloze"), sp = el("span", "s");
-    s.textContent = ""; const gap = el("span", "gap", "______"); gap.id = "clozeGap";
-    sp.append(document.createTextNode(a), gap, document.createTextNode(b)); s.appendChild(sp);
+    s.textContent = ""; const gap = el("span", "gap slots"); gap.id = "clozeGap";
+    sp.append(document.createTextNode(a), gap, document.createTextNode(b + " "), el("span", "clue", "(" + v.h + ")")); s.appendChild(sp);
+    drawSlots(gap, q.sent.g, "", false);
   }
   setSyn("synW", q.u);
   $("meaning").textContent = ""; $("meaning").style.display = "none";
@@ -799,13 +808,34 @@ function showAsk(q){
   $("hintBtn").style.display = ""; $("hintBtn").textContent = q.m === "c" ? "Tipp: Bedeutung" : "Tipp";
   $("result").className = "result"; $("result").textContent = "";
 }
-function setGap(text, cls){ const g = $("clozeGap"); if(!g) return; g.textContent = text || "______"; g.className = "gap" + (cls ? " " + cls : text ? " filled" : ""); }
+// Lücke: Striche je Buchstabe, getippte Buchstaben füllen sie; nach dem Prüfen steht die Lösung als Text darin
+function drawSlots(box, g, typed, first, label){
+  box.textContent = "";
+  const r = Engine.slots(g, typed, first);
+  r.words.forEach((w, wi) => {
+    const ws = el("span", "w");
+    if(label && !wi) ws.append(el("span", "gnum", label + "\u00a0"));          // Nummer bleibt beim ersten Wort
+    for(const it of w) ws.append(it.fix != null ? el("span", "fx", it.fix) : el("i", it.hint ? "h" : null, it.v || "\u00a0"));
+    if(wi === r.words.length - 1) for(const ch of r.extra) ws.append(el("i", "x", ch));
+    box.append(ws);
+    if(wi < r.words.length - 1) box.append(document.createTextNode(" "));
+  });
+  box.setAttribute("aria-label", `Lücke mit ${r.words.map(w => w.filter(x => x.fix == null).length).join(" + ")} Buchstaben`);
+}
+function setGap(text, cls){
+  const g = $("clozeGap"); if(!g || !cur || cur.m !== "c") return;
+  if(cls === "ok" || cls === "no"){ g.className = "gap " + cls; g.removeAttribute("aria-label"); g.textContent = text; return; }
+  g.className = "gap slots"; drawSlots(g, cur.sent.g, text || "", hintLevel >= 2);
+}
 $("hintBtn").onclick = () => {
   if(!cur || pending || cur.m === "k") return;
   if(cur.m === "c" && hintLevel === 0){
     hintLevel = 1; $("meaning").textContent = "Bedeutung: " + cur.v.q; $("meaning").style.display = "";
-    $("hintBtn").textContent = "Tipp: Buchstaben";
-  } else { hintLevel = 2; $("hintText").textContent = hintPattern(cur.m === "c" ? cur.sent.g : cur.v.e); $("hintBtn").style.display = "none"; }
+    $("hintBtn").textContent = "Tipp: Anfangsbuchstaben";
+  } else {
+    hintLevel = 2; $("hintBtn").style.display = "none";
+    if(cur.m === "c") setGap($("answer").value.trim()); else $("hintText").textContent = hintPattern(cur.v.e);
+  }
   $("answer").focus();
 };
 $("form").addEventListener("submit", e => {
@@ -1073,13 +1103,12 @@ $("optLetters").onchange = () => store.set("optLetters2", $("optLetters").checke
 function renderExamTile(){
   for(const b of $("examKinds").children) b.classList.toggle("on", b.dataset.k === examKind);
   $("textPick").style.display = examKind === "text" ? "" : "none";
-  $("examDesc").textContent = examKind === "text" ? "Ein zusammenhängender Text je Buchaufgabe, ohne Wortkasten – wie eine schwere Klausuraufgabe."
-    : examKind === "all" ? "Alle 155 Prüfungssätze in zufälliger Reihenfolge. Die Auswertung kommt erst am Ende."
-    : "30 zufällige Vokabeln als englische Lückensätze, die im Training nie vorkommen. Die Auswertung kommt erst am Ende.";
+  $("examDesc").textContent = (examKind === "text" ? "Ein zusammenhängender Text je Buchaufgabe, ohne Wortkasten."
+    : examKind === "all" ? "Alle 155 Prüfungssätze in zufälliger Reihenfolge."
+    : "30 zufällige Vokabeln als englische Lückensätze, die im Training nie vorkommen.") + " Jede Lücke zeigt einen Strich pro Buchstaben, dahinter steht ein englischer Hinweis in Klammern. Auswertung erst am Ende.";
   const ex = store.get("exams", []), last = ex[ex.length - 1];
   $("homeExam").textContent = last ? `Letztes Ergebnis: ${last.p} / ${last.n} (${Math.round(100 * last.p / last.n)} %, Note ${Engine.note(Math.round(100 * last.p / last.n))}) · ${ex.length} Prüfung${ex.length > 1 ? "en" : ""}` : "Noch keine Prüfung gemacht";
 }
-function gapPattern(g){ return g.replace(/[A-Za-z]+/g, w => w[0] + "_".repeat(w.length - 1)); }
 function pickText(){
   const v = $("textPick").value;
   if(v && v !== "rand") return TEXTS.find(t => t.id === v);
@@ -1105,34 +1134,38 @@ function startExam(){
   exam = {kind: examKind, items, i: 0, letters, text};
   show("exam"); renderQ();
 }
-function gapText(it, active){ const typed = it === exam.items[exam.i] ? $("examAns").value.trim() : it.ans.trim(); return typed || (exam.letters ? gapPattern(it.g) : it.g.split(/\s+/).map(() => "_____").join(" ")); }
 function renderGap(){
-  const it = exam.items[exam.i], typed = $("examAns").value.trim();
-  const gap = document.querySelector("#sentence .gap.on") || document.querySelector("#sentence .gap");
-  if(!gap) return;
-  gap.classList.toggle("filled", !!typed);
-  gap.textContent = (exam.text ? `(${it.n}) ` : "") + gapText(it);
+  const it = exam.items[exam.i], gap = document.querySelector("#sentence .gap.on");
+  if(gap) drawSlots(gap, it.g, $("examAns").value, exam.letters, exam.text ? `(${it.n})` : "");
 }
 function renderQ(){
   const it = exam.items[exam.i], s = $("sentence");
   s.textContent = ""; s.className = "sentence" + (exam.text ? " textbox" : "");
   $("examAns").value = it.ans;
   if(exam.text){
-    const parts = exam.text.text.split(/\[\[(\d+)\]\]/); let k = 0;
+    // Hinweise in Klammern am Ende des Satzes, in dem die Lücke steht: (3: hint; 4: hint)
+    const parts = exam.text.text.split(/\[\[(\d+)\]\]/); let k = 0, open = [];
+    const flush = () => { if(open.length){ s.append(" ", el("span", "clue", "(" + open.map(x => `${x.n}: ${x.v.h}`).join("; ") + ")")); open = []; } };
     for(let j = 0; j < parts.length; j++){
-      if(j % 2 === 0){ s.append(document.createTextNode(parts[j])); continue; }
-      const item = exam.items[k++], g = el("span", "gap" + (item === it ? " on" : "") + (item.ans.trim() ? " filled" : ""));
-      g.textContent = `(${item.n}) ` + gapText(item); g.dataset.i = k - 1;
+      if(j % 2 === 0){
+        let rest = parts[j];
+        const end = open.length ? rest.match(/[.!?](?=\s|$)/) : null;
+        if(end){ s.append(document.createTextNode(rest.slice(0, end.index + 1))); flush(); rest = rest.slice(end.index + 1); }
+        s.append(document.createTextNode(rest)); continue;
+      }
+      const item = exam.items[k++], g = el("span", "gap slots" + (item === it ? " on" : ""));
+      drawSlots(g, item.g, item === it ? $("examAns").value : item.ans, exam.letters, `(${item.n})`); g.dataset.i = k - 1;
       g.onclick = () => { exam.items[exam.i].ans = $("examAns").value; exam.i = +g.dataset.i; renderQ(); $("examAns").focus(); };
-      s.append(g);
+      s.append(g); open.push(item);
     }
+    flush();
     $("examTag").textContent = `Aufgabe ${exam.text.id} · ${exam.text.title}`;
     $("examSide").textContent = "Lückentext";
     $("examCount").textContent = `Lücke ${exam.i + 1} / ${exam.items.length}`;
     const on = s.querySelector(".gap.on"); if(on) requestAnimationFrame(() => { const top = on.offsetTop - s.offsetTop - s.clientHeight / 3; s.scrollTop = Math.max(0, top); });
   } else {
-    const [a, b] = it.s.split("___"), gap = el("span", "gap on"), sp = el("span", "s");
-    sp.append(document.createTextNode(a), gap, document.createTextNode(b)); s.append(sp);
+    const [a, b] = it.s.split("___"), gap = el("span", "gap slots on"), sp = el("span", "s");
+    sp.append(document.createTextNode(a), gap, document.createTextNode(b + " "), el("span", "clue", "(" + it.v.h + ")")); s.append(sp);
     $("examTag").textContent = it.v.c.split(" ")[0] + " · Aufg. " + it.v.n;
     $("examSide").textContent = "Lücke füllen";
     $("examCount").textContent = `Frage ${exam.i + 1} / ${exam.items.length}`;
