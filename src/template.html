@@ -466,9 +466,9 @@ body.typing .textbox{font-size:16px;max-height:calc(var(--vvh, 100vh) - 190px)}
   <form id="examForm" autocomplete="off">
     <input id="examAns" class="typein" type="text" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false"
       enterkeyhint="enter" placeholder="Antwort …">
-    <button class="btn main" id="examNext" type="submit">Weiter</button>
+    <button class="btn main" id="examNext" type="button">Weiter</button>
   </form>
-  <div class="row"><button class="tool" id="examPrev" type="button" style="flex:none;padding:9px 14px">‹ Zurück</button><span class="muted">Enter springt zur nächsten Lücke</span></div>
+  <div class="row"><button class="tool" id="examPrev" type="button" style="flex:none;padding:9px 14px">‹ Zurück</button><span class="muted" id="examHint">Enter springt zur nächsten Lücke</span></div>
 </section>
 
 <section id="resultScreen" class="screen">
@@ -1062,7 +1062,7 @@ $("examSave").onclick = () => {
 
 // ---------- Prüfungssimulation
 const EXAM_N = 30;
-let examKind = store.get("examKind", "s30"), exam = null;   // {kind, items:[{u, v, s, g, ans, ok, res, logId}], i, letters, text}
+let examKind = store.get("examKind", "s30"), exam = null, submitArmed = null;   // {kind, items:[{u, v, s, g, ans, ok, res, logId}], i, letters, text}
 $("optLetters").checked = store.get("optLetters2", false);
 $("optLetters").onchange = () => store.set("optLetters2", $("optLetters").checked);
 (() => {
@@ -1139,16 +1139,38 @@ function renderQ(){
   }
   setSyn("synE", it.u);
   $("examProg").style.width = 100 * exam.i / exam.items.length + "%";
-  $("examNext").textContent = exam.i === exam.items.length - 1 ? "Abgeben" : "Weiter";
+  const last = exam.i === exam.items.length - 1;
+  clearTimeout(submitArmed); submitArmed = null;
+  $("examNext").textContent = last ? "Abgeben" : "Weiter";
+  $("examHint").textContent = last ? "Letzte Lücke – abgeben nur über den Knopf „Abgeben“" : "Enter springt zur nächsten Lücke";
   $("examPrev").style.visibility = exam.i ? "visible" : "hidden";
   renderGap();
 }
 $("examAns").addEventListener("input", renderGap);
+// Enter (Bildschirm- oder Ansteck-Tastatur) geht nur zur nächsten Lücke und gibt nie ab
+const emptyGaps = () => exam.items.filter(i => !i.ans.trim()).length;
 $("examForm").addEventListener("submit", e => {
   e.preventDefault(); if(!exam) return;
   exam.items[exam.i].ans = $("examAns").value;
-  if(exam.i < exam.items.length - 1){ exam.i++; renderQ(); } else finishExam();
+  if(exam.i < exam.items.length - 1){ exam.i++; renderQ(); return; }
+  const empty = emptyGaps();
+  $("examHint").textContent = (empty ? `Noch ${empty} ${empty > 1 ? "Lücken" : "Lücke"} leer. ` : "Alles ausgefüllt. ") + "Abgeben nur über den Knopf „Abgeben“.";
 });
+// Abgeben nur per Knopf und mit zweitem Tippen
+$("examNext").onclick = () => {
+  if(!exam) return;
+  exam.items[exam.i].ans = $("examAns").value;
+  if(exam.i < exam.items.length - 1){ exam.i++; renderQ(); return; }
+  const b = $("examNext");
+  if(!submitArmed){
+    const empty = emptyGaps();
+    b.textContent = "Wirklich abgeben?";
+    $("examHint").textContent = (empty ? `Noch ${empty} ${empty > 1 ? "Lücken" : "Lücke"} leer. ` : "") + "Zum Abgeben nochmal tippen.";
+    submitArmed = setTimeout(() => { submitArmed = null; b.textContent = "Abgeben"; $("examHint").textContent = "Letzte Lücke – abgeben nur über den Knopf „Abgeben“"; }, 3000);
+    return;
+  }
+  clearTimeout(submitArmed); submitArmed = null; finishExam();
+};
 $("examPrev").onclick = () => { if(!exam || !exam.i) return; exam.items[exam.i].ans = $("examAns").value; exam.i--; renderQ(); };
 let quitArmed = null;
 $("examQuit").onclick = () => {

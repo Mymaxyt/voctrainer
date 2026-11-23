@@ -1,6 +1,6 @@
 {
-  "versionCode": 17,
-  "versionName": "1.15.1",
-  "notes": "Lernplan übersichtlicher: oben Tagesfortschritt und Abfrageart (Gemischt, Lückensätze, Deutsch → Englisch). Karteikarten haben jetzt einen eigenen Bereich auf der Startseite.",
+  "versionCode": 18,
+  "versionName": "1.15.2",
+  "notes": "Prüfung: Enter springt nur noch zur nächsten Lücke und gibt nie ab. Abgeben nur über den Knopf, mit zweitem Tippen zur Bestätigung.",
   "apk": "https://raw.githubusercontent.com/Mymaxyt/voctrainer/main/dist/Vokabeltrainer.apk"
 }
