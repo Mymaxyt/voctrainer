@@ -663,9 +663,11 @@ if(!settings.f18){ settings = Object.assign({}, settings, {n: 16, f18: 1, u: Dat
 const examOpts = () => ({examAt: settings.examAt, n: settings.n || 16, key1: Number.isFinite(settings.key1) ? settings.key1 : 95, key4: Number.isFinite(settings.key4) ? settings.key4 : 50});
 const gradeKey = () => { const o = examOpts(); return Engine.gradeKey(o.key1, o.key4); };
 const gradeOf = pct => Engine.gradeOf(pct, gradeKey());
+let fmtCache = null;
+function fmtShift(){ const k = calib().k; if(!fmtCache || fmtCache.v !== histVer || fmtCache.k !== k) fmtCache = {v: histVer, k, f: Engine.formatShift(hist, k)}; return fmtCache.f; }
 function forecastFor(plan){
   const now = Date.now(), id = [histVer, plan, JSON.stringify(examOpts()), Math.floor(now / (5 * MIN))].join("|");
-  if(!fcCache[plan] || fcCache[plan].id !== id) fcCache[plan] = {id, f: Engine.forecast(hist, now, Object.assign({cal: calib(), plan}, examOpts()))};
+  if(!fcCache[plan] || fcCache[plan].id !== id) fcCache[plan] = {id, f: Engine.forecast(hist, now, Object.assign({cal: calib(), plan, fmt: fmtShift()}, examOpts()))};
   return fcCache[plan].f;
 }
 // Beim Üben reicht der zuletzt berechnete Faktor (er ändert sich nur langsam); Startseite und Fortschritt rechnen neu.
@@ -1152,7 +1154,10 @@ function renderForecast(now, S){
     : `${cal.n} Abrufe über Nacht ausgewertet: ${cal.right} richtig (${Math.round(100 * cal.right / cal.n)} %). Das Durchschnittsmodell hätte ${Math.round(100 * cal.expStd / cal.n)} % erwartet, angepasst an dich ${Math.round(100 * cal.expMe / cal.n)} %. `
       + (cal.k < 0.8 ? "Du vergisst über Nacht mehr als der Durchschnitt – die Prognose ist deshalb strenger." : cal.k > 1.25 ? "Du behältst über Nacht mehr als der Durchschnitt – die Prognose ist deshalb großzügiger." : "Du liegst nahe am Durchschnitt.");
   const ec = Engine.examCheck(hist, cal.k);
-  $("simText").textContent = ec.n ? `Prüfungssimulationen: ${ec.right} von ${ec.n} Lücken richtig, das angepasste Modell hätte ${Math.round(ec.exp)} erwartet.` : "Noch keine Prüfungssimulation – sie ist die beste Gegenprobe für die Prognose.";
+  const fm = fmtShift(), ex80 = Math.round(100 * Engine.shiftP(0.8, fm.d));
+  $("simText").textContent = ec.n ? `Prüfungssimulationen: ${ec.right} von ${ec.n} schon geübten Wörtern richtig, das Gedächtnismodell hätte ${Math.round(ec.exp)} erwartet. `
+    + (Math.abs(ex80 - 80) >= 2 ? `Im Prüfungsformat klappt der Abruf also ${ex80 < 80 ? "schlechter" : "besser"} als beim Üben – die Prognose rechnet das ein: Wo das Modell 80 % erwartet, setzt sie ${ex80} % an.` : "Das passt zum Modell.")
+    : "Noch keine Prüfungssimulation – sie ist die beste Gegenprobe für die Prognose.";
   $("assumeText").textContent = `Annahmen: ${o.n} Punkte${o.n === 16 ? " wie im Übungstest" : ""} · 1,0 ab ${pctTxt(o.key1)} · bestanden (4,0) ab ${pctTxt(o.key4)}`;
 }
 $("assumeEdit").onclick = () => { const o = examOpts(); $("asN").value = o.n; $("asK1").value = o.key1; $("asK4").value = o.key4; $("assumeRow").style.display = "flex"; };
@@ -1943,7 +1948,7 @@ function logExport(){
   const FP = forecastFor(true), cal = S.F.cal, exc = Engine.examCheck(hist, cal.k), o = examOpts();
   L.push(`Prüfung: ${fmtWhen(settings.examAt)} · Annahmen ${o.n} Punkte, 1,0 ab ${pctTxt(o.key1)}, 4,0 ab ${pctTxt(o.key4)} · heute geschafft ${S.done}/${UNITS.length}`);
   L.push(`Prognose Stand jetzt: ${S.F.mean.toFixed(1)} % (Note ${gradeOf(S.F.mean)}, Bereich ${Math.round(S.F.p10)}–${Math.round(S.F.p90)} %, 1,0-Chance ${Math.round(100 * S.F.p1)} %) · mit Lernplan: ${FP.mean.toFixed(1)} % (Note ${gradeOf(FP.mean)}, 1,0-Chance ${Math.round(100 * FP.p1)} %)`);
-  L.push(`Anpassung: ${cal.n} Abrufe über Nacht, ${cal.right} richtig, Durchschnittsmodell erwartete ${cal.expStd.toFixed(1)}, angepasst ${cal.expMe.toFixed(1)} (Faktor ${cal.k.toFixed(2)} ± ${cal.se.toFixed(2)} log) · Simulationen: ${exc.right}/${exc.n} richtig, erwartet ${exc.exp.toFixed(1)}`);
+  L.push(`Anpassung: ${cal.n} Abrufe über Nacht, ${cal.right} richtig, Durchschnittsmodell erwartete ${cal.expStd.toFixed(1)}, angepasst ${cal.expMe.toFixed(1)} (Faktor ${cal.k.toFixed(2)} ± ${cal.se.toFixed(2)} log) · Simulationen: ${exc.right}/${exc.n} richtig, erwartet ${exc.exp.toFixed(1)} · Prüfungsformat ${fmtShift().d.toFixed(2)} ± ${fmtShift().se.toFixed(2)} logit (aus 80 % werden ${Math.round(100 * Engine.shiftP(0.8, fmtShift().d))} %)`);
   L.push("Lernstufen: " + ORDER.map(s => `${Engine.STAGES[s]} ${S.counts[s]}`).join(" · "));
   const ec = Engine.errorsByType(hist, now - 7 * DAY);
   L.push("Fehlerarten (7 Tage): " + Object.entries(ec).map(([k, n]) => `${Engine.ERR[k]} ${n}`).join(" · "));

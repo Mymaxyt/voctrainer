@@ -1,6 +1,6 @@
 {
-  "versionCode": 25,
-  "versionName": "1.19.2",
-  "notes": "Fehler „Antwort nicht lesbar“ behoben: Claude antwortet jetzt in festem Format. Neuer Knopf „KI-Prüfung wiederholen“.",
+  "versionCode": 26,
+  "versionName": "1.20",
+  "notes": "Prognose rechnet jetzt ein, dass das Prüfungsformat schwerer ist; echte Synonyme in Lücken (z. B. brand recognition) zählen; mehrdeutige Sätze korrigiert.",
   "apk": "https://raw.githubusercontent.com/Mymaxyt/voctrainer/main/dist/Vokabeltrainer.apk"
 }

@@ -101,7 +101,7 @@ const unitByKey = k => UNIT.get(k);
 const isRight = (u, typed, extra) => { const t = norm(typed); return t !== "" && (u.acc.has(t) || (!!extra && norm(extra) === t)); };
 // Lücke im Satz oder Text (wie in Moodle): nur genau das Wort, das in die Lücke gehört – in der Form, die der Satz braucht.
 // Erlaubt sind nur echte Schreibvarianten (britisch/amerikanisch, Bindestrich/Leerzeichen) und bei Abkürzungen Kurz- oder Langform.
-const spell = s => s.replace(/centre/g, "center").replace(/isation/g, "ization").replace(/ise(d|s)?$/, "ize$1")
+const spell = s => s.replace(/centre/g, "center").replace(/is(ation|ed|es|ing|e)/g, "iz$1")
   .replace(/fulfil(?!l)/g, "fulfill").replace(/catalogue/g, "catalog").replace(/organis/g, "organiz").replace(/colour/g, "color");
 function gapRight(u, typed, g){
   const t = norm(typed), w = norm(g);
@@ -392,10 +392,26 @@ function examCheck(hist, k){
   let n = 0, right = 0, exp = 0;
   for(const atts of Object.values(hist || {})) for(let i = 1; i < atts.length; i++){
     const a = atts[i]; if(a[2] !== "x" && a[2] !== "t") continue;
-    const m = memory(atts.slice(0, i)); n++; if(a[1] === 3) right++; exp += retr(k * m.S, (a[0] - m.last) / DAY);
+    const m = memory(atts.slice(0, i)); n++; if(a[1] >= 2) right++; exp += retr(k * m.S, (a[0] - m.last) / DAY);   // mit vorgegebenem Anfangsbuchstaben richtig = 2
   }
   return {n, right, exp};
 }
+// Prüfungsformat-Faktor: Wie viel schlechter (oder besser) klappt der Abruf in Prüfungssimulationen (Definition + Satz,
+// Text ohne Hilfe) als das Gedächtnismodell erwartet? Verschiebung d auf der Logit-Skala, MAP mit Prior d ~ N(0, 1²).
+const PRIOR_FMT = 1, logit = p => Math.log(p / (1 - p)), sig = x => 1 / (1 + Math.exp(-x)), clampP = p => Math.min(1 - 1e-4, Math.max(1e-4, p));
+function formatShift(hist, k){
+  const obs = [];
+  for(const atts of Object.values(hist || {})) for(let i = 1; i < atts.length; i++){
+    const a = atts[i]; if(a[2] !== "x" && a[2] !== "t") continue;
+    const m = memory(atts.slice(0, i)); obs.push([logit(clampP(retr(k * m.S, (a[0] - m.last) / DAY))), a[1] >= 2 ? 1 : 0]);
+  }
+  const lp = d => obs.reduce((s, [z, y]) => { const p = clampP(sig(z + d)); return s + (y ? Math.log(p) : Math.log(1 - p)); }, 0) - d * d / (2 * PRIOR_FMT * PRIOR_FMT);
+  let lo = -4, hi = 4;
+  for(let it = 0; it < 60; it++){ const a = lo + (hi - lo) * 0.382, b = lo + (hi - lo) * 0.618; if(lp(a) < lp(b)) lo = a; else hi = b; }
+  const d = obs.length ? (lo + hi) / 2 : 0, h = 1e-3, curv = -(lp(d + h) - 2 * lp(d) + lp(d - h)) / (h * h);
+  return {d, se: Math.min(PRIOR_FMT, curv > 0 ? 1 / Math.sqrt(curv) : PRIOR_FMT), n: obs.length};
+}
+const shiftP = (p, d) => p <= 0 ? 0 : sig(logit(clampP(p)) + d);
 
 // ---------- Notenprognose
 // Je Wort: Wahrscheinlichkeit, es zum Prüfungstermin ohne Hilfe richtig zu schreiben (FSRS-6 mit persönlichem Faktor).
@@ -434,12 +450,14 @@ function forecast(hist, now, opt){
   opt = opt || {};
   const examAt = opt.examAt && opt.examAt > now ? opt.examAt : now;
   const cal = opt.cal || calibrate(hist), key = gradeKey(opt.key1, opt.key4), n = Math.max(1, Math.min(opt.n || 30, UNITS.length));
+  const fmt = opt.fmt || {d: 0, se: 0, n: 0};
   const sessions = opt.plan ? sessionsUntil(now, examAt) : [];
   const Z = [-2, -1.33, -0.67, 0, 0.67, 1.33, 2], W = Z.map(z => Math.exp(-z * z / 2)), WS = W.reduce((x, y) => x + y, 0);
   const rnd = mulberry(20261126), count = {}, pcts = []; let center = null;
   Z.forEach((z, zi) => {
     const k = Math.exp(cal.lk + z * cal.se);
-    const rs = UNITS.map(u => { const a = hist[u.k] || []; return examRecall(a, examAt, k, sessions, sessions.length > 0 && today(a, now).done); });
+    const d = fmt.d + z * fmt.se;   // Unsicherheit von Faktor und Format gemeinsam (vorsichtig: gleichgerichtet)
+    const rs = UNITS.map(u => { const a = hist[u.k] || []; return shiftP(examRecall(a, examAt, k, sessions, sessions.length > 0 && today(a, now).done), d); });
     if(z === 0) center = rs;
     const sims = Math.round((opt.sims || 4200) * W[zi] / WS), idx = rs.map((_, i) => i);
     for(let s = 0; s < sims; s++){
@@ -454,7 +472,7 @@ function forecast(hist, now, opt){
   for(const g of [...GRADES, "5,0"]) grades[g] = (count[g] || 0) / pcts.length;
   const likely = Object.keys(grades).reduce((b, g) => grades[g] > grades[b] ? g : b, "1,0");
   const mean = pcts.reduce((x, y) => x + y, 0) / pcts.length;
-  return {examAt, n, key, plan: !!opt.plan, sessions, cal, rs: center, mean, p10: q(0.1), p90: q(0.9), grades, likely, p1: grades["1,0"]};
+  return {examAt, n, key, plan: !!opt.plan, sessions, cal, fmt, rs: center, mean, p10: q(0.1), p90: q(0.9), grades, likely, p1: grades["1,0"]};
 }
 
 // ---------- Übernahme aus Version ≤ 1.14 (Kästchen-System + Fehlerprotokoll)
@@ -572,6 +590,6 @@ function daily(hist, now, n){
 
 return {MIN, HOUR, DAY, P, STAGES, ERR, init, norm, accepted, forms, unitOf, unitByKey, get units(){ return UNITS; },
         isRight, gapRight, gapCheck, textGaps, textParts, wordCount, classify, closest, align, dist, slots, memory, recall, retr, stage, today, info, pick, modeFor, sentence, promptEntry,
-        chance, note, GRADES, gradeKey, gradeOf, recalls, calibrate, examCheck, sessionsUntil, examRecall, forecast, dayStart, dayKey, migrate, tidy, mergeHist, legacySrs, absorbLegacy, errorsByType, confusions, daily, isTyped, okTyped};
+        chance, note, GRADES, gradeKey, gradeOf, recalls, calibrate, examCheck, formatShift, shiftP, sessionsUntil, examRecall, forecast, dayStart, dayKey, migrate, tidy, mergeHist, legacySrs, absorbLegacy, errorsByType, confusions, daily, isTyped, okTyped};
 })();
 if(typeof module !== "undefined") module.exports = Engine;

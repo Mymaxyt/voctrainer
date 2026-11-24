@@ -7,7 +7,7 @@
 > sie zusammen mit dem Code. Am Ende jeder Arbeitssitzung muss hier der aktuelle Zwischenstand stehen.
 > Keine Passwörter, Tokens oder Schlüssel in diese Datei – das Repo ist öffentlich.
 
-Zuletzt aktualisiert: 24.11.2026, Version 1.19.2 (versionCode 25): Prüfung im Format des Moodle-Übungstests, englische Definitionen, 100 Wörter aus den Kursunterlagen.
+Zuletzt aktualisiert: 24.11.2026, Version 1.20 (versionCode 26): Prüfung im Format des Moodle-Übungstests, englische Definitionen, 100 Wörter aus den Kursunterlagen.
 
 ## Worum es geht
 - Max Werner (GitHub: Mymaxyt), Student International Management (FH Würzburg), schreibt am
@@ -68,7 +68,9 @@ Zuletzt aktualisiert: 24.11.2026, Version 1.19.2 (versionCode 25): Prüfung im F
   `ABBR`: 14 Abkürzungen für Frage 7 (Kurzform, Langformen, Musterantwort); `MTEXTS`: 15 Prüfungstexte mit genau 8 Lücken,
   `[[i|wort]]` = Lücke mit genau diesem Wort. build.py hängt `df`, `ab` an jeden Eintrag und `MTEXTS` an `TEXTS`.
 - Weitere Felder in vocab.json: `sg` = Lückenwort des Prüfungssatzes, falls anders als `g`; `ga` = echte Synonyme, die in
-  dieselbe Lücke passen (headquarters/head office, stock market/stock exchange, shareholders/stockholders).
+  dieselbe Lücke passen (headquarters/head office, stock market/stock exchange, shareholders/stockholders; seit 1.20 auch
+  brand awareness/recognition, sole trader/proprietor, flat/tall organisation, limited company, controlling interest,
+  personalised advertising, guerilla, flier …). Achtung: vocab.json ist die Quelle – Einträge 155+ nicht neu generieren.
 - `src/prompts.py`, `src/sentences.py` – alte Quellen von `q`/`s`, werden von build.py nicht mehr gelesen.
 - `src/build_apk.py` + `src/dexasm.py` – baut die APK **ohne Android-SDK** (DEX-Assembler, binäres Manifest,
   resources.arsc, Icon von Hand). Paket `de.maxwerner.vokabeln`, MainActivity = WebView, minSdk 26, targetSdk 29.
@@ -80,7 +82,7 @@ Zuletzt aktualisiert: 24.11.2026, Version 1.19.2 (versionCode 25): Prüfung im F
 
 ## Bauen, prüfen, veröffentlichen
 ```bash
-TZ=Europe/Berlin node tests/engine.test.js          # "engine: 18 Testgruppen bestanden"
+TZ=Europe/Berlin node tests/engine.test.js          # "engine: 19 Testgruppen bestanden"
 python3 -I tools/check_content.py                   # "510 Übungssätze, 17 Lückentexte + 15 Prüfungstexte, 255 von 255 …", 0 FEHLER
 python3 -I build.py --html /pfad/index.html 1.18 21 # nur App-Seite zum Testen im Browser (Playwright ist gut dafür)
 KEYSTORE=/pfad/key.jks KEYPASS=<von Max> python3 -I build.py 1.18 21 "Kurze Notiz für das Update-Banner"
@@ -90,7 +92,7 @@ git push
 ```
 - Signierschlüssel: `key.jks`, Alias `max`. Max gibt Datei und Passwort direkt im Chat (nie committen).
   **Ohne genau diesen Schlüssel lässt sich kein Update über die installierte App spielen.**
-- versionCode immer um 1 erhöhen (aktuell 25 → nächste 26). Die App vergleicht ihn mit `version.json`
+- versionCode immer um 1 erhöhen (aktuell 26 → nächste 27). Die App vergleicht ihn mit `version.json`
   (`https://raw.githubusercontent.com/Mymaxyt/voctrainer/main/version.json`) und zeigt dann das Update-Banner.
 - Nach dem Push prüfen, dass raw.githubusercontent.com die neue `version.json` und eine identische APK ausliefert.
 - UI-Tests (Playwright) liegen nicht im Repo; bisher: Lernfluss, Sync zwischen zwei Geräten, Tastatur,
@@ -163,6 +165,10 @@ git push
   n Lücken → Notenverteilung, Bereich p10–p90, Chance auf 1,0. Seed fest (mulberry 20261126).
 - **Selbstkontrolle:** Abrufe über Nacht richtig vs. erwartet (Standard- und angepasstes Modell); `examCheck`
   vergleicht Prüfungssimulationen (Modi x/t) mit dem Modell.
+- **Prüfungsformat-Faktor (seit 1.20, `formatShift`):** Verschiebung d auf der Logit-Skala aus allen Prüfungssimulationen
+  (Modi x/t, nur schon geübte Wörter), MAP mit Prior d ~ N(0, 1²). `forecast` wendet `shiftP(p, d + z·se)` auf jede
+  Abrufwahrscheinlichkeit an. Anlass: Fehlerprotokoll 24.11. – Simulationen 9/23 richtig, Modell erwartete 18,2.
+  `examCheck` zählt seit 1.20 Note 2 (richtig mit vorgegebenem Anfangsbuchstaben) als richtig.
 - **Annahmen einstellbar:** Punkte `settings.n` (seit 1.18 Standard 16 wie im Übungstest, Migration über `settings.f18`), Notenschlüssel `key1` (1,0 ab, Standard 95 %)
   und `key4` (4,0 ab, Standard 50 %), dazwischen linear (`gradeKey`, `gradeOf`).
 - Recherche dahinter: DASH (Lindsey et al. 2014), HLR (Settles & Meeder 2016), FSRS-Benchmark (Expertium;
@@ -187,12 +193,18 @@ git push
 - 1.17 Notenprognose an Max angepasst (siehe oben)
 - 1.18 Prüfung genau im Format des Moodle-Übungstests; Lückensätze mit englischer Definition statt Strichen; strenge
   Lückenbewertung; 100 Wörter aus den Kursunterlagen; Karteikarten „Erklären“; Prognose auf 16 Punkte
+- 1.20 Auswertung Fehlerprotokoll 24.11.: Prüfungsformat-Faktor in der Prognose, echte Synonyme in Lücken (`ga`),
+  -ise/-ize als Schreibvariante, mehrdeutige Sätze (branch, tall structure, brick-and-mortar store) eindeutig gemacht
 - 1.19.2 „Antwort nicht lesbar“ behoben (Werkzeug-Ausgabe), Erklärungen ohne Text gar nicht erst senden, Wiederholen-Knopf
 - 1.19.1 KI günstiger (nur Haiku, ohne Nachdenken), fairere Synonym-Prüfung, Langform lokal geprüft, Schlüssel über Sync
 - 1.19 KI-Prüfung mit Claude (eigener API-Schlüssel): gleichwertige Wörter anerkennen, Frage 7/8 bewerten
 - 1.18.1 Frage 7/8 automatisch vorbewertet; Buchstabenvergleich in der Überprüfung repariert (stand untereinander)
 
 ## Offene Punkte / Ideen
+- Fehlerprotokoll 24.11. (Lernstand, nicht App): häufig Rechtschreibung bei quotation/quotas („qou-“), materials handling
+  („handeling“), subsidiary („subsidary“), catalogue, apparel, hierarchy; Verwechslungen household appliances ↔ household
+  products, subsidiary ↔ subsidy ↔ subordinates, characteristic ↔ specification/feature, coupon ↔ discount.
+- Mehrdeutig bleiben einzelne 7.5-Sätze (characteristic/feature/benefit) – dafür ist die KI-Prüfung da.
 - Prognose mit echten Daten von Max beobachten: Wie viele Abrufe über Nacht gibt es, wie weit weicht k von 1 ab?
 - Notenschlüssel ist unbekannt (Standard 1,0 ab 95 %, 4,0 ab 50 %) – Max fragen, falls er ihn erfährt.
 - Hörübung „Organisational structures“ fehlt – falls Max sie (oder ihre Wortliste) schickt, Wörter in K3 ergänzen.

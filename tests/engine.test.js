@@ -40,6 +40,22 @@ test("Lücken wie in Moodle: nur die Form, die der Satz braucht", () => {
   assert.ok(g("headquarters / head office", "head office", "headquarters").ok);           // echtes Synonym in derselben Lücke
   assert.ok(g("stock market", "stock exchange", "stock market").ok);
   assert.ok(!g("promote (be promoted)", "promotion", "promoted").ok);
+  assert.ok(g("brand awareness", "brand recognition", "brand awareness").ok);                // Synonym laut Marketing overview
+  assert.ok(g("individualised advertising", "individualized advertising", "individualised advertising").ok);
+  assert.ok(g("individualised advertising", "personalised advertising", "individualised advertising").ok);
+  assert.ok(!g("tertiary industries", "service", "tertiary").ok);                          // Teil-Lücke: nur das Wort davor
+});
+
+test("Prüfungsformat-Faktor aus den Simulationen", () => {
+  const T = new Date(2026, 10, 20, 10, 0).getTime(), h = {}, keys = units.slice(0, 40).map(u => u.k);
+  // je Wort: gelernt (3× richtig über zwei Tage), dann in der Prüfung (x) nur jedes dritte richtig
+  keys.forEach((k, i) => { h[k] = [[T, 3, "w"], [T + 600e3, 3, "c"], [T + 86400e3, 3, "c"], [T + 2 * 86400e3, i % 3 ? 1 : 3, "x"]]; });
+  const f = Engine.formatShift(h, 1);
+  assert.ok(f.n === 40 && f.d < -1, "deutlich schwerer im Prüfungsformat: " + f.d);
+  assert.ok(Engine.shiftP(0.8, f.d) < 0.6);
+  assert.strictEqual(Engine.formatShift({}, 1).d, 0);
+  const g2 = {}; keys.forEach(k => { g2[k] = [[T, 3, "w"], [T + 86400e3, 2, "x"]]; });          // mit Anfangsbuchstabe richtig zählt als richtig
+  assert.strictEqual(Engine.examCheck(g2, 1).right, 40);
 });
 
 test("FSRS-6 stimmt mit py-fsrs überein", () => {
