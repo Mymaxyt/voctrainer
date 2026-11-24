@@ -219,7 +219,7 @@ span.gapin{display:inline-block;min-height:1.9em;width:auto;min-width:6em}
 .mqa:focus{border-color:var(--accent)}
 .ans{white-space:pre-wrap;padding:8px 10px;border:1px dashed var(--line);border-radius:8px;margin-top:6px;min-height:2.2em}
 .mqf{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--surface2);font-size:14.5px;line-height:1.5}
-.mqf .y{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;color:var(--muted);font-size:13px;margin-top:4px}
+.mqf>.y,.mqf .rv2{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;color:var(--muted);font-size:13px;margin-top:4px}
 .mqf .y button{border:1px solid var(--line);background:transparent;color:var(--text);border-radius:8px;padding:5px 10px;font-size:12px;flex:none}
 .mqf .diff{font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-top:4px}
 .rate{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center;font-size:13px;color:var(--muted)}
@@ -1372,6 +1372,7 @@ function finishExam(auto){
     } else {
       q.ans = q.el.value; q.got = q.ans.trim() ? null : 0;           // null = „Bewertung notwendig“ (selbst bewerten)
       if(q.type === "abbr") q.fullOk = fullFormIn(q.u, q.ans);
+      if(q.ans.trim()) autoGrade(q);
     }
   }
   store.set("hist", hist);
@@ -1381,6 +1382,19 @@ function finishExam(auto){
   scoreExam();
   const ex = store.get("exams", []); ex.push(exam.rec); store.set("exams", ex.slice(-50));
   show("resultScreen"); renderResult();
+}
+// Frage 7/8 automatisch vorbewerten (änderbar): Abkürzung 0,5 für die exakt geschriebene Langform + 0,5 für eine Erklärung,
+// die Kernwörter der Musterlösung enthält; Erklären 1 / 0,5 / 0 nach Anteil der getroffenen Kernwörter
+const STOP = new Set("that this with from which what when where their there they them have been were your will would could should into than then also only some such other more most very about after before because being both each just like make made over same under using used want when while about company companies something thing things people".split(" "));
+const kern = t => new Set((String(t).toLowerCase().match(/[a-z]{4,}/g) || []).filter(w => !STOP.has(w)).map(w => w.slice(0, 5)));
+function autoGrade(q){
+  let txt = q.ans;
+  if(q.type === "abbr") for(const f of q.u.ab.f) txt = plainWords(txt).replace(plainWords(f), " ");
+  const mine = kern(txt), model = kern(q.type === "abbr" ? q.u.ab.x + " " + q.v.df : q.v.df), hit = [...model].filter(w => mine.has(w));
+  const words = (String(txt).match(/[a-z]+/gi) || []).length, share = hit.length / Math.min(model.size || 1, 6);
+  const expl = words < 3 ? 0 : share >= 0.5 ? 1 : share >= 0.25 ? 0.5 : 0;
+  q.got = q.type === "abbr" ? (q.fullOk ? 0.5 : 0) + (expl >= 0.5 ? 0.5 : 0) : expl;
+  q.auto = {hit, expl, words};
 }
 function scoreExam(){
   exam.rec.p = Math.round(exam.qs.reduce((p, q) => p + (q.got || 0), 0) * 100) / 100;
@@ -1443,6 +1457,8 @@ function renderResult(){
           f.append(el("b", null, cleanE(q.v)), document.createTextNode(": " + q.v.df), document.createElement("br"), el("span", "muted", "Deutsch: " + q.v.d));
           f.append(el("div", "y", "Volle Punktzahl nur, wenn deine Erklärung dasselbe sagt – auf Englisch, in eigenen Worten."));
         }
+        if(q.auto) f.append(el("div", "y", q.auto.words < 3 ? "Automatisch bewertet: keine Erklärung erkannt – die gehört immer dazu."
+          : `Automatisch bewertet (${fmtP(q.got)} P.): ${q.auto.hit.length ? "Kernwörter getroffen: " + q.auto.hit.join(", ") : "keine Kernwörter der Musterlösung getroffen"}. Du kannst es ändern.`));
         if(q.ans.trim()) f.append(rateRow(q, () => { draw(); renderScore(); }));
         c.append(f);
       } else {

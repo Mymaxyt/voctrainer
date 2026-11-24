@@ -1,6 +1,6 @@
 {
-  "versionCode": 21,
-  "versionName": "1.18",
-  "notes": "Prüfung genau wie der Übungstest (16 Punkte, 10 Minuten), Lückensätze mit englischer Definition, 100 neue Wörter aus den Kursunterlagen, Karteikarten „Erklären“.",
+  "versionCode": 22,
+  "versionName": "1.18.1",
+  "notes": "Die App bewertet Abkürzung und Erklärung jetzt selbst vor; Buchstabenvergleich in der Auswertung repariert.",
   "apk": "https://raw.githubusercontent.com/Mymaxyt/voctrainer/main/dist/Vokabeltrainer.apk"
 }

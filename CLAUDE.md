@@ -7,7 +7,7 @@
 > sie zusammen mit dem Code. Am Ende jeder Arbeitssitzung muss hier der aktuelle Zwischenstand stehen.
 > Keine Passwörter, Tokens oder Schlüssel in diese Datei – das Repo ist öffentlich.
 
-Zuletzt aktualisiert: 24.11.2026, Version 1.18 (versionCode 21): Prüfung im Format des Moodle-Übungstests, englische Definitionen, 100 Wörter aus den Kursunterlagen.
+Zuletzt aktualisiert: 24.11.2026, Version 1.18.1 (versionCode 22): Prüfung im Format des Moodle-Übungstests, englische Definitionen, 100 Wörter aus den Kursunterlagen.
 
 ## Worum es geht
 - Max Werner (GitHub: Mymaxyt), Student International Management (FH Würzburg), schreibt am
@@ -90,7 +90,7 @@ git push
 ```
 - Signierschlüssel: `key.jks`, Alias `max`. Max gibt Datei und Passwort direkt im Chat (nie committen).
   **Ohne genau diesen Schlüssel lässt sich kein Update über die installierte App spielen.**
-- versionCode immer um 1 erhöhen (aktuell 21 → nächste 22). Die App vergleicht ihn mit `version.json`
+- versionCode immer um 1 erhöhen (aktuell 22 → nächste 23). Die App vergleicht ihn mit `version.json`
   (`https://raw.githubusercontent.com/Mymaxyt/voctrainer/main/version.json`) und zeigt dann das Update-Banner.
 - Nach dem Push prüfen, dass raw.githubusercontent.com die neue `version.json` und eine identische APK ausliefert.
 - UI-Tests (Playwright) liegen nicht im Repo; bisher: Lernfluss, Sync zwischen zwei Geräten, Tastatur,
@@ -121,7 +121,9 @@ git push
   10-Minuten-Timer, automatische Abgabe, Abgeben nur per Knopf mit zweitem Tippen, Enter springt zur nächsten Lücke.
 - „Nur Lückentext“: ein Text mit allen Lücken, ohne Zeitlimit (Auswahl im Menü).
 - Überprüfung wie Moodle (Richtig/Falsch/Teilweise, „Die richtige Antwort ist“), Frage 7/8 selbst bewerten (0/0,5/1;
-  Langform wird automatisch geprüft). Ergebnis in `exams` {t, n: 16, p, o: offene Bewertungen, k, tx, d}.
+  Langform wird automatisch geprüft). Seit 1.18.1 bewertet die App Frage 7/8 selbst vor (`autoGrade`: Abkürzung 0,5 für
+  exakte Langform + 0,5 für Erklärung mit Kernwörtern der Musterlösung; Erklären 1/0,5/0 nach Anteil getroffener Kernwörter,
+  unter 3 Wörtern = 0) – Max wollte „bewerte selbst“; die Knöpfe 0/0,5/1 bleiben zum Ändern. Ergebnis in `exams` {t, n: 16, p, o: offene Bewertungen, k, tx, d}.
 - Sätze werden als Modus `x`, Textlücken als `t` im Verlauf gespeichert; Frage 7/8 nicht.
 - Karteikarten haben die Richtung „Erklären“ (Wort/Abkürzung → englische Definition) als Übung für Frage 7/8.
 
@@ -159,6 +161,7 @@ git push
 - 1.17 Notenprognose an Max angepasst (siehe oben)
 - 1.18 Prüfung genau im Format des Moodle-Übungstests; Lückensätze mit englischer Definition statt Strichen; strenge
   Lückenbewertung; 100 Wörter aus den Kursunterlagen; Karteikarten „Erklären“; Prognose auf 16 Punkte
+- 1.18.1 Frage 7/8 automatisch vorbewertet; Buchstabenvergleich in der Überprüfung repariert (stand untereinander)
 
 ## Offene Punkte / Ideen
 - Prognose mit echten Daten von Max beobachten: Wie viele Abrufe über Nacht gibt es, wie weit weicht k von 1 ab?
