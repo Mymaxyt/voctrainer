@@ -9,12 +9,37 @@ const test = (name, fn) => { try { fn(); n++; } catch (e) { console.error("FEHLE
 const U = e => Engine.unitOf(DATA.findIndex(v => v.e === e));
 const T0 = new Date(2026, 10, 23, 10, 0).getTime();      // Mo 23.11.2026 10:00
 
-test("Wörter: 151 verschiedene, keine Überschneidung der Schreibweisen", () => {
-  assert.strictEqual(units.length, 151);
+test("Wörter: 251 verschiedene, keine Überschneidung der Schreibweisen", () => {
+  assert.strictEqual(units.length, 251);
   const seen = new Map();
   for (const u of units) for (const a of u.acc) { assert.ok(!seen.has(a) || seen.get(a) === u, "doppelt: " + a); seen.set(a, u); }
   assert.strictEqual(U("market share").entries.length, 2);
   assert.strictEqual(U("end-user"), U("end user"));
+});
+
+test("Lücken wie in Moodle: nur die Form, die der Satz braucht", () => {
+  const g = (w, typed, gap) => Engine.gapCheck(U(w), typed, gap);
+  assert.ok(g("promote (be promoted)", "promoted", "promoted").ok);
+  const f = g("promote (be promoted)", "promote", "promoted");
+  assert.ok(!f.ok && f.res.e === "f");
+  assert.ok(!g("distribution channel", "distribution channel", "distribution channels").ok);
+  assert.ok(!g("household (product)", "household product", "household").ok);
+  assert.ok(g("cost centre", "cost center", "cost centre").ok);                     // britisch/amerikanisch bleibt erlaubt
+  assert.ok(g("centralization", "centralisation", "centralization").ok);
+  assert.ok(g("CEO (Chief Executive Officer)", "Chief Executive Officer", "CEO").ok);  // Abkürzung: Kurz- oder Langform
+  assert.ok(!g("subsidiary", "foreign subsidiary", "subsidiary").ok);               // ein Wort zu viel ist falsch
+  assert.ok(!g("freight", "frieght", "freight").ok);                                // Tippfehler bleibt Fehler
+  // Texte: [[i]] und [[i|wort]]
+  const gaps = Engine.textGaps("A [[0]] and its [[46|market]] share.");
+  assert.deepStrictEqual(gaps.map(x => x.g), ["freight", "market"]);
+  assert.deepStrictEqual(Engine.textParts("A [[0]] and its [[46|market]] share."), ["A ", " and its ", " share."]);
+  assert.strictEqual(Engine.wordCount("limited liability"), 2);
+  // jede Vokabel hat eine englische Definition, Abkürzungen haben Langform und Erklärung
+  for (const v of DATA) assert.ok(v.df && v.df.length > 10, "Definition fehlt: " + v.e);
+  assert.strictEqual(units.filter(u => u.ab).length, 14);
+  assert.ok(g("headquarters / head office", "head office", "headquarters").ok);           // echtes Synonym in derselben Lücke
+  assert.ok(g("stock market", "stock exchange", "stock market").ok);
+  assert.ok(!g("promote (be promoted)", "promotion", "promoted").ok);
 });
 
 test("FSRS-6 stimmt mit py-fsrs überein", () => {

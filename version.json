@@ -1,6 +1,6 @@
 {
-  "versionCode": 20,
-  "versionName": "1.17",
-  "notes": "Genauere Notenprognose: an dein Gedächtnis angepasst (Abrufe über Nacht), Notenverteilung mit wahrscheinlichem Bereich, Szenario mit Lernplan bis zur Prüfung, einstellbare Lückenzahl und Notenschlüssel.",
+  "versionCode": 21,
+  "versionName": "1.18",
+  "notes": "Prüfung genau wie der Übungstest (16 Punkte, 10 Minuten), Lückensätze mit englischer Definition, 100 neue Wörter aus den Kursunterlagen, Karteikarten „Erklären“.",
   "apk": "https://raw.githubusercontent.com/Mymaxyt/voctrainer/main/dist/Vokabeltrainer.apk"
 }

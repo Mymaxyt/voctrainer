@@ -50,8 +50,6 @@ body.typing{padding-top:10px}
 body.typing .segbar{margin-bottom:10px}
 body.typing .daybox{margin:4px 0 8px}
 body.typing #writeMode{margin-top:0;gap:10px}
-body.typing #exam{gap:8px}
-body.typing #exam .qbox{padding:12px 14px 14px}
 body.typing .sentence{font-size:17px}
 body.typing .qbox{min-height:0;padding:12px 16px 16px;box-shadow:none}
 body.typing .qhead{margin-bottom:8px}
@@ -195,6 +193,44 @@ header.nav h1{flex:none}
 body.typing .textbox{font-size:16px;max-height:calc(var(--vvh, 100vh) - 190px)}
 #exam .qbox{padding:14px 18px 22px}
 .muted{color:var(--muted);font-size:13px}
+/* Prüfung im Moodle-Format (wie der Übungstest) */
+.examtop{position:sticky;top:0;z-index:5;background:var(--bg);padding:6px 0 10px;border-bottom:1px solid var(--line)}
+.timer{font-size:15px;font-variant-numeric:tabular-nums;color:var(--muted)}
+.timer b{color:var(--text);font-weight:700}
+.timer.low b{color:var(--bad)}
+.mq{display:flex;flex-direction:column;gap:12px;padding:12px 0}
+.mqc{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px 16px;line-height:1.6;font-size:16px}
+.mqh{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px}
+.mqh b{font-size:17px}
+.mqh .st{font-size:12.5px;color:var(--muted);text-align:right;line-height:1.35}
+.mqh .st.ok{color:var(--good)} .mqh .st.no{color:var(--bad)} .mqh .st.part{color:var(--warn)}
+.mqd{margin-bottom:6px}
+.mqs{font-size:17px;line-height:2.05}
+.mqi{font-weight:700}
+.gapin{font:inherit;font-size:16px;line-height:1.3;padding:5px 8px;border:1.5px solid var(--line);border-radius:6px;background:var(--surface);color:var(--text);
+  width:10.5em;max-width:100%;outline:none;margin:0 2px;vertical-align:baseline}
+.gapin:focus{border-color:var(--accent)}
+span.gapin{display:inline-block;min-height:1.9em;width:auto;min-width:6em}
+.gapin.ok{border-color:var(--good);background:var(--good-bg)}
+.gapin.no{border-color:var(--bad);background:var(--bad-bg);text-decoration:line-through;text-decoration-thickness:1px}
+.fix{color:var(--good);font-weight:700;margin-right:4px}
+.mqa{width:100%;min-height:110px;font:inherit;font-size:16px;padding:10px;border:1.5px solid var(--line);border-radius:10px;
+  background:var(--surface);color:var(--text);resize:vertical;outline:none;margin-top:6px}
+.mqa:focus{border-color:var(--accent)}
+.ans{white-space:pre-wrap;padding:8px 10px;border:1px dashed var(--line);border-radius:8px;margin-top:6px;min-height:2.2em}
+.mqf{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--surface2);font-size:14.5px;line-height:1.5}
+.mqf .y{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;color:var(--muted);font-size:13px;margin-top:4px}
+.mqf .y button{border:1px solid var(--line);background:transparent;color:var(--text);border-radius:8px;padding:5px 10px;font-size:12px;flex:none}
+.mqf .diff{font-family:ui-monospace,Menlo,monospace;font-size:14px;margin-top:4px}
+.rate{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center;font-size:13px;color:var(--muted)}
+.rate button{border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:8px;padding:7px 14px;font-size:14px}
+.rate button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+#examSubmit{flex:none}
+.nw{white-space:nowrap}
+.mqf .diff small{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:12px;color:var(--muted);display:inline-block;min-width:58px}
+.defline{font-size:15px;color:var(--text);text-align:left;margin:0 0 10px;line-height:1.45}
+.gap.box{display:inline-block;min-width:6em;font-family:inherit;letter-spacing:0;color:var(--text);border-bottom:2px solid var(--accent)}
+.face .def{font-size:18px;font-weight:500;line-height:1.45}
 /* Ergebnis */
 #resultScreen{gap:14px}
 .score{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px;text-align:center;box-shadow:var(--shadow)}
@@ -315,17 +351,17 @@ body.typing .textbox{font-size:16px;max-height:calc(var(--vvh, 100vh) - 190px)}
 </head>
 <body>
 <section id="home" class="screen">
-  <div class="hero"><h1>Vokabeltrainer</h1><p>Self-study-Vokabeln für den Test</p></div>
+  <div class="hero"><h1>Vokabeltrainer</h1><p>Self-study-Vokabeln für den Test – Format wie im Übungstest</p></div>
   <div class="update" id="updBox">
     <div class="grow"><b id="updTitle"></b><span id="updNotes"></span></div>
     <a class="btn main" id="updBtn" href="#">Jetzt aktualisieren</a>
     <p class="muted" id="updHow" style="display:none;margin:0">Das Update wird geladen (Fortschritt oben in der Benachrichtigungsleiste) – danach öffnet sich die Installation von selbst. Nur „Aktualisieren“ tippen, dein Lernstand bleibt erhalten. Beim allerersten Mal schickt Android dich zu „Aus dieser Quelle zulassen“: einschalten, zurück, fertig.<br><a id="updFallback" href="#">Es passiert nichts? Stattdessen im Browser laden</a></p>
   </div>
-  <div class="panel intro" id="intro115" style="display:none">
-    <h3>Neu in Version 1.15</h3>
-    <p><b>Lernplan:</b> Jedes Wort kommt jeden Tag einmal dran, meist als Lückensatz wie in der Prüfung. Nach einem Fehler tippst du die Lösung einmal ab, und das Wort kommt nach etwa 1 und 10 Minuten wieder.</p>
-    <p><b>Fortschritt:</b> Prognose für den Prüfungstag, Lernstufen, Wackelkandidaten und Fehlerarten. Dein bisheriger Stand ist übernommen. Weil die Stufen jetzt Nachweise über mehrere Tage verlangen, steht anfangs fast alles auf „In Arbeit“.</p>
-    <p><b>„Zählt doch“ gibt es nicht mehr:</b> Falsch bleibt falsch. Wertet die App etwas wirklich zu Unrecht als falsch, tippe „Bewertung melden“.</p>
+  <div class="panel intro" id="intro118" style="display:none">
+    <h3>Neu in Version 1.18: alles wie im Übungstest</h3>
+    <p><b>Prüfungssimulation</b> genau im Format des Moodle-Tests: 6 Sätze mit englischer Definition, eine Abkürzung ausschreiben und erklären, ein Wort erklären, ein Text mit 8 Lücken ohne Hilfe – 16 Punkte in 10 Minuten.</p>
+    <p><b>Lückensätze</b> zeigen jetzt die englische Definition wie Frage 1–6 statt Strichen und Hinweis. Gewertet wird nur das Wort in der Form, die der Satz braucht („promoted“, nicht „promote“). Striche gibt es weiter über „Tipp“.</p>
+    <p><b>100 neue Wörter</b> aus allen Unterlagen der Liste „Vocabulary revision for the test“: Industries and companies (in class), Organisational structures, Marketing overview, Wiederholungsblatt und Übungstest. Sie stehen in eigenen Kapiteln („Kurs …“, „Übungstest + Wdh.“). <b>Karteikarten</b> haben den neuen Modus „Erklären“ für Frage 7 und 8.</p>
     <button class="btn main" id="introOk" style="flex:none">Verstanden</button>
   </div>
   <button class="tile ready" id="goProgress">
@@ -349,10 +385,9 @@ body.typing .textbox{font-size:16px;max-height:calc(var(--vvh, 100vh) - 190px)}
   </button>
   <div class="tile examtile">
     <span class="t">Prüfungssimulation</span>
-    <span class="d" id="examDesc">Englische Lückensätze, die im Training nie vorkommen. Die Auswertung kommt erst am Ende.</span>
-    <div class="seg small" id="examKinds"><button data-k="s30">30 Sätze</button><button data-k="all">Alle 155</button><button data-k="text">Lückentext</button></div>
+    <span class="d" id="examDesc"></span>
+    <div class="seg small" id="examKinds"><button data-k="test">Wie im Test (10 Min.)</button><button data-k="text">Nur Lückentext</button></div>
     <select class="select" id="textPick" aria-label="Lückentext auswählen"></select>
-    <label class="opt"><input type="checkbox" id="optLetters"> Zusätzlich Anfangsbuchstaben zeigen (zählt als „mit Hilfe“)</label>
     <span class="m" id="homeExam"></span>
     <button class="btn main" id="goExam">Prüfung starten</button>
   </div>
@@ -385,7 +420,7 @@ body.typing .textbox{font-size:16px;max-height:calc(var(--vvh, 100vh) - 190px)}
     <p id="simText"></p>
     <div class="examdate"><span class="muted" id="assumeText"></span><button class="linkbtn" id="assumeEdit">ändern</button></div>
     <div class="examdate" id="assumeRow" style="display:none">
-      <label class="muted">Lücken <input type="number" id="asN" min="5" max="155" step="1" style="width:70px"></label>
+      <label class="muted">Punkte <input type="number" id="asN" min="5" max="214" step="1" style="width:70px"></label>
       <label class="muted">1,0 ab <input type="number" id="asK1" min="50" max="100" step="0.5" style="width:70px"> %</label>
       <label class="muted">4,0 ab <input type="number" id="asK4" min="20" max="90" step="0.5" style="width:70px"> %</label>
       <button class="tool" id="assumeSave" style="flex:none;padding:9px 14px">Speichern</button>
@@ -429,10 +464,10 @@ body.typing .textbox{font-size:16px;max-height:calc(var(--vvh, 100vh) - 190px)}
     <ul class="method">
       <li><b>Prognose:</b> Für jedes Wort schätzt das Gedächtnismodell FSRS-6, wie wahrscheinlich du es zum Prüfungstermin ohne Hilfe richtig schreibst – aus deinen Antworten, ihren Abständen und deinen Fehlern. Das Modell wird an dich angepasst: Es vergleicht, was es für deine Abrufe über Nacht (erste Antwort eines Tages zu einem Wort vom Vortag) vorhergesagt hat, mit dem, was du wirklich wusstest, und schätzt daraus, ob du schneller oder langsamer vergisst als der Durchschnitt. Bei wenigen Daten bleibt es nahe am Durchschnitt.</li>
       <li><b>Notenverteilung:</b> Viele simulierte Prüfungen mit zufällig gezogenen Wörtern; jedes Wort ist mit seiner Wahrscheinlichkeit richtig, und die Unsicherheit der Anpassung wird mitgerechnet. Daraus kommen der wahrscheinliche Bereich und die Wahrscheinlichkeit jeder Note. „Mit Lernplan“ nimmt an, dass du bis zur Prüfung jeden Tag das Tagesziel schaffst (eine Runde um 18 Uhr); Fehler werden dabei wie im Lernplan zweimal nachgelernt.</li>
-      <li><b>Grenzen:</b> Die Prognose kennt nur das Format der App. Ist die echte Prüfung schwerer (ohne Striche und Hinweise) oder hat sie einen anderen Notenschlüssel, stell die Annahmen in der Notenprognose um. Nie geübte Wörter zählen als falsch.</li>
+      <li><b>Grenzen:</b> Die Prognose rechnet mit 16 Punkten wie im Übungstest (je Lücke, Satz oder Erklärung ein Punkt) und nimmt an, dass nur Wörter aus der App drankommen. Seit 1.18 sind auch die Kursunterlagen der Wiederholungsliste drin; die Hörübung „Organisational structures“ lag nicht vor, ihre Wörter sind aus Übungstest und Wiederholungsblatt erschlossen. Der Notenschlüssel ist nicht bekannt; stell ihn in der Notenprognose um, sobald du ihn kennst. Nie geübte Wörter zählen als falsch.</li>
       <li><b>Lernstufen</b> zählen nur Fakten aus getippten Antworten. Gefestigt: seit dem letzten Fehler 2× ohne Hilfe richtig, mindestens 10 Minuten auseinander. Sicher: an 2 Tagen, davon 1× im Lückensatz. Prüfungsfest: 3× an 3 Tagen, davon 2× im Satz. Ein Fehler oder Tipp setzt auf „In Arbeit“ zurück. Karteikarten zählen nicht, weil man sich dort selbst bewertet.</li>
       <li><b>Heute geschafft:</b> einmal ohne Hilfe richtig; nach einem Fehler zweimal (nach etwa 1 und 10 Minuten). Der Lerntag beginnt um 4 Uhr.</li>
-      <li>151 verschiedene Wörter: market share, brand loyalty, distribution channel und end user stehen in zwei Kapiteln und zählen je einmal.</li>
+      <li>251 verschiedene Wörter: 151 aus den Self-study-Aufgaben (market share, brand loyalty, distribution channel und end user stehen in zwei Kapiteln und zählen je einmal) und 100 aus den Kursunterlagen der Wiederholungsliste.</li>
     </ul>
   </div>
 </section>
@@ -490,22 +525,17 @@ body.typing .textbox{font-size:16px;max-height:calc(var(--vvh, 100vh) - 190px)}
 </section>
 
 <section id="exam" class="screen">
-  <header class="nav"><button class="backbtn" id="examQuit">‹ Abbrechen</button><span id="examCount" class="muted"></span></header>
-  <div class="bar"><i id="examProg"></i></div>
-  <div class="qbox"><div class="qhead"><span class="tag" id="examTag"></span><span class="side" id="examSide">Lücke füllen</span></div><div class="sentence" id="sentence"></div><div class="syn" id="synE"></div></div>
-  <form id="examForm" autocomplete="off">
-    <input id="examAns" class="typein" type="text" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false"
-      enterkeyhint="enter" placeholder="Antwort …">
-    <button class="btn main" id="examNext" type="button">Weiter</button>
-  </form>
-  <div class="row"><button class="tool" id="examPrev" type="button" style="flex:none;padding:9px 14px">‹ Zurück</button><span class="muted" id="examHint">Enter springt zur nächsten Lücke</span></div>
+  <header class="nav examtop"><button class="backbtn" id="examQuit">‹ Abbrechen</button><span class="timer" id="examTimer"></span></header>
+  <div id="examQs" class="mq"></div>
+  <button class="btn main" id="examSubmit" type="button">Abgeben</button>
+  <p class="muted" id="examHint" style="text-align:center;margin:8px 0 0"></p>
 </section>
 
 <section id="resultScreen" class="screen">
-  <header class="nav"><button class="backbtn" id="resHome">‹ Start</button><h1>Ergebnis</h1></header>
-  <div class="score"><div class="big" id="score"></div><div class="sub2" id="grade"></div></div>
-  <div class="actions"><button class="btn ghost" id="practiceWrong">Fehler üben</button><button class="btn main" id="examAgain">Neue Prüfung</button></div>
-  <div id="review"></div>
+  <header class="nav"><button class="backbtn" id="resHome">‹ Start</button><h1>Überprüfung</h1></header>
+  <div class="score" style="margin-top:12px"><div class="big" id="score"></div><div class="sub2" id="grade"></div></div>
+  <div class="actions" style="margin-top:12px"><button class="btn ghost" id="practiceWrong">Fehler üben</button><button class="btn main" id="examAgain">Neue Prüfung</button></div>
+  <div id="review" class="mq"></div>
 </section>
 
 <section id="train" class="screen">
@@ -519,6 +549,7 @@ body.typing .textbox{font-size:16px;max-height:calc(var(--vvh, 100vh) - 190px)}
 <div id="writeMode">
   <div class="qbox"><div class="qhead"><span class="tag" id="tagW"></span><span class="weak" id="weakW"></span><span class="kind" id="kindW"></span><span class="side" id="sideW">Englisch schreiben</span></div>
     <div class="word" id="prompt"></div>
+    <div class="defline" id="defW"></div>
     <div class="sentence" id="cloze"></div>
     <div class="syn" id="synW"></div>
     <div class="meaning" id="meaning"></div></div>
@@ -535,7 +566,7 @@ body.typing .textbox{font-size:16px;max-height:calc(var(--vvh, 100vh) - 190px)}
   <h2 id="doneTitle">Alles erledigt!</h2>
   <p id="doneText"></p>
   <button class="btn main" id="doneBonus">Bonus: schwächste Wörter üben</button>
-  <button class="btn ghost" id="doneText2">Lückentext-Prüfung</button>
+  <button class="btn ghost" id="doneText2">Prüfung wie im Test</button>
   <button class="btn ghost" id="doneProgress">Fortschritt ansehen</button>
 </div>
 </section>
@@ -543,7 +574,7 @@ body.typing .textbox{font-size:16px;max-height:calc(var(--vvh, 100vh) - 190px)}
 <section id="cards" class="screen">
 <header class="nav"><button class="backbtn" id="cardsHome">‹ Start</button><h1>Karteikarten</h1></header>
 <div class="daybox"><div class="dayline"><span id="cardCount"></span><span id="cardMore"></span></div><div class="meter" id="cardMeterBox" role="img"><i id="cardMeter"></i></div></div>
-<div class="seg fmt" id="cardDir" aria-label="Richtung"><button data-d="0">Englisch → Deutsch</button><button data-d="1">Deutsch → Englisch</button></div>
+<div class="seg fmt" id="cardDir" aria-label="Richtung"><button data-d="0">Englisch → Deutsch</button><button data-d="1">Deutsch → Englisch</button><button data-d="2">Erklären</button></div>
 <div class="chips" id="cardChips"></div>
 
 <div id="cardMode">
@@ -576,7 +607,7 @@ const DATA = /*DATA*/[];
 const TEXTS = /*TEXTS*/[];
 /*ENGINE*/
 const UNITS = Engine.init(DATA);
-const CHAPS = [["all","Alle"],["1","1 Industries"],["3","3 Strategy"],["7","7 Marketing"],["8","8 Distribution"],["2","2 Globalization"]];
+const CHAPS = [["all","Alle"],["1","1 Industries"],["3","3 Strategy"],["7","7 Marketing"],["8","8 Distribution"],["2","2 Globalization"],["W","Übungstest + Wdh."],["K1","Kurs Industries"],["K3","Kurs Organisation"],["K7","Kurs Marketing"]];
 const MIN = 60e3, HOUR = 60 * MIN, DAY = 24 * HOUR;
 const SYNC_KEYS = new Set(["hist", "exams", "log", "logCleared", "settings"]);
 const store = {
@@ -608,7 +639,8 @@ const H = u => hist[u.k] || [];
 // Persönliche Anpassung und Notenprognose werden zwischengespeichert, bis sich der Verlauf oder die Annahmen ändern
 let histVer = 0, calCache = null, fcCache = {};
 function calib(){ if(!calCache || calCache.v !== histVer) calCache = {v: histVer, c: Engine.calibrate(hist)}; return calCache.c; }
-const examOpts = () => ({examAt: settings.examAt, n: settings.n || 30, key1: Number.isFinite(settings.key1) ? settings.key1 : 95, key4: Number.isFinite(settings.key4) ? settings.key4 : 50});
+if(!settings.f18){ settings = Object.assign({}, settings, {n: 16, f18: 1, u: Date.now()}); store.set("settings", settings); }   // 1.18: Format des Übungstests
+const examOpts = () => ({examAt: settings.examAt, n: settings.n || 16, key1: Number.isFinite(settings.key1) ? settings.key1 : 95, key4: Number.isFinite(settings.key4) ? settings.key4 : 50});
 const gradeKey = () => { const o = examOpts(); return Engine.gradeKey(o.key1, o.key4); };
 const gradeOf = pct => Engine.gradeOf(pct, gradeKey());
 function forecastFor(plan){
@@ -627,7 +659,9 @@ function record(u, g, m, e, p, noSave){
   return a;
 }
 const firstEntry = u => DATA[u.entries[0]];
-const tagOf = v => v.c.split(" ")[0] + " · Aufg. " + v.n;
+const cleanE = v => v.e.split(" / ")[0].replace(/\s*\([^)]*\)/g, "").trim();
+const defText = (v, g) => v.df + (Engine.wordCount(g) > 1 ? ` (${Engine.wordCount(g)} words)` : "");
+const tagOf = v => /^\d/.test(v.c) ? v.c.split(" ")[0] + " · Aufg. " + v.n : v.c.slice(v.c.indexOf(" ") + 1);
 const fullE = k => { const u = Engine.unitByKey(k); return u ? firstEntry(u).e : k; };
 function summary(now){
   const I = infos(now), counts = [0, 0, 0, 0, 0]; let done = 0, learn = 0, never = 0;
@@ -664,7 +698,8 @@ function stageLegend(box, counts, withNumbers){
 }
 
 // ---------- Training
-let chap = store.get("chap", "all"), dirRev = store.get("dirRev", false);
+let chap = store.get("chap", "all"); if(!CHAPS.some(x => x[0] === chap)) chap = "all";
+let dirRev = store.get("dirRev", false), cardDirN = store.get("cardDir", dirRev ? 1 : 0);
 let tmode = store.get("tmode", "plan");
 if(!["plan", "c", "w"].includes(tmode)) tmode = "plan";            // Karten haben seit 1.15.1 einen eigenen Bereich
 let cur = null, pending = null, hintLevel = 0, recent = [], special = null, bonus = false, waitTimer = null;
@@ -758,7 +793,7 @@ function showDone(title, text){
   $("doneBonus").textContent = bonus ? "Weiter: schwächste Wörter" : "Bonus: schwächste Wörter üben";
 }
 $("doneBonus").onclick = () => { bonus = true; next(); };
-$("doneText2").onclick = () => { examKind = "text"; store.set("examKind", examKind); startExam(); };
+$("doneText2").onclick = () => { examKind = "test"; store.set("examKind2", examKind); renderExamTile(); startExam(); };
 $("doneProgress").onclick = () => show("progress");
 $("specialEnd").onclick = () => { special = null; next(); };
 
@@ -774,7 +809,7 @@ function nextCard(){
 }
 function renderCardsHead(){
   const c = $("cardCount"); c.textContent = "";
-  for(const b of $("cardDir").children) b.classList.toggle("on", (b.dataset.d === "1") === dirRev);
+  for(const b of $("cardDir").children) b.classList.toggle("on", +b.dataset.d === cardDirN);
   if(!cardQ) return;
   c.append("Runde: ", el("b", null, String(cardQ.done)), ` von ${cardQ.total} gewusst`);
   $("cardMore").textContent = cardQ.again ? `${cardQ.again}× Nochmal` : "";
@@ -786,6 +821,13 @@ function showCard(u){
   card.classList.remove("flip", "fly-l", "fly-r"); flipped = false;
   $("tagF").textContent = $("tagB").textContent = tagOf(v);
   $("weakF").textContent = weakText(u);
+  if(cardDirN === 2){   // Frage 7/8 im Test: Wort (oder Abkürzung) auf Englisch erklären
+    const f = u.ab ? u.ab.a : cleanE(v), b = u.ab ? u.ab.f[0] + " – " + u.ab.x : v.df;
+    $("front").textContent = f; $("back").textContent = b; setSyn("synF", null); $("backSub").textContent = v.d;
+    $("front").classList.toggle("long", f.length > 32); $("back").classList.remove("long"); $("back").classList.add("def");
+    return;
+  }
+  $("back").classList.remove("def");
   const f = dirRev ? v.q : v.e, b = dirRev ? v.e : v.q;
   $("front").textContent = f; $("back").textContent = b; setSyn("synF", dirRev ? u : null); $("backSub").textContent = dirRev ? v.q : v.e;
   $("front").classList.toggle("long", f.length > 32); $("back").classList.toggle("long", b.length > 32);
@@ -795,7 +837,7 @@ function answerCard(ok){
   busy = true;
   const u = cardCur, v = firstEntry(u);
   record(u, ok ? 2 : 1, "k", "n");
-  if(!ok) addLog({m: "Karte", v, a: "", q: dirRev ? "DE → EN" : "EN → DE", k: "n"});
+  if(!ok) addLog({m: "Karte", v, a: "", q: ["EN → DE", "DE → EN", "Erklären"][cardDirN], k: "n"});
   cardQ.list.shift();
   if(ok) cardQ.done++; else { cardQ.again++; cardQ.list.splice(Math.min(cardQ.list.length, 3 + Math.floor(Math.random() * 4)), 0, u); }
   const card = $("card");
@@ -813,7 +855,7 @@ $("card").addEventListener("pointerup", e => {
 });
 $("yes").onclick = () => answerCard(true);
 $("no").onclick = () => answerCard(false);
-for(const b of $("cardDir").children) b.onclick = () => { dirRev = b.dataset.d === "1"; store.set("dirRev", dirRev); renderCardsHead(); if(cardCur) showCard(cardCur); };
+for(const b of $("cardDir").children) b.onclick = () => { cardDirN = +b.dataset.d; dirRev = cardDirN === 1; store.set("cardDir", cardDirN); store.set("dirRev", dirRev); renderCardsHead(); if(cardCur) showCard(cardCur); };
 $("goCards").onclick = () => { show("cards"); nextCard(); };
 $("cardsHome").onclick = () => show("home");
 $("cardAgain").onclick = () => { cardQ = null; nextCard(); };
@@ -827,20 +869,22 @@ function showAsk(q){
   $("kindW").textContent = q.kind === "learn" ? "Wiederholung" : q.kind === "bonus" ? "Bonus" : q.kind === "special" ? "Liste" : "";
   $("sideW").textContent = q.m === "c" ? "Lücke füllen" : "Englisch schreiben";
   $("prompt").style.display = q.m === "w" ? "" : "none";
-  $("cloze").style.display = q.m === "c" ? "" : "none";
+  $("cloze").style.display = $("defW").style.display = q.m === "c" ? "" : "none";
   if(q.m === "w") $("prompt").textContent = v.q;
   else {
+    // wie Frage 1–6 im Test: englische Definition, darunter der Satz mit einer Lücke
+    $("defW").textContent = defText(v, q.sent.g);
     const [a, b] = q.sent.s.split("___"), s = $("cloze"), sp = el("span", "s");
-    s.textContent = ""; const gap = el("span", "gap slots"); gap.id = "clozeGap";
-    sp.append(document.createTextNode(a), gap, document.createTextNode(b + " "), el("span", "clue", "(" + v.h + ")")); s.appendChild(sp);
-    drawSlots(gap, q.sent.g, "", false);
+    s.textContent = ""; const gap = el("span", "gap box"); gap.id = "clozeGap";
+    sp.append(document.createTextNode(a), gap, document.createTextNode(b)); s.appendChild(sp);
+    setGap("");
   }
   setSyn("synW", q.u);
   $("meaning").textContent = ""; $("meaning").style.display = "none";
   const inp = $("answer"); inp.value = ""; inp.classList.remove("locked"); inp.placeholder = q.m === "c" ? "Wort für die Lücke …" : "Englisches Wort …";
   $("check").textContent = "Prüfen";
   $("hintText").textContent = ""; $("hintRow").style.display = "flex";
-  $("hintBtn").style.display = ""; $("hintBtn").textContent = q.m === "c" ? "Tipp: Bedeutung" : "Tipp";
+  $("hintBtn").style.display = ""; $("hintBtn").textContent = q.m === "c" ? "Tipp: Deutsch" : "Tipp";
   $("result").className = "result"; $("result").textContent = "";
 }
 // Lücke: Striche je Buchstabe, getippte Buchstaben füllen sie; nach dem Prüfen steht die Lösung als Text darin
@@ -860,13 +904,14 @@ function drawSlots(box, g, typed, first, label){
 function setGap(text, cls){
   const g = $("clozeGap"); if(!g || !cur || cur.m !== "c") return;
   if(cls === "ok" || cls === "no"){ g.className = "gap " + cls; g.removeAttribute("aria-label"); g.textContent = text; return; }
-  g.className = "gap slots"; drawSlots(g, cur.sent.g, text || "", hintLevel >= 2);
+  if(hintLevel >= 2){ g.className = "gap slots"; drawSlots(g, cur.sent.g, text || "", true); }
+  else { g.className = "gap box"; g.removeAttribute("aria-label"); g.textContent = text || "\u00a0"; }
 }
 $("hintBtn").onclick = () => {
   if(!cur || pending || cur.m === "k") return;
   if(cur.m === "c" && hintLevel === 0){
-    hintLevel = 1; $("meaning").textContent = "Bedeutung: " + cur.v.q; $("meaning").style.display = "";
-    $("hintBtn").textContent = "Tipp: Anfangsbuchstaben";
+    hintLevel = 1; $("meaning").textContent = "Deutsch: " + cur.v.q; $("meaning").style.display = "";
+    $("hintBtn").textContent = "Tipp: Striche mit Anfangsbuchstaben";
   } else {
     hintLevel = 2; $("hintBtn").style.display = "none";
     if(cur.m === "c") setGap($("answer").value.trim()); else $("hintText").textContent = hintPattern(cur.v.e);
@@ -877,8 +922,8 @@ $("form").addEventListener("submit", e => {
   e.preventDefault();
   if(!cur || cur.m === "k") return;
   if(pending){ if(pending.phase === "fix") checkRetype(); else next(); return; }
-  const typed = $("answer").value, extra = cur.m === "c" ? cur.sent.g : null;
-  const ok = Engine.isRight(cur.u, typed, extra), res = ok ? {e: null} : Engine.classify(cur.u, typed);
+  const typed = $("answer").value, gc = cur.m === "c" ? Engine.gapCheck(cur.u, typed, cur.sent.g) : null;   // Lücke: nur die Form, die der Satz braucht
+  const ok = gc ? gc.ok : Engine.isRight(cur.u, typed), res = ok ? {e: null} : gc ? gc.res : Engine.classify(cur.u, typed);
   const g = ok ? (hintLevel ? 2 : 3) : 1;
   record(cur.u, g, cur.m, res.e, res.p);
   recent.push(cur.u.k);
@@ -931,7 +976,7 @@ function showResult(){
   const res = p.res, typed = p.typed.trim(), head = el("div", "rhead");
   head.append(el("b", null, errLabel(res)), reportBtn(p.logId)); r.append(head);
   if(typed){
-    if(res.e === "s" || res.e === "f"){ const t = cur.m === "c" && Engine.dist(Engine.norm(typed), Engine.norm(cur.sent.g)) <= Engine.closest(cur.u, typed).d ? cur.sent.g : Engine.closest(cur.u, typed).form; r.append(diffBlock(typed, t)); }
+    if(res.e === "s" || res.e === "f"){ const t = cur.m === "c" && (res.e === "f" || Engine.dist(Engine.norm(typed), Engine.norm(cur.sent.g)) <= Engine.closest(cur.u, typed).d) ? cur.sent.g : Engine.closest(cur.u, typed).form; r.append(diffBlock(typed, t)); }
     else r.append(el("div", "yours", "Deine Antwort: " + typed));
   }
   const sol = el("div", "sol", solOf(cur)); sol.id = "solLine"; r.append(sol);
@@ -946,7 +991,7 @@ function showResult(){
 }
 function checkRetype(){
   const inp = $("answer"), typed = inp.value, sol = $("solLine");
-  if(Engine.isRight(cur.u, typed, cur.m === "c" ? cur.sent.g : null)){
+  if(cur.m === "c" ? Engine.gapRight(cur.u, typed, cur.sent.g) : Engine.isRight(cur.u, typed)){
     pending.phase = "fixed"; pending.keep = typed;
     const r = $("result"); r.className = "result fixed"; r.textContent = "";
     r.append(el("b", null, "Richtig abgetippt."), el("div", "sol", solOf(cur)), el("div", "muted", "Gleich kommt das Wort noch einmal – dann aus dem Kopf."));
@@ -968,7 +1013,7 @@ $("answer").addEventListener("input", () => {
 
 // Tasten im Schreibmodus nehmen dem Eingabefeld nicht den Fokus -> Tastatur bleibt offen
 const typing = () => document.activeElement && document.activeElement.classList.contains("typein");
-for(const e of document.querySelectorAll(".keepkb, #examNext, #examPrev"))
+for(const e of document.querySelectorAll(".keepkb"))
   e.addEventListener("pointerdown", ev => { if(typing()) ev.preventDefault(); });
 // Kompaktansicht nur bei echter Bildschirmtastatur (Höhe schrumpft deutlich).
 // Mit Ansteck-Tastatur bleibt alles normal und der Fokus bleibt im Feld.
@@ -1029,8 +1074,8 @@ function renderHome(){
   renderExamTile();
 }
 $("goTrain").onclick = () => { special = null; bonus = false; show("train"); next(); };
-$("intro115").style.display = store.get("intro115", false) ? "none" : "";
-$("introOk").onclick = () => { store.set("intro115", true); $("intro115").style.display = "none"; };
+$("intro118").style.display = store.get("intro118", false) ? "none" : "";
+$("introOk").onclick = () => { store.set("intro118", true); $("intro118").style.display = "none"; };
 $("trainHome").onclick = () => { special = null; bonus = false; show("home"); };
 $("goProgress").onclick = () => show("progress");
 $("progHome").onclick = () => show("home");
@@ -1060,7 +1105,7 @@ function renderForecast(now, S){
     box.appendChild(col);
   }
   box.setAttribute("aria-label", "Wahrscheinlichkeit je Note: " + order.filter(g => F.grades[g] >= 0.01).map(g => `${g}: ${Math.round(100 * F.grades[g])} %`).join(", "));
-  $("progNever").textContent = (o.n <= 60 ? `Bei ${o.n} Lücken zählt jede Lücke ${pctTxt(100 / o.n).replace(" %", " Prozentpunkte")} – deshalb sind manche Noten wahrscheinlicher als ihre Nachbarn. ` : "")
+  $("progNever").textContent = (o.n <= 60 ? `Bei ${o.n} Punkten zählt jeder Punkt ${pctTxt(100 / o.n).replace(" %", " Prozentpunkte")} – deshalb sind manche Noten wahrscheinlicher als ihre Nachbarn. ` : "")
     + (S.never ? `${S.never} Wörter noch nie geübt – sie zählen als falsch.` : "");
   // Gegenprobe: Abrufe über Nacht und Prüfungssimulationen
   $("calText").textContent = cal.n < 20
@@ -1069,12 +1114,12 @@ function renderForecast(now, S){
       + (cal.k < 0.8 ? "Du vergisst über Nacht mehr als der Durchschnitt – die Prognose ist deshalb strenger." : cal.k > 1.25 ? "Du behältst über Nacht mehr als der Durchschnitt – die Prognose ist deshalb großzügiger." : "Du liegst nahe am Durchschnitt.");
   const ec = Engine.examCheck(hist, cal.k);
   $("simText").textContent = ec.n ? `Prüfungssimulationen: ${ec.right} von ${ec.n} Lücken richtig, das angepasste Modell hätte ${Math.round(ec.exp)} erwartet.` : "Noch keine Prüfungssimulation – sie ist die beste Gegenprobe für die Prognose.";
-  $("assumeText").textContent = `Annahmen: ${o.n} Lücken · 1,0 ab ${pctTxt(o.key1)} · bestanden (4,0) ab ${pctTxt(o.key4)}`;
+  $("assumeText").textContent = `Annahmen: ${o.n} Punkte${o.n === 16 ? " wie im Übungstest" : ""} · 1,0 ab ${pctTxt(o.key1)} · bestanden (4,0) ab ${pctTxt(o.key4)}`;
 }
 $("assumeEdit").onclick = () => { const o = examOpts(); $("asN").value = o.n; $("asK1").value = o.key1; $("asK4").value = o.key4; $("assumeRow").style.display = "flex"; };
 $("assumeSave").onclick = () => {
   const n = Math.round(+$("asN").value), k1 = +$("asK1").value, k4 = +$("asK4").value;
-  if(!(n >= 5 && n <= 155 && k1 > k4 && k1 <= 100 && k4 >= 20)) { $("assumeText").textContent = "Bitte prüfen: 5–155 Lücken, und 1,0 muss über 4,0 liegen."; return; }
+  if(!(n >= 5 && n <= 214 && k1 > k4 && k1 <= 100 && k4 >= 20)) { $("assumeText").textContent = "Bitte prüfen: 5–214 Punkte, und 1,0 muss über 4,0 liegen."; return; }
   settings = Object.assign({}, settings, {n, key1: k1, key4: k4, u: Date.now()}); store.set("settings", settings);
   $("assumeRow").style.display = "none"; renderProgress();
 };
@@ -1164,175 +1209,270 @@ $("examSave").onclick = () => {
   $("examEditRow").style.display = "none"; renderProgress();
 };
 
-// ---------- Prüfungssimulation
-const EXAM_N = 30;
-let examKind = store.get("examKind", "s30"), exam = null, submitArmed = null;   // {kind, items:[{u, v, s, g, ans, ok, res, logId}], i, letters, text}
-$("optLetters").checked = store.get("optLetters2", false);
-$("optLetters").onchange = () => store.set("optLetters2", $("optLetters").checked);
+// ---------- Prüfungssimulation im Format des Moodle-Übungstests (24.11.2026)
+// Frage 1–6: englische Definition + Satz mit einer Lücke (bei 2 von 6 steht der Anfangsbuchstabe davor, bei mehreren Wörtern „(2 words)“)
+// Frage 7: Abkürzung ausschreiben und erklären · Frage 8: Wort erklären (beides selbst bewerten) · Frage 9: Text mit 8 Lücken ohne Hilfe
+// 16 Punkte, 10 Minuten. Gewertet wird wie in Moodle nur das exakte Wort in der Form, die der Satz braucht.
+const TEST_MS = 10 * MIN, N_DEF = 6, N_LETTER = 2, N_TEXT = 8;
+let examKind = store.get("examKind2", "test"), exam = null, submitArmed = null, examTick = null, quitArmed = null;
 (() => {
-  const s = $("textPick"); s.append(new Option("Zufälliger Lückentext", "rand"));
-  for(const t of TEXTS) s.append(new Option(`${t.id} – ${t.title} (${(t.text.match(/\[\[/g) || []).length} Lücken)`, t.id));
-  for(const b of $("examKinds").children) b.onclick = () => { examKind = b.dataset.k; store.set("examKind", examKind); renderExamTile(); };
+  const s = $("textPick"); s.append(new Option("Zufälliger Text", "rand"));
+  for(const t of TEXTS) s.append(new Option(`${t.id.startsWith("M") ? "Prüfungstext" : "Aufgabe " + t.id} – ${t.title} (${Engine.textGaps(t.text).length} Lücken)`, t.id));
+  for(const b of $("examKinds").children) b.onclick = () => { examKind = b.dataset.k; store.set("examKind2", examKind); renderExamTile(); };
 })();
+const fmtP = x => (Math.round(x * 10) / 10).toLocaleString("de-DE", {minimumFractionDigits: 1, maximumFractionDigits: 1});
 function renderExamTile(){
   for(const b of $("examKinds").children) b.classList.toggle("on", b.dataset.k === examKind);
   $("textPick").style.display = examKind === "text" ? "" : "none";
-  $("examDesc").textContent = (examKind === "text" ? "Ein zusammenhängender Text je Buchaufgabe, ohne Wortkasten."
-    : examKind === "all" ? "Alle 155 Prüfungssätze in zufälliger Reihenfolge."
-    : "30 zufällige Vokabeln als englische Lückensätze, die im Training nie vorkommen.") + " Jede Lücke zeigt einen Strich pro Buchstaben, dahinter steht ein englischer Hinweis in Klammern. Auswertung erst am Ende.";
+  $("examDesc").textContent = examKind === "text"
+    ? "Ein zusammenhängender Text ohne jede Hilfe – wie Frage 9 im Test. Ohne Zeitlimit, Auswertung am Ende."
+    : "Genau wie der Übungstest: 6 Sätze mit englischer Definition, 1 Abkürzung ausschreiben und erklären, 1 Wort erklären, 1 Text mit 8 Lücken. 16 Punkte in 10 Minuten.";
   const ex = store.get("exams", []), last = ex[ex.length - 1];
-  $("homeExam").textContent = last ? `Letztes Ergebnis: ${last.p} / ${last.n} (${Math.round(100 * last.p / last.n)} %, Note ${gradeOf(100 * last.p / last.n)}) · ${ex.length} Prüfung${ex.length > 1 ? "en" : ""}` : "Noch keine Prüfung gemacht";
+  $("homeExam").textContent = last ? `Letztes Ergebnis: ${fmtP(last.p)} / ${last.n} Punkte (${Math.round(100 * last.p / last.n)} %, Note ${gradeOf(100 * last.p / last.n)})${last.o ? " – noch nicht alles bewertet" : ""} · ${ex.length} Prüfung${ex.length > 1 ? "en" : ""}` : "Noch keine Prüfung gemacht";
 }
-function pickText(){
+function pickText(fixed){
   const v = $("textPick").value;
-  if(v && v !== "rand") return TEXTS.find(t => t.id === v);
-  const done = new Map(); for(const e of store.get("exams", [])) if(String(e.k || "").startsWith("text:")) done.set(e.k.slice(5), Math.max(done.get(e.k.slice(5)) || 0, e.t));
-  const order = shuffle(TEXTS.slice()).sort((a, b) => (done.get(a.id) || 0) - (done.get(b.id) || 0));
-  return order[0];
+  if(fixed && v && v !== "rand") return TEXTS.find(t => t.id === v);
+  const done = new Map();
+  for(const e of store.get("exams", [])) for(const id of e.tx || (String(e.k || "").startsWith("text:") ? [e.k.slice(5)] : [])) done.set(id, Math.max(done.get(id) || 0, e.t));
+  const pool = shuffle(TEXTS.filter(t => Engine.textGaps(t.text).length >= N_TEXT));
+  // zuerst noch nie gemachte, gemischte Prüfungstexte (wie im Test), dann die ältesten
+  return pool.sort((a, b) => ((done.get(a.id) || 0) + (a.id.startsWith("M") ? 0 : 1)) - ((done.get(b.id) || 0) + (b.id.startsWith("M") ? 0 : 1)))[0];
+}
+// Text mit Lücken: bei mehr als 8 Lücken bleiben 8 zufällige offen, die übrigen stehen als Wort im Text
+function textQuestion(t, all){
+  const gaps = Engine.textGaps(t.text), keep = new Set(all ? gaps.map((_, k) => k) : shuffle(gaps.map((_, k) => k)).slice(0, N_TEXT));
+  const parts = Engine.textParts(t.text), seq = [], items = [];
+  gaps.forEach((g, k) => {
+    seq.push(parts[k]);
+    if(keep.has(k)){ const it = {u: Engine.unitOf(g.i), v: DATA[g.i], g: g.g, raw: g.raw, n: items.length + 1, ans: ""}; items.push(it); seq.push(it); }
+    else seq.push(g.g);
+  });
+  seq.push(parts[gaps.length]);
+  return {type: "text", t, seq, gaps: items, pts: items.length};
 }
 function startExam(){
-  const letters = $("optLetters").checked; let items = [], text = null;
-  if(examKind === "text"){
-    text = pickText();
-    for(const m of text.text.matchAll(/\[\[(\d+)\]\]/g)){ const i = +m[1]; items.push({u: Engine.unitOf(i), v: DATA[i], s: null, g: DATA[i].g, ans: "", n: items.length + 1}); }
-  } else if(examKind === "all"){
-    items = shuffle(DATA.map((v, i) => ({u: Engine.unitOf(i), v, s: v.s, g: v.g, ans: ""})));
-  } else {
-    const seen = new Set();
-    for(const i of shuffle(DATA.map((_, i) => i))){
-      const u = Engine.unitOf(i); if(seen.has(u.k)) continue;
-      seen.add(u.k); items.push({u, v: DATA[i], s: DATA[i].s, g: DATA[i].g, ans: ""});
-      if(items.length === EXAM_N) break;
+  const text = examKind === "text" ? textQuestion(pickText(true), true) : textQuestion(pickText(false), false);
+  const used = new Set(text.gaps.map(g => g.u.k)), qs = [];
+  if(examKind === "test"){
+    const order = shuffle(DATA.map((_, i) => i));
+    for(const i of order){
+      const u = Engine.unitOf(i), v = DATA[i];
+      if(used.has(u.k) || !v.s || !v.df) continue;
+      used.add(u.k); qs.push({type: "def", u, v, g: v.sg || v.g, s: v.s, pts: 1, letter: ""});
+      if(qs.length === N_DEF) break;
     }
+    for(const q of shuffle(qs.filter(q => !/\s/.test(q.g) && /^[a-z]/i.test(q.g))).slice(0, N_LETTER)) q.letter = q.g[0];
+    const ab = shuffle(UNITS.filter(u => u.ab && !used.has(u.k)))[0];
+    if(ab){ used.add(ab.k); qs.push({type: "abbr", u: ab, v: firstEntry(ab), pts: 1}); }
+    const ex = shuffle(UNITS.filter(u => !u.ab && !used.has(u.k) && cleanE(firstEntry(u)).split(/\s+/).length <= 3))[0];
+    if(ex){ used.add(ex.k); qs.push({type: "expl", u: ex, v: firstEntry(ex), pts: 1}); }
   }
-  exam = {kind: examKind, items, i: 0, letters, text};
-  show("exam"); renderQ();
+  qs.push(text);
+  exam = {kind: examKind, qs, start: Date.now(), end: examKind === "test" ? Date.now() + TEST_MS : 0, text: text.t};
+  show("exam"); renderExam();
 }
-function renderGap(){
-  const it = exam.items[exam.i], gap = document.querySelector("#sentence .gap.on");
-  if(gap) drawSlots(gap, it.g, $("examAns").value, exam.letters, exam.text ? `(${it.n})` : "");
+function gapInput(it){
+  const inp = el("input", "gapin"); inp.type = "text";
+  for(const [k, v] of [["autocomplete", "off"], ["autocorrect", "off"], ["autocapitalize", "none"], ["spellcheck", "false"], ["enterkeyhint", "next"]]) inp.setAttribute(k, v);
+  inp.setAttribute("aria-label", "Lücke " + (it.n || ""));
+  it.el = inp; return inp;
 }
-function renderQ(){
-  const it = exam.items[exam.i], s = $("sentence");
-  s.textContent = ""; s.className = "sentence" + (exam.text ? " textbox" : "");
-  $("examAns").value = it.ans;
-  if(exam.text){
-    // Hinweise in Klammern am Ende des Satzes, in dem die Lücke steht: (3: hint; 4: hint)
-    const parts = exam.text.text.split(/\[\[(\d+)\]\]/); let k = 0, open = [];
-    const flush = () => { if(open.length){ s.append(" ", el("span", "clue", "(" + open.map(x => `${x.n}: ${x.v.h}`).join("; ") + ")")); open = []; } };
-    for(let j = 0; j < parts.length; j++){
-      if(j % 2 === 0){
-        let rest = parts[j];
-        const end = open.length ? rest.match(/[.!?](?=\s|$)/) : null;
-        if(end){ s.append(document.createTextNode(rest.slice(0, end.index + 1))); flush(); rest = rest.slice(end.index + 1); }
-        s.append(document.createTextNode(rest)); continue;
-      }
-      const item = exam.items[k++], g = el("span", "gap slots" + (item === it ? " on" : ""));
-      drawSlots(g, item.g, item === it ? $("examAns").value : item.ans, exam.letters, `(${item.n})`); g.dataset.i = k - 1;
-      g.onclick = () => { exam.items[exam.i].ans = $("examAns").value; exam.i = +g.dataset.i; renderQ(); $("examAns").focus(); };
-      s.append(g); open.push(item);
+function qHead(k, q, status, got){
+  const h = el("div", "mqh"), st = el("div", "st" + (status ? " " + status[1] : ""));
+  h.append(el("b", null, "Frage " + (k + 1)));
+  st.append(document.createTextNode(status ? status[0] : "Bisher nicht beantwortet"), document.createElement("br"),
+    document.createTextNode(got == null ? `Erreichbare Punkte: ${fmtP(q.pts)}` : `Erreichte Punkte ${fmtP(got)} von ${fmtP(q.pts)}`));
+  h.append(st); return h;
+}
+function renderExam(){
+  const box = $("examQs"); box.textContent = "";
+  exam.qs.forEach((q, k) => {
+    const c = el("div", "mqc"); c.append(qHead(k, q));
+    if(q.type === "def"){
+      c.append(el("div", "mqd", defText(q.v, q.g)));
+      const [a, b] = q.s.split("___"), sn = el("div", "mqs");
+      const lg = el("span", "nw"); lg.append(document.createTextNode(q.letter), gapInput(q));   // Anfangsbuchstabe bleibt an der Lücke
+      sn.append(document.createTextNode(a), lg, document.createTextNode(b)); c.append(sn);
+    } else if(q.type === "abbr" || q.type === "expl"){
+      const p = el("div", "mqd");
+      if(q.type === "abbr") p.append("Give the ", el("b", null, "full form"), " of the following word and ", el("b", null, "explain"), " it:");
+      else p.append("Explain the following word:");
+      c.append(p, el("div", "mqi", q.type === "abbr" ? q.u.ab.a : cleanE(q.v)));
+      const ta = el("textarea", "mqa"); ta.setAttribute("spellcheck", "false"); ta.setAttribute("autocapitalize", "none"); q.el = ta; c.append(ta);
+    } else {
+      const p = el("div", "mqd"); p.append(el("b", null, "Complete the text by filling in the gaps with the appropriate vocabulary."));
+      const sn = el("div", "mqs");
+      for(const x of q.seq) sn.append(typeof x === "string" ? document.createTextNode(x) : gapInput(x));
+      c.append(p, sn);
     }
-    flush();
-    $("examTag").textContent = `Aufgabe ${exam.text.id} · ${exam.text.title}`;
-    $("examSide").textContent = "Lückentext";
-    $("examCount").textContent = `Lücke ${exam.i + 1} / ${exam.items.length}`;
-    const on = s.querySelector(".gap.on"); if(on) requestAnimationFrame(() => { const top = on.offsetTop - s.offsetTop - s.clientHeight / 3; s.scrollTop = Math.max(0, top); });
-  } else {
-    const [a, b] = it.s.split("___"), gap = el("span", "gap slots on"), sp = el("span", "s");
-    sp.append(document.createTextNode(a), gap, document.createTextNode(b + " "), el("span", "clue", "(" + it.v.h + ")")); s.append(sp);
-    $("examTag").textContent = it.v.c.split(" ")[0] + " · Aufg. " + it.v.n;
-    $("examSide").textContent = "Lücke füllen";
-    $("examCount").textContent = `Frage ${exam.i + 1} / ${exam.items.length}`;
-  }
-  setSyn("synE", it.u);
-  $("examProg").style.width = 100 * exam.i / exam.items.length + "%";
-  const last = exam.i === exam.items.length - 1;
-  clearTimeout(submitArmed); submitArmed = null;
-  $("examNext").textContent = last ? "Abgeben" : "Weiter";
-  $("examHint").textContent = last ? "Letzte Lücke – abgeben nur über den Knopf „Abgeben“" : "Enter springt zur nächsten Lücke";
-  $("examPrev").style.visibility = exam.i ? "visible" : "hidden";
-  renderGap();
+    box.append(c);
+  });
+  const ins = [...box.querySelectorAll(".gapin, .mqa")];
+  ins.forEach((e, k) => {
+    e.addEventListener("focus", () => setTimeout(() => e.scrollIntoView({block: "center", behavior: "smooth"}), 320));
+    if(e.tagName === "INPUT") e.addEventListener("keydown", ev => { if(ev.key === "Enter"){ ev.preventDefault(); const n = ins[k + 1]; if(n) n.focus(); else e.blur(); } });
+  });
+  clearTimeout(submitArmed); submitArmed = null; $("examSubmit").textContent = "Abgeben";
+  $("examHint").textContent = "Abgeben nur über diesen Knopf – Enter springt zur nächsten Lücke.";
+  clearInterval(examTick); tickExam(); if(exam.end) examTick = setInterval(tickExam, 1000);
 }
-$("examAns").addEventListener("input", renderGap);
-// Enter (Bildschirm- oder Ansteck-Tastatur) geht nur zur nächsten Lücke und gibt nie ab
-const emptyGaps = () => exam.items.filter(i => !i.ans.trim()).length;
-$("examForm").addEventListener("submit", e => {
-  e.preventDefault(); if(!exam) return;
-  exam.items[exam.i].ans = $("examAns").value;
-  if(exam.i < exam.items.length - 1){ exam.i++; renderQ(); return; }
-  const empty = emptyGaps();
-  $("examHint").textContent = (empty ? `Noch ${empty} ${empty > 1 ? "Lücken" : "Lücke"} leer. ` : "Alles ausgefüllt. ") + "Abgeben nur über den Knopf „Abgeben“.";
-});
-// Abgeben nur per Knopf und mit zweitem Tippen
-$("examNext").onclick = () => {
+function tickExam(){
   if(!exam) return;
-  exam.items[exam.i].ans = $("examAns").value;
-  if(exam.i < exam.items.length - 1){ exam.i++; renderQ(); return; }
-  const b = $("examNext");
+  const t = $("examTimer"); t.textContent = "";
+  if(!exam.end){ t.append("Ohne Zeitlimit"); return; }
+  const left = Math.max(0, exam.end - Date.now()), m = Math.floor(left / MIN), sec = Math.floor(left % MIN / 1000);
+  t.append("Verbleibende Zeit ", el("b", null, `00:${pad(m)}:${pad(sec)}`)); t.classList.toggle("low", left < MIN);
+  if(left <= 0 && $("exam").classList.contains("on")) finishExam(true);
+}
+const openCount = () => exam.qs.reduce((n, q) => n + (q.type === "text" ? q.gaps.filter(g => !g.el.value.trim()).length : (q.el.value.trim() ? 0 : 1)), 0);
+$("examSubmit").onclick = () => {
+  if(!exam) return;
+  const b = $("examSubmit");
   if(!submitArmed){
-    const empty = emptyGaps();
+    const empty = openCount();
     b.textContent = "Wirklich abgeben?";
-    $("examHint").textContent = (empty ? `Noch ${empty} ${empty > 1 ? "Lücken" : "Lücke"} leer. ` : "") + "Zum Abgeben nochmal tippen.";
-    submitArmed = setTimeout(() => { submitArmed = null; b.textContent = "Abgeben"; $("examHint").textContent = "Letzte Lücke – abgeben nur über den Knopf „Abgeben“"; }, 3000);
+    $("examHint").textContent = (empty ? `Noch ${empty} ${empty > 1 ? "Antworten" : "Antwort"} leer. ` : "Alles ausgefüllt. ") + "Zum Abgeben nochmal tippen.";
+    submitArmed = setTimeout(() => { submitArmed = null; b.textContent = "Abgeben"; $("examHint").textContent = "Abgeben nur über diesen Knopf – Enter springt zur nächsten Lücke."; }, 3000);
     return;
   }
-  clearTimeout(submitArmed); submitArmed = null; finishExam();
+  clearTimeout(submitArmed); submitArmed = null; finishExam(false);
 };
-$("examPrev").onclick = () => { if(!exam || !exam.i) return; exam.items[exam.i].ans = $("examAns").value; exam.i--; renderQ(); };
-let quitArmed = null;
+$("examSubmit").addEventListener("pointerdown", ev => { if(document.activeElement && document.activeElement.classList.contains("gapin")) ev.preventDefault(); });
 $("examQuit").onclick = () => {
   const b = $("examQuit");
   if(!quitArmed){ b.textContent = "‹ Wirklich abbrechen?"; quitArmed = setTimeout(() => { quitArmed = null; b.textContent = "‹ Abbrechen"; }, 2500); return; }
-  clearTimeout(quitArmed); quitArmed = null; b.textContent = "‹ Abbrechen"; exam = null; show("home");
+  clearTimeout(quitArmed); quitArmed = null; b.textContent = "‹ Abbrechen"; clearInterval(examTick); exam = null; show("home");
 };
-function contextOf(it){
-  if(it.s) return it.s;
-  const parts = exam.text.text.split(/(?<=[.!?:])\s+/), mark = `[[${DATA.indexOf(it.v)}]]`;
-  const sent = parts.find(p => p.includes(mark)) || "";
-  return sent.replace(mark, "___").replace(/\[\[(\d+)\]\]/g, (m, i) => DATA[+i].g);
+// Satz, in dem eine Textlücke steht (für Protokoll und „Fehler üben“)
+function contextOf(q, it){
+  const full = q.seq.map(x => typeof x === "string" ? x : x === it ? "___" : x.g).join("");
+  return (full.split(/(?<=[.!?])\s+/).find(p => p.includes("___")) || full).trim();
 }
-function finishExam(){
-  const m = exam.text ? "t" : "x", logs = [];
-  for(const it of exam.items){
-    it.ok = Engine.isRight(it.u, it.ans, it.g);
-    it.res = it.ok ? {e: null} : Engine.classify(it.u, it.ans);
-    record(it.u, it.ok ? (exam.letters ? 2 : 3) : 1, m, it.res.e, it.res.p, true);
-    if(!it.ok) logs.push([it, {m: exam.text ? "Lückentext" : "Prüfung", v: it.v, a: it.ans, q: contextOf(it), h: exam.letters, k: it.res.e, p: it.res.p}]);
+// Langform einer Abkürzung im freien Text gefunden? (genau geschrieben, Groß-/Kleinschreibung egal)
+const plainWords = s => " " + String(s).toLowerCase().replace(/[^a-z0-9&]+/g, " ").trim() + " ";
+const fullFormIn = (u, text) => u.ab.f.some(f => plainWords(text).includes(plainWords(f)));
+function finishExam(auto){
+  clearInterval(examTick); clearTimeout(submitArmed); submitArmed = null;
+  const logs = [], now = Date.now();
+  for(const q of exam.qs){
+    if(q.type === "def"){
+      q.ans = q.el.value; const typed = q.letter + q.ans.trim(), c = Engine.gapCheck(q.u, typed, q.g);
+      q.ok = c.ok; q.res = c.res; q.got = q.ok ? 1 : 0;
+      if(!q.ok && q.letter && Engine.gapRight(q.u, q.ans, q.g)) q.res = {e: "f", d: "der Anfangsbuchstabe stand schon vor der Lücke – im Test wäre das falsch"};
+      record(q.u, q.ok ? (q.letter ? 2 : 3) : 1, "x", q.res.e, q.res.p, true);
+      if(!q.ok) logs.push([q, {m: "Prüfung", v: q.v, a: q.letter ? q.letter + "|" + q.ans : q.ans, q: q.s, h: !!q.letter, k: q.res.e, p: q.res.p}]);
+    } else if(q.type === "text"){
+      for(const g of q.gaps){
+        g.ans = g.el.value; const c = Engine.gapCheck(g.u, g.ans, g.g); g.ok = c.ok; g.res = c.res;
+        record(g.u, g.ok ? 3 : 1, "t", g.res.e, g.res.p, true);
+        if(!g.ok) logs.push([g, {m: "Lückentext", v: g.v, a: g.ans, q: contextOf(q, g), k: g.res.e, p: g.res.p}]);
+      }
+      q.got = q.pts ? q.gaps.filter(g => g.ok).length * q.pts / q.gaps.length : 0;
+    } else {
+      q.ans = q.el.value; q.got = q.ans.trim() ? null : 0;           // null = „Bewertung notwendig“ (selbst bewerten)
+      if(q.type === "abbr") q.fullOk = fullFormIn(q.u, q.ans);
+    }
   }
   store.set("hist", hist);
   const ids = addLogs(logs.map(x => x[1])); logs.forEach((x, j) => x[0].logId = ids[j]);
-  const ex = store.get("exams", []);
-  ex.push({t: Date.now(), n: exam.items.length, p: exam.items.filter(i => i.ok).length, u: Date.now(), k: exam.text ? "text:" + exam.text.id : exam.kind, l: exam.letters});
-  store.set("exams", ex.slice(-50));
+  exam.auto = auto; exam.dur = now - exam.start;
+  exam.rec = {t: now, n: exam.qs.reduce((n, q) => n + q.pts, 0), p: 0, u: now, k: exam.kind === "text" ? "text:" + exam.text.id : "test", tx: [exam.text.id], d: exam.dur};
+  scoreExam();
+  const ex = store.get("exams", []); ex.push(exam.rec); store.set("exams", ex.slice(-50));
   show("resultScreen"); renderResult();
 }
-function renderResult(){
-  const n = exam.items.length, p = exam.items.filter(i => i.ok).length, pct = Math.round(100 * p / n);
-  $("score").textContent = `${p} / ${n}`;
-  $("grade").textContent = `${pct} % · Note etwa ${gradeOf(100 * p / n)} · ${gradeOf(100 * p / n) !== "5,0" ? "bestanden" : "nicht bestanden"}` + (exam.letters ? " · mit Anfangsbuchstaben" : "");
-  const r = $("review"); r.innerHTML = "";
-  const order = exam.items.map((it, k) => [it, k]).sort((x, y) => x[0].ok - y[0].ok);   // Fehler zuerst
-  for(const [it, k] of order){
-    const d = el("div", "rv" + (it.ok ? "" : " no")), s = el("div", "s");
-    const [a, b] = contextOf(it).split("___");
-    s.append(document.createTextNode((exam.text ? `(${it.n}) ` : (k + 1) + ". ") + a), el("b", null, it.g), document.createTextNode(b || ""));
-    d.append(s);
-    if(!it.ok){
-      const y = el("div", "y"), typed = it.ans.trim();
-      y.append(el("span", null, errLabel(it.res) + " · Deine Antwort: " + (typed || "–")));
-      const o = el("button", null, "Bewertung melden");
-      o.onclick = () => { flagLog(it.logId); o.textContent = "Gemeldet"; o.disabled = true; };
-      y.append(o); d.append(y);
-      if(typed && (it.res.e === "s" || it.res.e === "f")) d.append(diffBlock(typed, Engine.dist(Engine.norm(typed), Engine.norm(it.g)) <= Engine.closest(it.u, typed).d ? it.g : Engine.closest(it.u, typed).form));
-    }
-    r.append(d);
+function scoreExam(){
+  exam.rec.p = Math.round(exam.qs.reduce((p, q) => p + (q.got || 0), 0) * 100) / 100;
+  exam.rec.o = exam.qs.filter(q => q.got == null).length;
+}
+function saveExamRec(){
+  scoreExam(); exam.rec.u = Date.now();
+  const ex = store.get("exams", []), k = ex.findIndex(e => e.t === exam.rec.t);
+  if(k >= 0){ ex[k] = exam.rec; store.set("exams", ex); }
+}
+function renderScore(){
+  const r = exam.rec, pct = 100 * r.p / r.n, d = Math.round(exam.dur / 1000);
+  $("score").textContent = `${fmtP(r.p)} / ${fmtP(r.n)}`;
+  $("grade").textContent = `${Math.round(pct)} % · Note etwa ${gradeOf(pct)} · Dauer ${Math.floor(d / 60)} Min. ${d % 60} Sek.` + (exam.auto ? " · Zeit abgelaufen" : "")
+    + (r.o ? ` · ${r.o} ${r.o > 1 ? "Antworten" : "Antwort"} unten selbst bewerten` : "");
+}
+function wrongBlock(it, sol){
+  const f = el("div", "mqf no"), typed = (it.letter || "") + String(it.ans || "").trim();
+  f.append(document.createTextNode("Die richtige Antwort ist: "), el("b", null, sol));
+  const y = el("div", "y"); y.append(el("span", null, errLabel(it.res) + " · Deine Antwort: " + (typed || "–")));
+  const o = el("button", null, "Bewertung melden"); o.onclick = () => { flagLog(it.logId); o.textContent = "Gemeldet"; o.disabled = true; };
+  y.append(o); f.append(y);
+  if(typed && (it.res.e === "s" || it.res.e === "f")) f.append(diffBlock(typed, it.res.e === "f" || Engine.dist(Engine.norm(typed), Engine.norm(sol)) <= Engine.closest(it.u, typed).d ? sol : Engine.closest(it.u, typed).form));
+  return f;
+}
+function rateRow(q, rerender){
+  const r = el("div", "rate"); r.append(el("span", null, "Selbst bewerten:"));
+  for(const [v, t] of [[0, "0"], [0.5, "0,5"], [1, "1"]]){
+    const b = el("button", q.got === v ? "on" : null, t);
+    b.onclick = () => { q.got = v; saveExamRec(); rerender(); };
+    r.append(b);
   }
-  $("practiceWrong").style.display = p < n ? "" : "none";
+  return r;
+}
+function renderResult(){
+  renderScore();
+  const box = $("review"); box.textContent = "";
+  exam.qs.forEach((q, k) => {
+    const c = el("div", "mqc");
+    const draw = () => {
+      c.textContent = "";
+      const st = q.got == null ? ["Bewertung notwendig", "part"] : q.got >= q.pts ? ["Richtig", "ok"] : q.got > 0 ? ["Teilweise richtig", "part"] : ["Falsch", "no"];
+      c.append(qHead(k, q, st, q.got));
+      if(q.type === "def"){
+        c.append(el("div", "mqd", defText(q.v, q.g)));
+        const [a, b] = q.s.split("___"), sn = el("div", "mqs"), g = el("span", "gapin " + (q.ok ? "ok" : "no"), q.ans.trim() || " ");
+        const lg = el("span", "nw"); lg.append(document.createTextNode(q.letter), g, el("span", "mark " + (q.ok ? "ok" : "no"), q.ok ? " ✓" : " ✗"));
+        sn.append(document.createTextNode(a), lg, document.createTextNode(b)); c.append(sn);
+        if(q.ok){ const f = el("div", "mqf ok"); f.append("Die richtige Antwort ist: ", el("b", null, q.g)); c.append(f); } else c.append(wrongBlock(q, q.g));
+      } else if(q.type === "abbr" || q.type === "expl"){
+        const p = el("div", "mqd");
+        if(q.type === "abbr") p.append("Give the ", el("b", null, "full form"), " of the following word and ", el("b", null, "explain"), " it:"); else p.append("Explain the following word:");
+        c.append(p, el("div", "mqi", q.type === "abbr" ? q.u.ab.a : cleanE(q.v)), el("div", "ans", q.ans.trim() || "–"));
+        const f = el("div", "mqf");
+        if(q.type === "abbr"){
+          const fulls = [...new Map(q.u.ab.f.map(x => [plainWords(x).replace(/ and /g, " "), x])).values()];
+          f.append(el("b", null, q.u.ab.a + " = " + fulls.join(" / ")), document.createElement("br"), document.createTextNode(q.u.ab.x));
+          f.append(el("div", "y", q.fullOk ? "Langform richtig geschrieben ✓ – jetzt die Erklärung prüfen." : "Langform fehlt oder ist nicht genau richtig geschrieben – dafür gibt es im Test höchstens die Hälfte. Die Erklärung gehört immer dazu."));
+        } else {
+          f.append(el("b", null, cleanE(q.v)), document.createTextNode(": " + q.v.df), document.createElement("br"), el("span", "muted", "Deutsch: " + q.v.d));
+          f.append(el("div", "y", "Volle Punktzahl nur, wenn deine Erklärung dasselbe sagt – auf Englisch, in eigenen Worten."));
+        }
+        if(q.ans.trim()) f.append(rateRow(q, () => { draw(); renderScore(); }));
+        c.append(f);
+      } else {
+        const p = el("div", "mqd"); p.append(el("b", null, "Complete the text by filling in the gaps with the appropriate vocabulary."));
+        const sn = el("div", "mqs");
+        for(const x of q.seq){
+          if(typeof x === "string"){ sn.append(document.createTextNode(x)); continue; }
+          sn.append(el("span", "gapin " + (x.ok ? "ok" : "no"), x.ans.trim() || " "), el("span", "mark " + (x.ok ? "ok" : "no"), x.ok ? " ✓ " : " ✗ "));
+          if(!x.ok) sn.append(el("span", "fix", x.g));
+        }
+        c.append(p, sn);
+        const wrong = q.gaps.filter(g => !g.ok);
+        const f = el("div", "mqf" + (wrong.length ? "" : " ok"), `${q.gaps.length - wrong.length} von ${q.gaps.length} Lücken richtig.`);
+        for(const g of wrong) f.append(wrongBlock(g, g.g));
+        c.append(f);
+      }
+    };
+    draw(); box.append(c);
+  });
+  const bad = exam.qs.flatMap(q => q.type === "text" ? q.gaps.filter(g => !g.ok) : (q.got != null && q.got >= q.pts) ? [] : [q]);
+  $("practiceWrong").style.display = bad.length ? "" : "none";
+  renderExamTile();
 }
 $("goExam").onclick = startExam;
 $("examAgain").onclick = startExam;
 $("resHome").onclick = () => show("home");
-$("practiceWrong").onclick = () => startSpecial("Fehler aus der Prüfung", [...new Set(exam.items.filter(i => !i.ok).map(i => i.u.k))]);
+$("practiceWrong").onclick = () => {
+  const keys = exam.qs.flatMap(q => q.type === "text" ? q.gaps.filter(g => !g.ok).map(g => g.u.k) : (q.got != null && q.got >= q.pts) ? [] : [q.u.k]);
+  startSpecial("Fehler aus der Prüfung", [...new Set(keys)]);
+};
 
 document.addEventListener("visibilitychange", () => {
   if(!document.hidden){
@@ -1607,7 +1747,7 @@ function logExport(){
   L.push(`Vokabeltrainer ${APP_VERSION} – Fehlerprotokoll`);
   L.push(`Exportiert: ${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())} · ${log.length} Einträge · Geräte: ${devs}`);
   const FP = forecastFor(true), cal = S.F.cal, exc = Engine.examCheck(hist, cal.k), o = examOpts();
-  L.push(`Prüfung: ${fmtWhen(settings.examAt)} · Annahmen ${o.n} Lücken, 1,0 ab ${pctTxt(o.key1)}, 4,0 ab ${pctTxt(o.key4)} · heute geschafft ${S.done}/${UNITS.length}`);
+  L.push(`Prüfung: ${fmtWhen(settings.examAt)} · Annahmen ${o.n} Punkte, 1,0 ab ${pctTxt(o.key1)}, 4,0 ab ${pctTxt(o.key4)} · heute geschafft ${S.done}/${UNITS.length}`);
   L.push(`Prognose Stand jetzt: ${S.F.mean.toFixed(1)} % (Note ${gradeOf(S.F.mean)}, Bereich ${Math.round(S.F.p10)}–${Math.round(S.F.p90)} %, 1,0-Chance ${Math.round(100 * S.F.p1)} %) · mit Lernplan: ${FP.mean.toFixed(1)} % (Note ${gradeOf(FP.mean)}, 1,0-Chance ${Math.round(100 * FP.p1)} %)`);
   L.push(`Anpassung: ${cal.n} Abrufe über Nacht, ${cal.right} richtig, Durchschnittsmodell erwartete ${cal.expStd.toFixed(1)}, angepasst ${cal.expMe.toFixed(1)} (Faktor ${cal.k.toFixed(2)} ± ${cal.se.toFixed(2)} log) · Simulationen: ${exc.right}/${exc.n} richtig, erwartet ${exc.exp.toFixed(1)}`);
   L.push("Lernstufen: " + ORDER.map(s => `${Engine.STAGES[s]} ${S.counts[s]}`).join(" · "));

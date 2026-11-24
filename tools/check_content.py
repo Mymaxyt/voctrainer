@@ -10,6 +10,9 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 data = json.load(open(os.path.join(ROOT, "src", "vocab.json"), encoding="utf-8"))
 spec = importlib.util.spec_from_file_location("training", os.path.join(ROOT, "src", "training.py"))
 tr = importlib.util.module_from_spec(spec); spec.loader.exec_module(tr)
+spec = importlib.util.spec_from_file_location("definitions", os.path.join(ROOT, "src", "definitions.py"))
+df = importlib.util.module_from_spec(spec); spec.loader.exec_module(df)
+GAP = re.compile(r"\[\[(\d+)(?:\|([^\]]+))?\]\]")
 
 FUNC = {"a", "an", "the", "of", "to", "in", "from", "for", "and", "on", "at", "by"}
 errors, hints = [], []
@@ -68,27 +71,41 @@ for i, h in sorted(getattr(tr, "H", {}).items()):
     if lk: errors.append(f"{i} {data[i]['e']}: Hinweis verrät das Lösungswort ({', '.join(sorted(lk))}): {h}")
     if not h.strip() or len(h) > 45: errors.append(f"{i} {data[i]['e']}: Hinweis leer oder zu lang: {h}")
 
-# Lückentexte
+# Lückentexte (je Buchaufgabe) und gemischte Texte im Prüfungsformat (genau 8 Lücken)
 used = {}
-for t in tr.TEXTS:
-    ids = [int(x) for x in re.findall(r"\[\[(\d+)\]\]", t["text"])]
-    prefix = t["id"]
-    for i in ids:
-        if i in used: errors.append(f"Text {prefix}: Eintrag {i} schon in Text {used[i]}")
-        used[i] = prefix
-        n = data[i]["n"]
-        if not (n.startswith(prefix + "-") or (prefix == "3.4" and n.startswith("3.5-"))):
-            errors.append(f"Text {prefix}: Eintrag {i} ({n}) gehört nicht zu dieser Aufgabe")
-        plain = re.sub(r"\[\[\d+\]\]", " ", t["text"])
-        lk = leaks(forms(data[i]), plain)
+for t in tr.TEXTS + df.MTEXTS:
+    prefix, mixed = t["id"], t["id"].startswith("M")
+    gaps = [(int(m.group(1)), m.group(2)) for m in GAP.finditer(t["text"])]
+    if mixed and len(gaps) != 8: errors.append(f"Text {prefix}: {len(gaps)} statt 8 Lücken")
+    if len({i for i, _ in gaps}) != len(gaps): errors.append(f"Text {prefix}: Eintrag doppelt")
+    plain = GAP.sub(" ", t["text"])
+    for i, word in gaps:
+        if i >= len(data): errors.append(f"Text {prefix}: Eintrag {i} gibt es nicht"); continue
+        if not mixed:
+            if i in used: errors.append(f"Text {prefix}: Eintrag {i} schon in Text {used[i]}")
+            n = data[i]["n"]
+            if not (n.startswith(prefix + "-") or (prefix == "3.4" and n.startswith("3.5-"))):
+                errors.append(f"Text {prefix}: Eintrag {i} ({n}) gehört nicht zu dieser Aufgabe")
+        used.setdefault(i, prefix)
+        lk = leaks(forms(data[i]), plain) if not word else set()   # Teil-Lücke: der Rest steht absichtlich im Text
         if lk: hints.append(f"Text {prefix} [[{i}]] {data[i]['e']}: Lösungswort im Text ({', '.join(sorted(lk))})")
-        before = t["text"].split(f"[[{i}]]")[0]
-        a = article(before, data[i]["g"])
+        before = GAP.split(t["text"].split(f"[[{i}")[0])[0] if False else t["text"].split(f"[[{i}")[0]
+        a = article(GAP.sub(lambda m: m.group(2) or data[int(m.group(1))]["g"], before), word or data[i]["g"])
         if a: hints.append(f"Text {prefix} [[{i}]] {data[i]['e']}: {a}")
+
+# Englische Definitionen (Prüfungsformat Frage 1-6 und 8) und Abkürzungen (Frage 7)
+if sorted(df.D) != list(range(len(data))): errors.append("D hat nicht genau die Einträge 0–%d" % (len(data) - 1))
+for i, d in sorted(df.D.items()):
+    if i >= len(data): continue
+    lk = leaks(forms(data[i]), d)
+    if lk: errors.append(f"{i} {data[i]['e']}: Definition verrät das Lösungswort ({', '.join(sorted(lk))}): {d}")
+for i, (ab, full, expl) in df.ABBR.items():
+    if norm_ab := ab.lower():
+        if norm_ab not in {x.lower() for x in forms(data[i])}: errors.append(f"ABBR {i}: {ab} passt nicht zu {data[i]['e']}")
 missing = sorted(set(range(len(data))) - set(used))
 if missing: errors.append(f"Lückentexte: Einträge fehlen: {missing}")
 
-print(f"{len(seen)} Übungssätze, {len(tr.TEXTS)} Lückentexte mit {len(used)} Lücken")
+print(f"{len(seen)} Übungssätze, {len(tr.TEXTS)} Lückentexte + {len(df.MTEXTS)} Prüfungstexte, {len(used)} von {len(data)} Wörtern in Texten, {len(df.D)} Definitionen, {len(df.ABBR)} Abkürzungen")
 for h in hints: print("Hinweis:", h)
 for e in errors: print("FEHLER:", e)
 sys.exit(1 if errors else 0)

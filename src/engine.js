@@ -83,7 +83,9 @@ function init(data){
   data.forEach((v, i) => {
     const k = norm(v.e);
     let u = UNIT.get(k);
-    if(!u){ u = {k, idx: UNITS.length, entries: [], acc: new Set(), forms: [], chaps: [], syn: [], sents: []}; UNIT.set(k, u); UNITS.push(u); }
+    if(!u){ u = {k, idx: UNITS.length, entries: [], acc: new Set(), forms: [], chaps: [], syn: [], sents: [], ab: null}; UNIT.set(k, u); UNITS.push(u); }
+    if(v.ab && !u.ab) u.ab = {a: v.ab.a, f: v.ab.f, x: v.ab.x, set: new Set([v.ab.a, ...v.ab.f].map(norm))};
+    if(v.ga) u.ga = new Set(v.ga.map(norm));   // echte Synonyme, die in dieselbe Lücke passen (headquarters = head office)
     u.entries.push(i); ENTRY_UNIT[i] = u;
     for(const a of accepted(v)) u.acc.add(a);
     for(const f of forms(v)) if(!u.forms.includes(f)) u.forms.push(f);
@@ -97,6 +99,31 @@ function init(data){
 const unitOf = i => ENTRY_UNIT[i];
 const unitByKey = k => UNIT.get(k);
 const isRight = (u, typed, extra) => { const t = norm(typed); return t !== "" && (u.acc.has(t) || (!!extra && norm(extra) === t)); };
+// Lücke im Satz oder Text (wie in Moodle): nur genau das Wort, das in die Lücke gehört – in der Form, die der Satz braucht.
+// Erlaubt sind nur echte Schreibvarianten (britisch/amerikanisch, Bindestrich/Leerzeichen) und bei Abkürzungen Kurz- oder Langform.
+const spell = s => s.replace(/centre/g, "center").replace(/isation/g, "ization").replace(/ise(d|s)?$/, "ize$1")
+  .replace(/fulfil(?!l)/g, "fulfill").replace(/catalogue/g, "catalog").replace(/organis/g, "organiz").replace(/colour/g, "color");
+function gapRight(u, typed, g){
+  const t = norm(typed), w = norm(g);
+  if(!t) return false;
+  if(t === w || spell(t) === spell(w)) return true;
+  if(u && u.ga && u.ga.has(t) && u.acc.has(w)) return true;
+  return !!(u && u.ab && u.ab.set.has(w) && u.ab.set.has(t));
+}
+// Ergebnis für eine Lücke: {ok, res}; ein richtiges Wort in falscher Form zählt als Formfehler
+function gapCheck(u, typed, g){
+  if(gapRight(u, typed, g)) return {ok: true, res: {e: null}};
+  const t = norm(typed);
+  if(t && u.acc.has(t)) return {ok: false, res: {e: "f", d: "die Lücke braucht „" + g + "“"}};
+  const r = classify(u, typed);
+  return {ok: false, res: r.e ? r : {e: "f", d: "die Lücke braucht „" + g + "“"}};
+}
+// Lücken eines Textes: [[i]] = Eintrag i mit seinem Lückenwort, [[i|wort]] = genau dieses Wort
+const GAP_RE = /\[\[(\d+)(?:\|([^\]]+))?\]\]/g;
+const textGaps = text => [...String(text).matchAll(GAP_RE)].map(m => ({i: +m[1], g: m[2] || DATA[+m[1]].g, raw: m[0]}));
+const textParts = text => String(text).split(/\[\[\d+(?:\|[^\]]+)?\]\]/);
+// Anzahl Wörter einer Antwort, wie Moodle es zeigt: "(2 words)"
+const wordCount = g => String(g).trim().split(/\s+/).length;
 
 // ---------- Fehlerarten
 function dist(a, b){                       // Damerau-Levenshtein (Vertauschung zweier Nachbarbuchstaben = 1 Fehler)
@@ -544,7 +571,7 @@ function daily(hist, now, n){
 }
 
 return {MIN, HOUR, DAY, P, STAGES, ERR, init, norm, accepted, forms, unitOf, unitByKey, get units(){ return UNITS; },
-        isRight, classify, closest, align, dist, slots, memory, recall, retr, stage, today, info, pick, modeFor, sentence, promptEntry,
+        isRight, gapRight, gapCheck, textGaps, textParts, wordCount, classify, closest, align, dist, slots, memory, recall, retr, stage, today, info, pick, modeFor, sentence, promptEntry,
         chance, note, GRADES, gradeKey, gradeOf, recalls, calibrate, examCheck, sessionsUntil, examRecall, forecast, dayStart, dayKey, migrate, tidy, mergeHist, legacySrs, absorbLegacy, errorsByType, confusions, daily, isTyped, okTyped};
 })();
 if(typeof module !== "undefined") module.exports = Engine;

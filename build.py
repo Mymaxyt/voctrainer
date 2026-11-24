@@ -17,13 +17,22 @@ def load_training():
     mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
     return mod
 
+def load_module(name):
+    spec = importlib.util.spec_from_file_location(name, os.path.join(SRC, name + ".py"))
+    mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+    return mod
+
 def load_data():
     data = json.load(open(os.path.join(SRC, "vocab.json"), encoding="utf-8"))
-    tr = load_training()
+    tr, df = load_training(), load_module("definitions")
     for i, v in enumerate(data):
         v["t"] = [list(s) if isinstance(s, tuple) else s for s in tr.T[i]]
         v["h"] = tr.H[i]
-    return data, tr.TEXTS
+        v["df"] = df.D[i]                                   # englische Definition (Prüfungsformat)
+        if i in df.ABBR:
+            ab, full, expl = df.ABBR[i]
+            v["ab"] = {"a": ab, "f": full, "x": expl}       # Abkürzung ausschreiben und erklären
+    return data, tr.TEXTS + df.MTEXTS
 
 def js(obj):
     return json.dumps(obj, ensure_ascii=False).replace("</", "<\\/")
