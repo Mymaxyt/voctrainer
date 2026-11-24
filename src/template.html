@@ -234,6 +234,13 @@ body.typing .textbox{font-size:16px;max-height:calc(var(--vvh, 100vh) - 190px)}
 .hbars .val{font-variant-numeric:tabular-nums;color:var(--text);text-align:right}
 .pairs{display:flex;flex-direction:column;gap:8px;font-size:14px}
 .pairs div small{display:block;color:var(--muted);font-size:12px}
+.gdist{display:grid;grid-template-columns:repeat(11,1fr);gap:2px;align-items:end;height:132px;margin-top:4px}
+.gdist .col{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0}
+.gdist .col i{display:block;width:72%;max-width:34px;background:var(--bar1);border-radius:4px 4px 0 0;min-height:0}
+.gdist .col span{font-size:11px;color:var(--text);font-variant-numeric:tabular-nums;margin-bottom:2px;white-space:nowrap}
+.gdist .col b{font-size:11px;color:var(--muted);font-weight:600;margin-top:4px;white-space:nowrap}
+.gdist .col.top b{color:var(--text)}
+#scen{max-width:420px}
 .tbl{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
 .tbl th{text-align:right;font-weight:600;color:var(--muted);padding:4px 6px;border-bottom:1px solid var(--line)}
 .tbl td{text-align:right;padding:6px;border-bottom:1px solid var(--line)}
@@ -365,11 +372,24 @@ body.typing .textbox{font-size:16px;max-height:calc(var(--vvh, 100vh) - 190px)}
       <button class="linkbtn" id="examEdit">ändern</button></div>
     <div class="examdate" id="examEditRow" style="display:none"><input type="datetime-local" id="examInput"><button class="tool" id="examSave" style="flex:none;padding:9px 14px">Speichern</button></div>
   </div>
-  <div class="panel">
-    <h3>Prognose für den Prüfungstag</h3>
+  <div class="panel wide">
+    <h3>Notenprognose</h3>
+    <div class="seg small" id="scen"><button data-s="now">Stand jetzt</button><button data-s="plan">Mit Lernplan bis zur Prüfung</button></div>
+    <p class="muted" id="scenText"></p>
     <div class="herorow"><span class="herofig" id="progPct">–</span><span class="note">Note <span id="progNote">–</span></span></div>
-    <p id="progChance"></p>
+    <p id="progRange"></p>
+    <div class="gdist" id="gradeDist" role="img"></div>
     <p class="muted" id="progNever"></p>
+    <h3 style="font-size:15px;margin-top:4px">Wie gut passt die Prognose zu dir?</h3>
+    <p id="calText"></p>
+    <p id="simText"></p>
+    <div class="examdate"><span class="muted" id="assumeText"></span><button class="linkbtn" id="assumeEdit">ändern</button></div>
+    <div class="examdate" id="assumeRow" style="display:none">
+      <label class="muted">Lücken <input type="number" id="asN" min="5" max="155" step="1" style="width:70px"></label>
+      <label class="muted">1,0 ab <input type="number" id="asK1" min="50" max="100" step="0.5" style="width:70px"> %</label>
+      <label class="muted">4,0 ab <input type="number" id="asK4" min="20" max="90" step="0.5" style="width:70px"> %</label>
+      <button class="tool" id="assumeSave" style="flex:none;padding:9px 14px">Speichern</button>
+    </div>
   </div>
   <div class="panel">
     <h3>Heute</h3>
@@ -407,7 +427,9 @@ body.typing .textbox{font-size:16px;max-height:calc(var(--vvh, 100vh) - 190px)}
   <div class="panel wide">
     <h3>So wird gerechnet</h3>
     <ul class="method">
-      <li><b>Prognose:</b> Für jedes Wort schätzt ein Gedächtnismodell (FSRS-6, gelernt aus Millionen echter Wiederholungen), wie wahrscheinlich du es zum Prüfungstermin noch richtig schreibst – aus deinen Antworten, deren Abständen und deinen Fehlern. Der Mittelwert ergibt die erwartete Quote. Die 1,0-Chance gilt für 30 zufällige Lücken mit höchstens einem Fehler. Nie geübte Wörter zählen als falsch.</li>
+      <li><b>Prognose:</b> Für jedes Wort schätzt das Gedächtnismodell FSRS-6, wie wahrscheinlich du es zum Prüfungstermin ohne Hilfe richtig schreibst – aus deinen Antworten, ihren Abständen und deinen Fehlern. Das Modell wird an dich angepasst: Es vergleicht, was es für deine Abrufe über Nacht (erste Antwort eines Tages zu einem Wort vom Vortag) vorhergesagt hat, mit dem, was du wirklich wusstest, und schätzt daraus, ob du schneller oder langsamer vergisst als der Durchschnitt. Bei wenigen Daten bleibt es nahe am Durchschnitt.</li>
+      <li><b>Notenverteilung:</b> Viele simulierte Prüfungen mit zufällig gezogenen Wörtern; jedes Wort ist mit seiner Wahrscheinlichkeit richtig, und die Unsicherheit der Anpassung wird mitgerechnet. Daraus kommen der wahrscheinliche Bereich und die Wahrscheinlichkeit jeder Note. „Mit Lernplan“ nimmt an, dass du bis zur Prüfung jeden Tag das Tagesziel schaffst (eine Runde um 18 Uhr); Fehler werden dabei wie im Lernplan zweimal nachgelernt.</li>
+      <li><b>Grenzen:</b> Die Prognose kennt nur das Format der App. Ist die echte Prüfung schwerer (ohne Striche und Hinweise) oder hat sie einen anderen Notenschlüssel, stell die Annahmen in der Notenprognose um. Nie geübte Wörter zählen als falsch.</li>
       <li><b>Lernstufen</b> zählen nur Fakten aus getippten Antworten. Gefestigt: seit dem letzten Fehler 2× ohne Hilfe richtig, mindestens 10 Minuten auseinander. Sicher: an 2 Tagen, davon 1× im Lückensatz. Prüfungsfest: 3× an 3 Tagen, davon 2× im Satz. Ein Fehler oder Tipp setzt auf „In Arbeit“ zurück. Karteikarten zählen nicht, weil man sich dort selbst bewertet.</li>
       <li><b>Heute geschafft:</b> einmal ohne Hilfe richtig; nach einem Fehler zweimal (nach etwa 1 und 10 Minuten). Der Lerntag beginnt um 4 Uhr.</li>
       <li>151 verschiedene Wörter: market share, brand loyalty, distribution channel und end user stehen in zwei Kapiteln und zählen je einmal.</li>
@@ -583,8 +605,21 @@ const EXAM_DEFAULT = new Date(2026, 10, 26, 8, 0).getTime();       // Do 26.11.2
 let settings = store.get("settings", null);
 if(!settings || !settings.examAt) settings = {examAt: EXAM_DEFAULT, u: 0};
 const H = u => hist[u.k] || [];
-function infos(now){ const m = new Map(); for(const u of UNITS) m.set(u.k, Engine.info(hist[u.k], now, settings.examAt)); return m; }
+// Persönliche Anpassung und Notenprognose werden zwischengespeichert, bis sich der Verlauf oder die Annahmen ändern
+let histVer = 0, calCache = null, fcCache = {};
+function calib(){ if(!calCache || calCache.v !== histVer) calCache = {v: histVer, c: Engine.calibrate(hist)}; return calCache.c; }
+const examOpts = () => ({examAt: settings.examAt, n: settings.n || 30, key1: Number.isFinite(settings.key1) ? settings.key1 : 95, key4: Number.isFinite(settings.key4) ? settings.key4 : 50});
+const gradeKey = () => { const o = examOpts(); return Engine.gradeKey(o.key1, o.key4); };
+const gradeOf = pct => Engine.gradeOf(pct, gradeKey());
+function forecastFor(plan){
+  const now = Date.now(), id = [histVer, plan, JSON.stringify(examOpts()), Math.floor(now / (5 * MIN))].join("|");
+  if(!fcCache[plan] || fcCache[plan].id !== id) fcCache[plan] = {id, f: Engine.forecast(hist, now, Object.assign({cal: calib(), plan}, examOpts()))};
+  return fcCache[plan].f;
+}
+// Beim Üben reicht der zuletzt berechnete Faktor (er ändert sich nur langsam); Startseite und Fortschritt rechnen neu.
+function infos(now){ const m = new Map(), k = (calCache ? calCache.c : calib()).k; for(const u of UNITS) m.set(u.k, Engine.info(hist[u.k], now, settings.examAt, k)); return m; }
 function record(u, g, m, e, p, noSave){
+  histVer++;
   const list = hist[u.k] || (hist[u.k] = []);
   let t = Date.now(); if(list.length && list[list.length - 1][0] >= t) t = list[list.length - 1][0] + 1;
   const a = [t, g, m]; if(g === 1){ a.push(e || "n"); if(p) a.push(p); }
@@ -595,10 +630,10 @@ const firstEntry = u => DATA[u.entries[0]];
 const tagOf = v => v.c.split(" ")[0] + " · Aufg. " + v.n;
 const fullE = k => { const u = Engine.unitByKey(k); return u ? firstEntry(u).e : k; };
 function summary(now){
-  const I = infos(now), counts = [0, 0, 0, 0, 0]; let done = 0, learn = 0, never = 0, sum = 0; const rs = [];
-  for(const u of UNITS){ const i = I.get(u.k); counts[i.stage]++; if(i.today.done) done++; if(i.today.learning) learn++; if(!i.n) never++; sum += i.rExam; rs.push(i.rExam); }
-  const pct = Math.round(100 * sum / UNITS.length);
-  return {I, counts, done, learn, never, pct, rs};
+  const I = infos(now), counts = [0, 0, 0, 0, 0]; let done = 0, learn = 0, never = 0;
+  for(const u of UNITS){ const i = I.get(u.k); counts[i.stage]++; if(i.today.done) done++; if(i.today.learning) learn++; if(!i.n) never++; }
+  const F = forecastFor(false), pct = Math.round(F.mean);
+  return {I, counts, done, learn, never, pct, F};
 }
 
 // ---------- Lernstufen-Balken (Prüfungsfest links, Neu rechts)
@@ -982,7 +1017,7 @@ function countdown(now){
 function renderHome(){
   const now = Date.now(), S = summary(now);
   $("homeCountdown").textContent = countdown(now);
-  $("homePrognose").textContent = S.pct + " %"; $("homeNote").textContent = Engine.note(S.pct);
+  $("homePrognose").textContent = S.pct + " %"; $("homeNote").textContent = gradeOf(S.F.mean);
   $("homeToday").textContent = `${S.done} / ${UNITS.length}`;
   stageBar($("homeStages"), S.counts, false); stageLegend($("homeLegend"), S.counts, true);
   const after = now >= settings.examAt, open = after ? UNITS.filter(u => { const i = S.I.get(u.k); return !i.today.done && !i.today.learning && i.rNow < 0.9; }).length : UNITS.length - S.done - S.learn;
@@ -1001,16 +1036,55 @@ $("goProgress").onclick = () => show("progress");
 $("progHome").onclick = () => show("home");
 $("progTrain").onclick = () => { special = null; bonus = false; show("train"); next(); };
 
+// ---------- Notenprognose (zwei Szenarien, Verteilung, Gegenprobe)
+let scen = store.get("scen", "now");
+for(const b of $("scen").children) b.onclick = () => { scen = b.dataset.s; store.set("scen", scen); renderForecast(Date.now(), summary(Date.now())); };
+const pctTxt = x => (Math.round(x * 10) / 10).toLocaleString("de-DE") + " %";
+function renderForecast(now, S){
+  const o = examOpts(), F = scen === "plan" ? forecastFor(true) : S.F, other = scen === "plan" ? S.F : forecastFor(true), cal = F.cal;
+  for(const b of $("scen").children) b.classList.toggle("on", b.dataset.s === scen);
+  const when = fmtWhen(Math.max(now, settings.examAt)).split(",")[0];
+  $("scenText").textContent = scen === "plan"
+    ? (F.sessions.length ? `Angenommen, du schaffst ${F.sessions.length > 1 ? "heute und an den nächsten Tagen" : "heute noch"} das Tagesziel (je eine Runde um 18 Uhr). Ohne weiteres Lernen: ${Math.round(other.mean)} %, Note ${gradeOf(other.mean)}.` : "Vor der Prüfung ist keine weitere Lernrunde mehr eingeplant – gleich wie „Stand jetzt“.")
+    : `Wenn du ab jetzt nichts mehr lernst. Mit Tagesziel bis zur Prüfung: ${Math.round(other.mean)} %, Note ${gradeOf(other.mean)}.`;
+  $("progPct").textContent = Math.round(F.mean) + " %"; $("progNote").textContent = gradeOf(F.mean);
+  $("progRange").textContent = "";
+  $("progRange").append(document.createTextNode(`Erwartet am ${when}: wahrscheinlich zwischen ${Math.round(F.p10)} und ${Math.round(F.p90)} % (Note ${gradeOf(F.p90)} bis ${gradeOf(F.p10)}). Chance auf 1,0: `), el("b", null, Math.round(100 * F.p1) + " %"), document.createTextNode("."));
+  // Wahrscheinlichkeit je Note (eine Farbe; Werte nur bei Säulen ab 2 %)
+  const box = $("gradeDist"), order = [...Engine.GRADES, "5,0"], max = Math.max(...order.map(g => F.grades[g])), likely = order.reduce((b, g) => F.grades[g] > F.grades[b] ? g : b, order[0]);
+  box.textContent = "";
+  for(const g of order){
+    const p = F.grades[g], col = el("div", "col" + (g === likely ? " top" : "")), bar = el("i");
+    bar.style.height = (max ? 96 * p / max : 0) + "px"; col.title = `Note ${g}: ${Math.round(100 * p)} %`;
+    col.append(el("span", null, p >= 0.02 ? Math.round(100 * p) + " %" : ""), bar, el("b", null, g));
+    box.appendChild(col);
+  }
+  box.setAttribute("aria-label", "Wahrscheinlichkeit je Note: " + order.filter(g => F.grades[g] >= 0.01).map(g => `${g}: ${Math.round(100 * F.grades[g])} %`).join(", "));
+  $("progNever").textContent = (o.n <= 60 ? `Bei ${o.n} Lücken zählt jede Lücke ${pctTxt(100 / o.n).replace(" %", " Prozentpunkte")} – deshalb sind manche Noten wahrscheinlicher als ihre Nachbarn. ` : "")
+    + (S.never ? `${S.never} Wörter noch nie geübt – sie zählen als falsch.` : "");
+  // Gegenprobe: Abrufe über Nacht und Prüfungssimulationen
+  $("calText").textContent = cal.n < 20
+    ? `Erst ${cal.n} Abrufe über Nacht (erste Antwort eines Tages zu einem Wort vom Vortag) – zu wenig zum Anpassen. Die Prognose nutzt vorerst das Durchschnittsmodell.`
+    : `${cal.n} Abrufe über Nacht ausgewertet: ${cal.right} richtig (${Math.round(100 * cal.right / cal.n)} %). Das Durchschnittsmodell hätte ${Math.round(100 * cal.expStd / cal.n)} % erwartet, angepasst an dich ${Math.round(100 * cal.expMe / cal.n)} %. `
+      + (cal.k < 0.8 ? "Du vergisst über Nacht mehr als der Durchschnitt – die Prognose ist deshalb strenger." : cal.k > 1.25 ? "Du behältst über Nacht mehr als der Durchschnitt – die Prognose ist deshalb großzügiger." : "Du liegst nahe am Durchschnitt.");
+  const ec = Engine.examCheck(hist, cal.k);
+  $("simText").textContent = ec.n ? `Prüfungssimulationen: ${ec.right} von ${ec.n} Lücken richtig, das angepasste Modell hätte ${Math.round(ec.exp)} erwartet.` : "Noch keine Prüfungssimulation – sie ist die beste Gegenprobe für die Prognose.";
+  $("assumeText").textContent = `Annahmen: ${o.n} Lücken · 1,0 ab ${pctTxt(o.key1)} · bestanden (4,0) ab ${pctTxt(o.key4)}`;
+}
+$("assumeEdit").onclick = () => { const o = examOpts(); $("asN").value = o.n; $("asK1").value = o.key1; $("asK4").value = o.key4; $("assumeRow").style.display = "flex"; };
+$("assumeSave").onclick = () => {
+  const n = Math.round(+$("asN").value), k1 = +$("asK1").value, k4 = +$("asK4").value;
+  if(!(n >= 5 && n <= 155 && k1 > k4 && k1 <= 100 && k4 >= 20)) { $("assumeText").textContent = "Bitte prüfen: 5–155 Lücken, und 1,0 muss über 4,0 liegen."; return; }
+  settings = Object.assign({}, settings, {n, key1: k1, key4: k4, u: Date.now()}); store.set("settings", settings);
+  $("assumeRow").style.display = "none"; renderProgress();
+};
+
 // ---------- Fortschritt
 function renderProgress(){
   const now = Date.now(), S = summary(now), I = S.I;
   $("examWhen").textContent = fmtWhen(settings.examAt);
   $("examLeft").textContent = countdown(now);
-  $("progPct").textContent = S.pct + " %"; $("progNote").textContent = Engine.note(S.pct);
-  const ch = Engine.chance(S.rs, 30, 0.95);
-  $("progChance").textContent = "";
-  $("progChance").append(document.createTextNode("Erwarteter Anteil richtiger Lücken am " + fmtWhen(Math.max(now, settings.examAt)).split(",")[0] + " – Chance auf 1,0: "), el("b", null, Math.round(100 * ch) + " %"), document.createTextNode(" (30 Lücken, höchstens 1 Fehler)."));
-  $("progNever").textContent = S.never ? `${S.never} Wörter noch nie geübt – sie zählen als falsch.` : "";
+  renderForecast(now, S);
   // Heute
   $("todayMeter").style.width = (100 * S.done / UNITS.length) + "%";
   $("todayMeterBox").setAttribute("aria-label", `${S.done} von ${UNITS.length} Wörtern heute geschafft`);
@@ -1086,7 +1160,7 @@ $("examEdit").onclick = () => { $("examEditRow").style.display = "flex"; $("exam
 $("examSave").onclick = () => {
   const v = $("examInput").value, t = v ? new Date(v).getTime() : NaN;
   if(!Number.isFinite(t)) return;
-  settings = {examAt: t, u: Date.now()}; store.set("settings", settings);
+  settings = Object.assign({}, settings, {examAt: t, u: Date.now()}); store.set("settings", settings);
   $("examEditRow").style.display = "none"; renderProgress();
 };
 
@@ -1107,7 +1181,7 @@ function renderExamTile(){
     : examKind === "all" ? "Alle 155 Prüfungssätze in zufälliger Reihenfolge."
     : "30 zufällige Vokabeln als englische Lückensätze, die im Training nie vorkommen.") + " Jede Lücke zeigt einen Strich pro Buchstaben, dahinter steht ein englischer Hinweis in Klammern. Auswertung erst am Ende.";
   const ex = store.get("exams", []), last = ex[ex.length - 1];
-  $("homeExam").textContent = last ? `Letztes Ergebnis: ${last.p} / ${last.n} (${Math.round(100 * last.p / last.n)} %, Note ${Engine.note(Math.round(100 * last.p / last.n))}) · ${ex.length} Prüfung${ex.length > 1 ? "en" : ""}` : "Noch keine Prüfung gemacht";
+  $("homeExam").textContent = last ? `Letztes Ergebnis: ${last.p} / ${last.n} (${Math.round(100 * last.p / last.n)} %, Note ${gradeOf(100 * last.p / last.n)}) · ${ex.length} Prüfung${ex.length > 1 ? "en" : ""}` : "Noch keine Prüfung gemacht";
 }
 function pickText(){
   const v = $("textPick").value;
@@ -1235,7 +1309,7 @@ function finishExam(){
 function renderResult(){
   const n = exam.items.length, p = exam.items.filter(i => i.ok).length, pct = Math.round(100 * p / n);
   $("score").textContent = `${p} / ${n}`;
-  $("grade").textContent = `${pct} % · Note etwa ${Engine.note(pct)} · ${pct >= 50 ? "bestanden" : "nicht bestanden"}` + (exam.letters ? " · mit Anfangsbuchstaben" : "");
+  $("grade").textContent = `${pct} % · Note etwa ${gradeOf(100 * p / n)} · ${gradeOf(100 * p / n) !== "5,0" ? "bestanden" : "nicht bestanden"}` + (exam.letters ? " · mit Anfangsbuchstaben" : "");
   const r = $("review"); r.innerHTML = "";
   const order = exam.items.map((it, k) => [it, k]).sort((x, y) => x[0].ok - y[0].ok);   // Fehler zuerst
   for(const [it, k] of order){
@@ -1321,7 +1395,7 @@ function merge(remote){
   for(const e of ll){ if(e.t <= lc) continue; const r = lm.get(e.id); if(!r){ lm.set(e.id, e); push = true; } else if((e.u || 0) > (r.u || 0)){ lm.set(e.id, e); push = true; } }
   const lg = [...lm.values()].sort((a, b) => a.t - b.t).slice(-LOG_MAX);
   if(lg.length !== ll.length || lg.some((e, i) => e.id !== ll[i].id || e.ov !== ll[i].ov || e.fl !== ll[i].fl)) pulled = true;
-  applying = true; hist = H2; settings = st;
+  applying = true; hist = H2; settings = st; histVer++;
   store.set("hist", hist); store.set("settings", settings); store.set("exams", ex); store.set("log", lg); store.set("logCleared", lc);
   applying = false;
   return {pulled, push};
@@ -1532,7 +1606,10 @@ function logExport(){
   const L = [];
   L.push(`Vokabeltrainer ${APP_VERSION} – Fehlerprotokoll`);
   L.push(`Exportiert: ${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())} · ${log.length} Einträge · Geräte: ${devs}`);
-  L.push(`Prüfung: ${fmtWhen(settings.examAt)} · Prognose ${S.pct} % (Note ${Engine.note(S.pct)}) · 1,0-Chance ${Math.round(100 * Engine.chance(S.rs, 30, 0.95))} % · heute geschafft ${S.done}/${UNITS.length}`);
+  const FP = forecastFor(true), cal = S.F.cal, exc = Engine.examCheck(hist, cal.k), o = examOpts();
+  L.push(`Prüfung: ${fmtWhen(settings.examAt)} · Annahmen ${o.n} Lücken, 1,0 ab ${pctTxt(o.key1)}, 4,0 ab ${pctTxt(o.key4)} · heute geschafft ${S.done}/${UNITS.length}`);
+  L.push(`Prognose Stand jetzt: ${S.F.mean.toFixed(1)} % (Note ${gradeOf(S.F.mean)}, Bereich ${Math.round(S.F.p10)}–${Math.round(S.F.p90)} %, 1,0-Chance ${Math.round(100 * S.F.p1)} %) · mit Lernplan: ${FP.mean.toFixed(1)} % (Note ${gradeOf(FP.mean)}, 1,0-Chance ${Math.round(100 * FP.p1)} %)`);
+  L.push(`Anpassung: ${cal.n} Abrufe über Nacht, ${cal.right} richtig, Durchschnittsmodell erwartete ${cal.expStd.toFixed(1)}, angepasst ${cal.expMe.toFixed(1)} (Faktor ${cal.k.toFixed(2)} ± ${cal.se.toFixed(2)} log) · Simulationen: ${exc.right}/${exc.n} richtig, erwartet ${exc.exp.toFixed(1)}`);
   L.push("Lernstufen: " + ORDER.map(s => `${Engine.STAGES[s]} ${S.counts[s]}`).join(" · "));
   const ec = Engine.errorsByType(hist, now - 7 * DAY);
   L.push("Fehlerarten (7 Tage): " + Object.entries(ec).map(([k, n]) => `${Engine.ERR[k]} ${n}`).join(" · "));

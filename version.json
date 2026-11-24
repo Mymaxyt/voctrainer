@@ -1,6 +1,6 @@
 {
-  "versionCode": 19,
-  "versionName": "1.16",
-  "notes": "Alle Lücken zeigen jetzt einen Strich pro Buchstabe, dahinter steht ein englischer Hinweis in Klammern. Anfangsbuchstaben nur als Tipp oder Prüfungsoption.",
+  "versionCode": 20,
+  "versionName": "1.17",
+  "notes": "Genauere Notenprognose: an dein Gedächtnis angepasst (Abrufe über Nacht), Notenverteilung mit wahrscheinlichem Bereich, Szenario mit Lernplan bis zur Prüfung, einstellbare Lückenzahl und Notenschlüssel.",
   "apk": "https://raw.githubusercontent.com/Mymaxyt/voctrainer/main/dist/Vokabeltrainer.apk"
 }

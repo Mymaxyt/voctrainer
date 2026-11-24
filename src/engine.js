@@ -248,10 +248,10 @@ function today(atts, now){
   if(err) return {done: false, tried, learning: true, step: ok + 1, due: T[T.length - 1][0] + (ok ? 10 * MIN : MIN)};
   return {done: false, tried, learning: false};
 }
-function info(atts, now, examAt){
+function info(atts, now, examAt, k){
   atts = atts || [];
   const m = memory(atts), at = examAt && examAt > now ? examAt : now;
-  return {n: atts.length, stage: stage(atts), mem: m, rNow: recall(m, now), rExam: recall(m, at), today: today(atts, now),
+  return {n: atts.length, stage: stage(atts), mem: m, rNow: recall(m, now), rExam: m ? retr((k || 1) * m.S, (at - m.last) / DAY) : 0, today: today(atts, now),
           errs: atts.filter(a => a[1] === 1).length, last: atts.length ? atts[atts.length - 1] : null};
 }
 
@@ -307,9 +307,127 @@ function chance(rs, n, need, sims){
   }
   return hit / sims;
 }
-function note(pct){                       // übliche Notenskala, nur Richtwert
-  for(const [p, n] of [[95, "1,0"], [90, "1,3"], [85, "1,7"], [80, "2,0"], [75, "2,3"], [70, "2,7"], [65, "3,0"], [60, "3,3"], [55, "3,7"], [50, "4,0"]]) if(pct >= p) return n;
-  return "5,0";
+// Notenschlüssel: 1,0 ab key1 %, 4,0 (bestanden) ab key4 %, dazwischen gleichmäßig. Standard 95 / 50 = 5-%-Schritte.
+// Hochschulen nutzen sehr verschiedene Schlüssel (z. B. 1,0 ab 95 % und 4,0 ab 60 %, oder 1,0 ab 98,5 %), deshalb einstellbar.
+const GRADES = ["1,0", "1,3", "1,7", "2,0", "2,3", "2,7", "3,0", "3,3", "3,7", "4,0"];
+function gradeKey(key1, key4){
+  key1 = Number.isFinite(key1) ? key1 : 95; key4 = Number.isFinite(key4) ? key4 : 50;
+  return GRADES.map((name, j) => ({name, min: key1 - j * (key1 - key4) / 9}));
+}
+function gradeOf(pct, key){ for(const s of key || gradeKey()) if(pct >= s.min - 1e-9) return s.name; return "5,0"; }
+const note = pct => gradeOf(pct, gradeKey(95, 50));
+
+// ---------- Persönliche Kalibrierung
+// Wie gut sagt das Modell DEINE Abrufe voraus? Grundlage ist jeweils die erste getippte Antwort eines Lerntags zu einem Wort,
+// das an einem früheren Tag schon dran war (Abruf über Nacht, wie in der Prüfung). Wiederholungen am selben Tag zählen nicht,
+// weil sie vor allem das Kurzzeitgedächtnis messen. Antworten mit Tipp zählen als nicht gewusst.
+function recalls(hist){
+  const out = [];
+  for(const atts of Object.values(hist || {})){
+    for(let i = 1; i < atts.length; i++){
+      const a = atts[i];
+      if(!isTyped(a) || a[2] === "l") continue;
+      const d = dayKey(a[0]); let first = true, earlier = false;
+      for(let j = i - 1; j >= 0; j--){
+        if(dayKey(atts[j][0]) !== d){ earlier = true; break; }
+        if(isTyped(atts[j])){ first = false; break; }
+      }
+      if(!first || !earlier) continue;
+      const m = memory(atts.slice(0, i));
+      out.push({S: m.S, dt: (a[0] - m.last) / DAY, y: a[1] === 3 ? 1 : 0, t: a[0]});
+    }
+  }
+  return out;
+}
+// Ein persönlicher Faktor k auf die Stabilität (k < 1: du vergisst schneller als das Durchschnittsmodell),
+// geschätzt nach Maximum-a-posteriori mit Vorwissen log k ~ N(0; 0,7²) – bei wenig Daten bleibt k nahe 1.
+const PRIOR_SD = 0.7;
+function calibrate(hist){
+  const rs = recalls(hist);
+  const ll = lk => {
+    const k = Math.exp(lk); let s = -0.5 * (lk / PRIOR_SD) ** 2;
+    for(const r of rs){ const p = Math.min(1 - 1e-6, Math.max(1e-6, retr(k * r.S, r.dt))); s += r.y ? Math.log(p) : Math.log(1 - p); }
+    return s;
+  };
+  let a = -3, b = 3; const g = (Math.sqrt(5) - 1) / 2;
+  let c = b - g * (b - a), d = a + g * (b - a), fc = ll(c), fd = ll(d);
+  for(let it = 0; it < 50; it++){
+    if(fc > fd){ b = d; d = c; fd = fc; c = b - g * (b - a); fc = ll(c); }
+    else { a = c; c = d; fc = fd; d = a + g * (b - a); fd = ll(d); }
+  }
+  const lk = (a + b) / 2, h = 0.01, curv = (ll(lk + h) - 2 * ll(lk) + ll(lk - h)) / (h * h);
+  const se = curv < 0 ? Math.min(PRIOR_SD, Math.sqrt(-1 / curv)) : PRIOR_SD, k = Math.exp(lk);
+  const sum = f => rs.reduce((x, r) => x + f(r), 0);
+  return {k, lk, se, n: rs.length, right: sum(r => r.y), expStd: sum(r => retr(r.S, r.dt)), expMe: sum(r => retr(k * r.S, r.dt))};
+}
+// Gegenprobe mit den Prüfungssimulationen: vorhergesagt (mit Faktor k) gegen tatsächlich richtig
+function examCheck(hist, k){
+  let n = 0, right = 0, exp = 0;
+  for(const atts of Object.values(hist || {})) for(let i = 1; i < atts.length; i++){
+    const a = atts[i]; if(a[2] !== "x" && a[2] !== "t") continue;
+    const m = memory(atts.slice(0, i)); n++; if(a[1] === 3) right++; exp += retr(k * m.S, (a[0] - m.last) / DAY);
+  }
+  return {n, right, exp};
+}
+
+// ---------- Notenprognose
+// Je Wort: Wahrscheinlichkeit, es zum Prüfungstermin ohne Hilfe richtig zu schreiben (FSRS-6 mit persönlichem Faktor).
+// Szenario "plan": bis zur Prüfung täglich eine Lernsitzung (heute, falls das Wort heute noch offen ist, sonst ab morgen um 18 Uhr).
+// Gewusst → gute Abfrage; nicht gewusst → Fehler und zweimal neu gelernt (nach 1 und 10 Min.), wie im Lernplan.
+function sessionsUntil(now, examAt){
+  const out = [];
+  for(let day = 0; day < 14; day++){
+    const d = new Date(dayStart(now)); d.setDate(d.getDate() + day); d.setHours(18, 0, 0, 0);
+    const t = day === 0 ? Math.max(d.getTime(), now + 30 * MIN) : d.getTime();
+    if(t > examAt - 2 * HOUR) break;
+    if(day === 0 && dayKey(t) !== dayKey(now)) continue;
+    out.push(t);
+  }
+  return out;
+}
+function examRecall(atts, examAt, k, sessions, skipFirst){
+  let L = [{a: atts || [], w: 1}];
+  (sessions || []).forEach((T, si) => {
+    if(si === 0 && skipFirst) return;
+    const nx = [];
+    for(const leaf of L){
+      const m = memory(leaf.a), p = m ? retr(k * m.S, (T - m.last) / DAY) : 0;
+      if(p > 0) nx.push({a: [...leaf.a, [T, 3, "c"]], w: leaf.w * p});
+      if(p < 1) nx.push({a: [...leaf.a, [T, 1, "c", "n"], [T + MIN, 3, "w"], [T + 11 * MIN, 3, "c"]], w: leaf.w * (1 - p)});
+    }
+    L = nx;
+  });
+  let r = 0;
+  for(const leaf of L){ const m = memory(leaf.a); if(m) r += leaf.w * retr(k * m.S, (examAt - m.last) / DAY); }
+  return r;
+}
+// Notenverteilung: Prüfung mit n zufälligen Wörtern, jedes mit seiner Wahrscheinlichkeit richtig (Poisson-Binomial),
+// dazu die Unsicherheit des persönlichen Faktors (7 Stützstellen). Ergebnis: Erwartung, 80-%-Bereich, Wahrscheinlichkeit je Note.
+function forecast(hist, now, opt){
+  opt = opt || {};
+  const examAt = opt.examAt && opt.examAt > now ? opt.examAt : now;
+  const cal = opt.cal || calibrate(hist), key = gradeKey(opt.key1, opt.key4), n = Math.max(1, Math.min(opt.n || 30, UNITS.length));
+  const sessions = opt.plan ? sessionsUntil(now, examAt) : [];
+  const Z = [-2, -1.33, -0.67, 0, 0.67, 1.33, 2], W = Z.map(z => Math.exp(-z * z / 2)), WS = W.reduce((x, y) => x + y, 0);
+  const rnd = mulberry(20261126), count = {}, pcts = []; let center = null;
+  Z.forEach((z, zi) => {
+    const k = Math.exp(cal.lk + z * cal.se);
+    const rs = UNITS.map(u => { const a = hist[u.k] || []; return examRecall(a, examAt, k, sessions, sessions.length > 0 && today(a, now).done); });
+    if(z === 0) center = rs;
+    const sims = Math.round((opt.sims || 4200) * W[zi] / WS), idx = rs.map((_, i) => i);
+    for(let s = 0; s < sims; s++){
+      let ok = 0;
+      for(let i = 0; i < n; i++){ const j = i + Math.floor(rnd() * (idx.length - i)); const x = idx[i]; idx[i] = idx[j]; idx[j] = x; if(rnd() < rs[idx[i]]) ok++; }
+      const pct = 100 * ok / n; pcts.push(pct);
+      const gn = gradeOf(pct, key); count[gn] = (count[gn] || 0) + 1;
+    }
+  });
+  pcts.sort((x, y) => x - y);
+  const q = f => pcts[Math.min(pcts.length - 1, Math.floor(f * pcts.length))], grades = {};
+  for(const g of [...GRADES, "5,0"]) grades[g] = (count[g] || 0) / pcts.length;
+  const likely = Object.keys(grades).reduce((b, g) => grades[g] > grades[b] ? g : b, "1,0");
+  const mean = pcts.reduce((x, y) => x + y, 0) / pcts.length;
+  return {examAt, n, key, plan: !!opt.plan, sessions, cal, rs: center, mean, p10: q(0.1), p90: q(0.9), grades, likely, p1: grades["1,0"]};
 }
 
 // ---------- Übernahme aus Version ≤ 1.14 (Kästchen-System + Fehlerprotokoll)
@@ -427,6 +545,6 @@ function daily(hist, now, n){
 
 return {MIN, HOUR, DAY, P, STAGES, ERR, init, norm, accepted, forms, unitOf, unitByKey, get units(){ return UNITS; },
         isRight, classify, closest, align, dist, slots, memory, recall, retr, stage, today, info, pick, modeFor, sentence, promptEntry,
-        chance, note, dayStart, dayKey, migrate, tidy, mergeHist, legacySrs, absorbLegacy, errorsByType, confusions, daily, isTyped, okTyped};
+        chance, note, GRADES, gradeKey, gradeOf, recalls, calibrate, examCheck, sessionsUntil, examRecall, forecast, dayStart, dayKey, migrate, tidy, mergeHist, legacySrs, absorbLegacy, errorsByType, confusions, daily, isTyped, okTyped};
 })();
 if(typeof module !== "undefined") module.exports = Engine;

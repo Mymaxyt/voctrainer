@@ -203,4 +203,57 @@ test("Auswertungen", () => {
   assert.strictEqual(d.length, 1); assert.strictEqual(d[0].answers, 4); assert.strictEqual(d[0].words, 2); assert.strictEqual(d[0].firstOk, 0);
 });
 
+test("Notenschlüssel", () => {
+  const k = Engine.gradeKey(95, 50);
+  assert.deepStrictEqual(k.map(x => x.min), [95, 90, 85, 80, 75, 70, 65, 60, 55, 50]);
+  assert.strictEqual(Engine.gradeOf(95, k), "1,0"); assert.strictEqual(Engine.gradeOf(94.9, k), "1,3"); assert.strictEqual(Engine.gradeOf(49.9, k), "5,0");
+  for (let p = 0; p <= 100; p += 0.5) assert.strictEqual(Engine.note(p), Engine.gradeOf(p, k));
+  const strict = Engine.gradeKey(95, 60);
+  assert.strictEqual(Engine.gradeOf(59, strict), "5,0"); assert.strictEqual(Engine.gradeOf(60, strict), "4,0");
+});
+
+test("Abrufe über Nacht", () => {
+  const D1 = T0, D2 = T0 + DAY, D3 = T0 + 2 * DAY;
+  const h = { a: [[D1, 3, "c"], [D2, 1, "c", "s"], [D2 + 2 * MIN, 3, "w"], [D3, 3, "c"]],
+              b: [[D1 - DAY, 3, "l"], [D1, 3, "k"], [D1 + MIN, 2, "c"], [D2, 3, "x"]] };
+  const r = Engine.recalls(h);
+  assert.deepStrictEqual(r.map(x => x.y), [0, 1, 0, 1]);          // gleicher Tag zählt nicht, Tipp zählt als nicht gewusst
+  assert.ok(Math.abs(r[0].dt - 1) < 1e-9);
+});
+
+test("Persönlicher Faktor", () => {
+  const none = Engine.calibrate({});
+  assert.ok(Math.abs(none.k - 1) < 1e-3 && none.se === 0.7 && none.n === 0);
+  // Daten von jemandem, der deutlich schneller vergisst als das Standardmodell (k = 0,3)
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const S0 = Engine.memory([[T0, 3, "c"]]).S, h = {};
+  for (let i = 0; i < 400; i++) {
+    const dt = 0.8 + rnd(); const p = Engine.retr(0.3 * S0, dt);        // ab 05:12 am nächsten Morgen = neuer Lerntag
+    h["u" + i] = [[T0, 3, "c"], [T0 + dt * DAY, rnd() < p ? 3 : 1, "c", "n"]];
+  }
+  const c = Engine.calibrate(h);
+  assert.strictEqual(c.n, 400);
+  assert.ok(c.k > 0.12 && c.k < 0.65, "k = " + c.k);
+  assert.ok(c.se < 0.7 && Math.abs(c.expMe - c.right) < Math.abs(c.expStd - c.right));
+});
+
+test("Notenprognose", () => {
+  const ex = new Date(2026, 10, 26, 8, 0).getTime(), now = new Date(2026, 10, 24, 12, 20).getTime();
+  assert.deepStrictEqual(Engine.sessionsUntil(now, ex).map(t => new Date(t).getDate() + "/" + new Date(t).getHours()), ["24/18", "25/18"]);
+  assert.strictEqual(Engine.sessionsUntil(new Date(2026, 10, 25, 23, 30).getTime(), ex).length, 1);   // kurz vor Mitternacht: noch eine Runde
+  const strong = {}, weak = {};
+  for (const u of units) {
+    strong[u.k] = [[now - 12 * DAY, 3, "c"], [now - 6 * DAY, 3, "c"], [now - 2 * DAY, 3, "c"], [now - 3 * HOUR, 3, "c"]];
+    weak[u.k] = [[now - 2 * DAY, 1, "c", "n"], [now - 2 * DAY + MIN, 3, "w"]];
+  }
+  const f = Engine.forecast(strong, now, { examAt: ex, n: 30, sims: 1500 });
+  assert.strictEqual(f.likely, "1,0"); assert.ok(f.p1 > 0.5 && f.mean > 95, JSON.stringify([f.p1, f.mean]));
+  assert.ok(Math.abs(Object.values(f.grades).reduce((a, b) => a + b, 0) - 1) < 1e-9);
+  const w0 = Engine.forecast(weak, now, { examAt: ex, sims: 1500 }), w1 = Engine.forecast(weak, now, { examAt: ex, plan: true, sims: 1500 });
+  assert.ok(w1.mean > w0.mean + 5, JSON.stringify([w0.mean, w1.mean]));                     // weiterlernen lohnt sich
+  assert.ok(w0.p10 <= w0.mean && w0.mean <= w0.p90);
+  const lenient = Engine.forecast(weak, now, { examAt: ex, key1: 90, key4: 40, sims: 1500 });
+  assert.ok(lenient.grades["1,0"] >= w0.grades["1,0"]);
+});
+
 console.log(`engine: ${n} Testgruppen bestanden`);
