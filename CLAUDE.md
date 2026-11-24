@@ -7,7 +7,7 @@
 > sie zusammen mit dem Code. Am Ende jeder Arbeitssitzung muss hier der aktuelle Zwischenstand stehen.
 > Keine Passwörter, Tokens oder Schlüssel in diese Datei – das Repo ist öffentlich.
 
-Zuletzt aktualisiert: 24.11.2026, Version 1.19.1 (versionCode 24): Prüfung im Format des Moodle-Übungstests, englische Definitionen, 100 Wörter aus den Kursunterlagen.
+Zuletzt aktualisiert: 24.11.2026, Version 1.19.2 (versionCode 25): Prüfung im Format des Moodle-Übungstests, englische Definitionen, 100 Wörter aus den Kursunterlagen.
 
 ## Worum es geht
 - Max Werner (GitHub: Mymaxyt), Student International Management (FH Würzburg), schreibt am
@@ -90,7 +90,7 @@ git push
 ```
 - Signierschlüssel: `key.jks`, Alias `max`. Max gibt Datei und Passwort direkt im Chat (nie committen).
   **Ohne genau diesen Schlüssel lässt sich kein Update über die installierte App spielen.**
-- versionCode immer um 1 erhöhen (aktuell 24 → nächste 25). Die App vergleicht ihn mit `version.json`
+- versionCode immer um 1 erhöhen (aktuell 25 → nächste 26). Die App vergleicht ihn mit `version.json`
   (`https://raw.githubusercontent.com/Mymaxyt/voctrainer/main/version.json`) und zeigt dann das Update-Banner.
 - Nach dem Push prüfen, dass raw.githubusercontent.com die neue `version.json` und eine identische APK ausliefert.
 - UI-Tests (Playwright) liegen nicht im Repo; bisher: Lernfluss, Sync zwischen zwei Geräten, Tastatur,
@@ -137,6 +137,11 @@ git push
 - **Kosten niedrig halten (Vorgabe von Max):** alles mit `claude-haiku-5-5` (laut Presse 0,10 $/Mio. Eingabe, 0,50 $/Mio.
   Ausgabe), `thinking: {type: "disabled"}` (Haiku 5.5 denkt sonst standardmäßig und verdoppelt die Ausgabe-Token),
   `max_tokens` 160, nur bei falschen Antworten ohne Tippfehler. Eine Prüfung ≈ 300 Eingabe- + 70 Ausgabe-Token ≈ 0,007 Cent.
+- **Antwortformat (seit 1.19.2):** erzwungener Werkzeug-Aufruf (`tools` + `tool_choice` „ergebnis“, Schemas in `AI_TOOL`),
+  dadurch kein Text-Parsen mehr. Vorher kam bei Max „Antwort nicht lesbar“ (in 1.19 fraß das standardmäßige Nachdenken
+  das `max_tokens`-Budget, Text-JSON war teils kaputt). `max_tokens` 400 (es zählt nur, was erzeugt wird).
+- Frage 7: `explPart` entfernt die (auch falsch geschriebene) Langform aus der Antwort; unter 3 Wörtern Erklärung gibt
+  es 0 ohne API-Aufruf. Langform-Halbpunkt prüft die App exakt (`fullFormIn`). Nach Fehlern Knopf „KI-Prüfung wiederholen“.
 - Am 24.11. mit dem echten Schlüssel getestet (18 Fälle): develop/launch ✗, release/launch ✓, assigned/promoted ✗,
   consolidate ✗ (Wortart), voucher/coupon ✗, edge/competitive advantage ✓; Frage 7: Langform prüft die App exakt selbst,
   Claude bewertet nur die Erklärung (0/0,5).
@@ -182,6 +187,7 @@ git push
 - 1.17 Notenprognose an Max angepasst (siehe oben)
 - 1.18 Prüfung genau im Format des Moodle-Übungstests; Lückensätze mit englischer Definition statt Strichen; strenge
   Lückenbewertung; 100 Wörter aus den Kursunterlagen; Karteikarten „Erklären“; Prognose auf 16 Punkte
+- 1.19.2 „Antwort nicht lesbar“ behoben (Werkzeug-Ausgabe), Erklärungen ohne Text gar nicht erst senden, Wiederholen-Knopf
 - 1.19.1 KI günstiger (nur Haiku, ohne Nachdenken), fairere Synonym-Prüfung, Langform lokal geprüft, Schlüssel über Sync
 - 1.19 KI-Prüfung mit Claude (eigener API-Schlüssel): gleichwertige Wörter anerkennen, Frage 7/8 bewerten
 - 1.18.1 Frage 7/8 automatisch vorbewertet; Buchstabenvergleich in der Überprüfung repariert (stand untereinander)

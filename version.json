@@ -1,6 +1,6 @@
 {
-  "versionCode": 24,
-  "versionName": "1.19.1",
-  "notes": "KI-Prüfung günstiger und fairer: gleichwertige Synonyme werden anerkannt, Schlüssel gilt nach einmaligem Eintragen auf allen gekoppelten Geräten.",
+  "versionCode": 25,
+  "versionName": "1.19.2",
+  "notes": "Fehler „Antwort nicht lesbar“ behoben: Claude antwortet jetzt in festem Format. Neuer Knopf „KI-Prüfung wiederholen“.",
   "apk": "https://raw.githubusercontent.com/Mymaxyt/voctrainer/main/dist/Vokabeltrainer.apk"
 }

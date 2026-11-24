@@ -553,7 +553,7 @@ span.gapin{display:inline-block;min-height:1.9em;width:auto;min-width:6em}
 
 <section id="resultScreen" class="screen">
   <header class="nav"><button class="backbtn" id="resHome">‹ Start</button><h1>Überprüfung</h1></header>
-  <div class="score" style="margin-top:12px"><div class="big" id="score"></div><div class="sub2" id="grade"></div></div>
+  <div class="score" style="margin-top:12px"><div class="big" id="score"></div><div class="sub2" id="grade"></div><button class="linkbtn" id="aiRetry" style="display:none;margin-top:8px">KI-Prüfung wiederholen</button></div>
   <div class="actions" style="margin-top:12px"><button class="btn ghost" id="practiceWrong">Fehler üben</button><button class="btn main" id="examAgain">Neue Prüfung</button></div>
   <div id="review" class="mq"></div>
 </section>
@@ -1253,28 +1253,36 @@ let aiKey = store.get("aiKey", ""), aiKeyU = store.get("aiKeyU", 0);   // Schlü
 function setAiKey(k, u){ aiKey = k; aiKeyU = u || Date.now(); store.set("aiKey", k); store.set("aiKeyU", aiKeyU); renderAI(); }
 const AI_FAST = "claude-haiku-5-5", AI_GOOD = "claude-haiku-5-5";   // günstigstes Modell, ohne „Nachdenken“ (spart Ausgabe-Token)
 const aiOn = () => !!aiKey && navigator.onLine !== false;
-async function claude(model, system, user, maxTokens){
-  const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 20000);
+// Antwort kommt als Werkzeug-Aufruf mit festem Schema zurück – dann muss die App keinen Text auslesen
+const AI_TOOL = {
+  gap: {type: "object", properties: {accept: {type: "boolean"}, reason: {type: "string", description: "Begründung auf Deutsch, höchstens 20 Wörter"}}, required: ["accept", "reason"]},
+  expl: {type: "object", properties: {points: {type: "number", enum: [0, 0.5, 1]}, reason: {type: "string", description: "Begründung auf Deutsch, höchstens 25 Wörter"}}, required: ["points", "reason"]}
+};
+async function claude(model, system, user, schema){
+  const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 25000);
   try{
     const r = await fetch("https://api.anthropic.com/v1/messages", {method: "POST", signal: ctl.signal,
       headers: {"x-api-key": aiKey, "anthropic-version": "2023-06-01", "content-type": "application/json", "anthropic-dangerous-direct-browser-access": "true"},
-      body: JSON.stringify({model, max_tokens: maxTokens || 160, thinking: {type: "disabled"}, system, messages: [{role: "user", content: user}]})});
+      body: JSON.stringify({model, max_tokens: 400, thinking: {type: "disabled"}, system, messages: [{role: "user", content: user}],
+        tools: [{name: "ergebnis", description: "Gibt die Bewertung zurück.", input_schema: AI_TOOL[schema]}], tool_choice: {type: "tool", name: "ergebnis"}})});
     const j = await r.json().catch(() => ({}));
-    if(!r.ok) throw new Error(r.status === 401 ? "Schlüssel ungültig" : (j.error && j.error.message) || "Fehler " + r.status);
+    if(!r.ok) throw new Error(r.status === 401 ? "Schlüssel ungültig" : r.status === 429 ? "zu viele Anfragen, gleich nochmal" : (j.error && j.error.message) || "Fehler " + r.status);
+    const tu = (j.content || []).find(c => c.type === "tool_use");
+    if(tu && tu.input && typeof tu.input === "object") return tu.input;
+    // Rückfall: JSON im Text suchen
     const txt = (j.content || []).map(c => c.type === "text" ? c.text || "" : "").join(""), m = txt.match(/\{[\s\S]*\}/);
     if(m){ try{ return JSON.parse(m[0]); }catch(e){} }
-    // nachsichtig lesen, falls die Begründung ungeschützte Anführungszeichen enthält
-    const acc = txt.match(/"accept"\s*:\s*(true|false)/), pts = txt.match(/"points"\s*:\s*([0-9.]+)/), rs = txt.match(/"reason"\s*:\s*"([\s\S]*?)"?\s*\}?\s*$/);
-    if(!acc && !pts) throw new Error("Antwort nicht lesbar");
-    return {accept: acc ? acc[1] === "true" : undefined, points: pts ? +pts[1] : undefined, reason: rs ? rs[1] : ""};
-  } catch(e){ throw new Error(e.name === "AbortError" ? "keine Antwort (Zeitüberschreitung)" : e.message); }
+    const acc = txt.match(/"accept"\s*:\s*(true|false)/), pts = txt.match(/"points"\s*:\s*([0-9.]+)/);
+    if(acc || pts) return {accept: acc ? acc[1] === "true" : undefined, points: pts ? +pts[1] : undefined, reason: ""};
+    throw new Error("Antwort nicht lesbar (" + (j.stop_reason || "leer") + ")");
+  } catch(e){ throw new Error(e.name === "AbortError" ? "keine Antwort (Zeitüberschreitung)" : e.message === "Failed to fetch" ? "keine Verbindung" : e.message); }
   finally { clearTimeout(tm); }
 }
 const AI_GAP_SYS = "Du bist erfahrener Englischlehrer und korrigierst einen Business-English-Vokabeltest an einer Hochschule. Zu jeder Lücke gibt es eine Musterlösung. "
   + "Entscheide, ob du die Antwort des Studenten als GENAUSO richtig anerkennen würdest: Sie muss in diesem Satz dasselbe aussagen, für Muttersprachler natürlich klingen "
   + "und grammatisch genau passen (Wortart, Singular/Plural, Zeitform, Artikel davor). Ein gängiges Synonym, das hier gleich gut passt, ist richtig, auch wenn es nicht die Musterlösung ist. "
   + "Falsch sind: Rechtschreibfehler, ein verwandtes Wort mit anderer Bedeutung, eine deutlich allgemeinere oder unvollständige Antwort, eine falsche Wortform. "
-  + 'Antworte nur mit JSON: {"accept": true oder false, "reason": "Begründung auf Deutsch, höchstens 20 Wörter"}';
+  + "Gib das Ergebnis über das Werkzeug zurück (accept, reason).";
 // lohnt sich die Nachfrage? (leer, Tippfehler am richtigen Wort oder abgebrochen: nein)
 const aiWorth = (res, typed) => aiOn() && String(typed).trim().length >= 2 && res && res.e !== "s" && !(res.e === "n" && res.d === "unvollständig") && res.e !== "n";
 function aiGap({def, sentence, prompt, g, typed}){
@@ -1283,21 +1291,40 @@ function aiGap({def, sentence, prompt, g, typed}){
   if(sentence) parts.push("Satz mit Lücke: " + sentence);
   if(prompt) parts.push("Aufgabe: das englische Wort für diesen deutschen Begriff schreiben: " + prompt);
   parts.push("Musterlösung: " + g, "Antwort des Studenten: " + typed);
-  return claude(AI_FAST, AI_GAP_SYS, parts.join("\n"), 200).then(r => ({accept: r.accept === true, reason: String(r.reason || "").slice(0, 200)}));
+  return claude(AI_FAST, AI_GAP_SYS, parts.join("\n"), "gap").then(r => ({accept: r.accept === true, reason: String(r.reason || "").slice(0, 200)}));
 }
 const AI_EXPL_SYS = "Du bewertest wie ein fairer Dozent Antworten in einem Business-English-Vokabeltest. "
   + "Aufgabentyp A: \"Give the full form of the following word and explain it\" – bewerte NUR die Erklärung (die Langform prüft die App selbst): 0,5 wenn sie zutrifft, sonst 0. "
   + "Aufgabentyp B: \"Explain the following word\" – 1 Punkt für eine zutreffende Erklärung, 0,5 wenn sie nur teilweise stimmt oder zu ungenau ist. "
   + "Ein Rechtschreibfehler in der Langform kostet deren halben Punkt; in der Erklärung sind kleine Sprachfehler egal, solange die Bedeutung stimmt. Fehlt die Erklärung, gibt es dafür nichts. "
-  + 'Antworte nur mit JSON: {"points": Zahl, "reason": "Begründung auf Deutsch, höchstens 25 Wörter"}';
+  + "Gib das Ergebnis über das Werkzeug zurück (points, reason).";
+// Erklärungsteil einer Antwort: bei Abkürzungen ohne die (auch falsch geschriebene) Langform und die Abkürzung selbst
+function explPart(q){
+  const words = String(q.ans).split(/[^A-Za-z0-9&'’]+/).filter(Boolean);
+  if(q.type !== "abbr") return words.join(" ");
+  const near = (w, f) => { w = w.toLowerCase(); return w === f || (f.length > 3 && Engine.dist(w, f) <= 2); };
+  let rest = words.filter(w => w.toLowerCase() !== q.u.ab.a.toLowerCase());
+  // die erste Stelle entfernen, an der die Langform (auch mit Tippfehlern) steht – Wörter der Erklärung bleiben
+  for(const f of q.u.ab.f){
+    const fw = f.toLowerCase().split(/[^a-z0-9&]+/).filter(x => x && x !== "and"), n = fw.length;
+    const k = rest.findIndex((_, i) => i + n <= rest.length && fw.every((x, j) => near(rest[i + j], x)));
+    if(k >= 0){ rest = rest.slice(0, k).concat(rest.slice(k + n)); break; }
+  }
+  return rest.join(" ");
+}
 function aiExplain(q){
   const word = q.type === "abbr" ? q.u.ab.a : cleanE(q.v), model = q.type === "abbr" ? q.u.ab.f[0] + " – " + q.u.ab.x : q.v.df;
-  return claude(AI_GOOD, AI_EXPL_SYS, `Aufgabentyp: ${q.type === "abbr" ? "A" : "B"}\nWort: ${word}\nMusterlösung: ${model}\nAntwort des Studenten: ${q.ans}`, 250)
-    .then(r => {
-      let pts = +r.points; if(![0, 0.5, 1].includes(pts)) pts = 0;
-      if(q.type === "abbr"){ pts = (q.fullOk ? 0.5 : 0) + Math.min(pts, 0.5); return {points: pts, reason: (q.fullOk ? "Langform richtig (0,5). " : "Langform fehlt oder falsch geschrieben (0). ") + "Erklärung: " + String(r.reason || "")}; }
-      return {points: pts, reason: String(r.reason || "").slice(0, 240)};
-    });
+  const full = q.type === "abbr" ? (q.fullOk ? "Langform richtig (0,5). " : "Langform fehlt oder falsch geschrieben (0). ") : "";
+  const expl = explPart(q), nWords = (expl.match(/[A-Za-z]{2,}/g) || []).length;
+  // ohne erkennbare Erklärung gar nicht erst fragen (spart Kosten, verhindert Fehlurteile)
+  if(nWords < 3) return Promise.resolve({points: q.type === "abbr" && q.fullOk ? 0.5 : 0, reason: full + "Keine Erklärung erkannt – die gehört immer dazu (0)."});
+  const user = q.type === "abbr" ? `Aufgabentyp: A\nWort: ${word}\nMusterlösung: ${model}\nErklärung des Studenten (ohne Langform): ${expl}`
+                                 : `Aufgabentyp: B\nWort: ${word}\nMusterlösung: ${model}\nAntwort des Studenten: ${q.ans}`;
+  return claude(AI_GOOD, AI_EXPL_SYS, user, "expl").then(r => {
+    let pts = +r.points; if(![0, 0.5, 1].includes(pts)) pts = 0;
+    if(q.type === "abbr") return {points: (q.fullOk ? 0.5 : 0) + (pts > 0 ? 0.5 : 0), reason: full + "Erklärung: " + String(r.reason || "")};
+    return {points: pts, reason: String(r.reason || "").slice(0, 240)};
+  });
 }
 function renderAI(){
   $("aiDot").className = "dot" + (aiKey ? " ok" : "");
@@ -1495,7 +1522,7 @@ async function aiReview(ex){
   for(const q of ex.qs){
     const items = q.type === "def" ? [q] : q.type === "text" ? q.gaps : [];
     for(const it of items){
-      if(it.ok || !aiWorth(it.res, (it.letter || "") + it.ans)) continue;
+      if(it.ok || (it.ai && !it.ai.error) || !aiWorth(it.res, (it.letter || "") + it.ans)) continue;
       const sentence = q.type === "def" ? q.s.replace("___", q.letter + "___") : contextOf(q, it);
       it.aiWait = true;
       jobs.push(aiGap({def: q.type === "def" ? defText(q.v, q.g) : "", sentence, g: it.g, typed: (it.letter || "") + it.ans.trim()})
@@ -1503,7 +1530,7 @@ async function aiReview(ex){
           const lg = store.get("log", []), e = lg.find(x => x.id === it.logId); if(e){ e.ov = "KI"; e.u = Date.now(); store.set("log", lg); } } })
         .catch(e => { it.ai = {error: e.message}; }).finally(() => { it.aiWait = false; }));
     }
-    if((q.type === "abbr" || q.type === "expl") && q.ans.trim()){
+    if((q.type === "abbr" || q.type === "expl") && q.ans.trim() && !(q.ai && !q.ai.error)){
       q.aiWait = true;
       jobs.push(aiExplain(q).then(r => { q.ai = r; q.got = r.points; }).catch(e => { q.ai = {error: e.message}; }).finally(() => { q.aiWait = false; }));
     }
@@ -1545,6 +1572,8 @@ function renderScore(){
   $("grade").textContent = `${Math.round(pct)} % · Note etwa ${gradeOf(pct)} · Dauer ${Math.floor(d / 60)} Min. ${d % 60} Sek.` + (exam.auto ? " · Zeit abgelaufen" : "")
     + (exam.aiRunning ? " · Claude prüft noch …" : "")
     + (r.o ? ` · ${r.o} ${r.o > 1 ? "Antworten" : "Antwort"} unten selbst bewerten` : "");
+  const failed = aiOn() && !exam.aiRunning && exam.qs.some(q => (q.ai && q.ai.error) || (q.gaps || []).some(g => g.ai && g.ai.error));
+  $("aiRetry").style.display = failed ? "" : "none";
 }
 function wrongBlock(it, sol){
   const typed = (it.letter || "") + String(it.ans || "").trim();
@@ -1627,6 +1656,7 @@ function renderResult(){
   renderExamTile();
 }
 $("goExam").onclick = startExam;
+$("aiRetry").onclick = () => { if(exam && !exam.aiRunning) aiReview(exam); };
 $("examAgain").onclick = startExam;
 $("resHome").onclick = () => show("home");
 $("practiceWrong").onclick = () => {
