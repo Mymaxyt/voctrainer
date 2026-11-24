@@ -1,6 +1,6 @@
 {
-  "versionCode": 22,
-  "versionName": "1.18.1",
-  "notes": "Die App bewertet Abkürzung und Erklärung jetzt selbst vor; Buchstabenvergleich in der Auswertung repariert.",
+  "versionCode": 23,
+  "versionName": "1.19",
+  "notes": "KI-Prüfung mit Claude: erkennt gleichwertige Wörter und bewertet Frage 7/8 (eigener API-Schlüssel nötig).",
   "apk": "https://raw.githubusercontent.com/Mymaxyt/voctrainer/main/dist/Vokabeltrainer.apk"
 }

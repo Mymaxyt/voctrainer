@@ -337,6 +337,7 @@ span.gapin{display:inline-block;min-height:1.9em;width:auto;min-width:6em}
 .logtext{width:100%;min-height:45vh;flex:1;font-family:ui-monospace,Menlo,monospace;font-size:12.5px;line-height:1.5;padding:12px;
   border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--text);resize:vertical;white-space:pre-wrap}
 #logScreen{gap:14px}
+#aiScreen{gap:14px}
 #logTop{white-space:pre-line}
 .update{display:none;flex-direction:column;gap:10px;background:var(--surface);border:2px solid var(--accent);border-radius:20px;padding:18px 20px}
 .update.on{display:flex}
@@ -393,6 +394,9 @@ span.gapin{display:inline-block;min-height:1.9em;width:auto;min-width:6em}
   </div>
   <button class="tile small" id="goLog"><span class="dot err" id="logDot"></span>
     <span class="grow"><span class="t" style="font-size:17px">Fehlerprotokoll</span><span class="d" id="homeLog">Noch keine Fehler</span></span><span class="d">›</span>
+  </button>
+  <button class="tile small" id="goAI"><span class="dot" id="aiDot"></span>
+    <span class="grow"><span class="t" style="font-size:17px">KI-Prüfung (Claude)</span><span class="d" id="homeAI"></span></span><span class="d">›</span>
   </button>
   <button class="tile small" id="goSync"><span class="dot" id="syncDot"></span>
     <span class="grow"><span class="t" style="font-size:17px">Geräte-Sync</span><span class="d" id="homeSync">Handy und Tablet verbinden</span></span><span class="d">›</span>
@@ -469,6 +473,22 @@ span.gapin{display:inline-block;min-height:1.9em;width:auto;min-width:6em}
       <li><b>Heute geschafft:</b> einmal ohne Hilfe richtig; nach einem Fehler zweimal (nach etwa 1 und 10 Minuten). Der Lerntag beginnt um 4 Uhr.</li>
       <li>251 verschiedene Wörter: 151 aus den Self-study-Aufgaben (market share, brand loyalty, distribution channel und end user stehen in zwei Kapiteln und zählen je einmal) und 100 aus den Kursunterlagen der Wiederholungsliste.</li>
     </ul>
+  </div>
+</section>
+
+<section id="aiScreen" class="screen">
+  <header class="nav"><button class="backbtn" id="aiHome">‹ Start</button><h1>KI-Prüfung</h1></header>
+  <div class="panel">
+    <h3>Was sie macht</h3>
+    <p>Passt deine Antwort nicht zur Musterlösung, fragt die App Claude, ob dein Wort in diesem Satz <b>genauso richtig</b> ist – gleiche Bedeutung, passende Grammatik. Tippfehler bleiben Fehler, nur verwandte Wörter bleiben falsch. In der Prüfungssimulation bewertet Claude außerdem Frage 7 und 8 wie ein Dozent.</p>
+    <p>Im echten Moodle-Test zählt sehr wahrscheinlich nur das Wort, das der Dozent als Lösung eingetragen hat. Ein anerkanntes Wort gibt deshalb hier den Punkt, zählt aber als „mit Hilfe“ – das gesuchte Wort kommt heute noch einmal.</p>
+  </div>
+  <div class="panel">
+    <h3>API-Schlüssel</h3>
+    <p>Dafür braucht die App einen eigenen Schlüssel von <b>console.anthropic.com</b> (API Keys → Create Key). Das ist getrennt vom Claude-Abo und wird pro Nutzung abgerechnet; eine Prüfung kostet nur einen Bruchteil eines Cents. Der Schlüssel bleibt nur auf diesem Gerät und wird nicht synchronisiert – auf Handy und Tablet je einmal eintragen.</p>
+    <input id="aiKeyIn" class="typein" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="sk-ant-…">
+    <div class="actions"><button class="btn main" id="aiSave">Speichern und testen</button><button class="btn ghost" id="aiDel">Entfernen</button></div>
+    <p id="aiMsg"></p>
   </div>
 </section>
 
@@ -918,19 +938,30 @@ $("hintBtn").onclick = () => {
   }
   $("answer").focus();
 };
-$("form").addEventListener("submit", e => {
+let aiBusy = false;
+$("form").addEventListener("submit", async e => {
   e.preventDefault();
-  if(!cur || cur.m === "k") return;
+  if(!cur || cur.m === "k" || aiBusy) return;
   if(pending){ if(pending.phase === "fix") checkRetype(); else next(); return; }
-  const typed = $("answer").value, gc = cur.m === "c" ? Engine.gapCheck(cur.u, typed, cur.sent.g) : null;   // Lücke: nur die Form, die der Satz braucht
-  const ok = gc ? gc.ok : Engine.isRight(cur.u, typed), res = ok ? {e: null} : gc ? gc.res : Engine.classify(cur.u, typed);
-  const g = ok ? (hintLevel ? 2 : 3) : 1;
+  const q0 = cur, typed = $("answer").value, gc = cur.m === "c" ? Engine.gapCheck(cur.u, typed, cur.sent.g) : null;   // Lücke: nur die Form, die der Satz braucht
+  let ok = gc ? gc.ok : Engine.isRight(cur.u, typed), res = ok ? {e: null} : gc ? gc.res : Engine.classify(cur.u, typed), ai = null;
+  if(!ok && aiWorth(res, typed)){
+    // passt ein anderes Wort genauso? Claude fragen (Tippfehler und Leeres nicht)
+    aiBusy = true; $("answer").classList.add("locked"); $("check").textContent = "…";
+    const r = $("result"); r.className = "result fixed"; r.textContent = ""; r.append(el("div", "muted", `Claude prüft, ob „${typed.trim()}“ hier auch passt …`));
+    try{ ai = await aiGap(cur.m === "c" ? {def: defText(cur.v, cur.sent.g), sentence: cur.sent.s, g: cur.sent.g, typed} : {prompt: cur.v.q, g: cur.v.e.replace(/\s*\([^)]*\)/g, "").trim(), typed}); }
+    catch(err){ ai = {error: err.message}; }
+    aiBusy = false; $("answer").classList.remove("locked"); $("check").textContent = "Prüfen";
+    if(cur !== q0) return;
+    if(ai.accept){ ok = true; res = {e: null}; }
+  }
+  const g = ok ? (hintLevel || (ai && ai.accept) ? 2 : 3) : 1;
   record(cur.u, g, cur.m, res.e, res.p);
   recent.push(cur.u.k);
   if(special && g === 3) special.left = special.left.filter(k => k !== cur.u.k);
   let logId = null;
   if(!ok) logId = addLog({m: cur.m === "c" ? "Lückensatz" : "Schreiben", v: cur.v, a: typed, q: cur.m === "c" ? cur.sent.s : cur.v.q, h: hintLevel > 0, k: res.e, p: res.p});
-  pending = {phase: ok ? "right" : "fix", ok, typed, keep: typed, res, logId};
+  pending = {phase: ok ? "right" : "fix", ok, typed, keep: typed, res, logId, ai};
   showResult();
   renderTrainHead();
 });
@@ -965,6 +996,13 @@ function showResult(){
   r.textContent = ""; $("hintRow").style.display = "none";
   if(p.ok){
     r.className = "result ok";
+    if(p.ai && p.ai.accept){
+      r.append(el("b", null, `„${p.typed.trim()}“ passt auch – von Claude anerkannt`), el("div", "muted", p.ai.reason),
+        el("div", "muted", "Gesucht war:"), el("div", "sol", solOf(cur)), el("div", "muted", "Im echten Test zählt vermutlich nur dieses Wort – es kommt heute noch einmal."));
+      inp.classList.add("locked"); $("check").textContent = "Weiter";
+      if(cur.m === "c") setGap(cur.sent.g, "ok");
+      return;
+    }
     r.append(el("b", null, hintLevel ? "Richtig (mit Tipp)" : "Richtig!"), el("div", "sol", cur.m === "c" ? cur.sent.g : cur.v.e));
     if(cur.kind === "learn") r.append(el("div", "muted", cur.step === 1 ? "Kommt in etwa 10 Minuten noch einmal." : "Für heute geschafft."));
     if(hintLevel) r.append(el("div", "muted", "Mit Tipp zählt es noch nicht als sicher – das Wort kommt heute noch einmal."));
@@ -980,6 +1018,7 @@ function showResult(){
     else r.append(el("div", "yours", "Deine Antwort: " + typed));
   }
   const sol = el("div", "sol", solOf(cur)); sol.id = "solLine"; r.append(sol);
+  if(p.ai) r.append(el("div", "muted", p.ai.error ? "KI-Prüfung nicht möglich: " + p.ai.error : "Claude: " + p.ai.reason));
   if(res.p){
     const pu = Engine.unitByKey(res.p);
     if(pu) r.append(el("div", "contrast", `${firstEntry(pu).e} = ${firstEntry(pu).d}  ·  ${cur.v.e} = ${cur.v.d}`));
@@ -1209,6 +1248,64 @@ $("examSave").onclick = () => {
   $("examEditRow").style.display = "none"; renderProgress();
 };
 
+// ---------- KI-Prüfung mit Claude (eigener API-Schlüssel, nur auf diesem Gerät, nie im Sync)
+let aiKey = store.get("aiKey", "");
+const AI_FAST = "claude-haiku-5-5", AI_GOOD = "claude-sonnet-5-5";
+const aiOn = () => !!aiKey && navigator.onLine !== false;
+async function claude(model, system, user, maxTokens){
+  const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 20000);
+  try{
+    const r = await fetch("https://api.anthropic.com/v1/messages", {method: "POST", signal: ctl.signal,
+      headers: {"x-api-key": aiKey, "anthropic-version": "2023-06-01", "content-type": "application/json", "anthropic-dangerous-direct-browser-access": "true"},
+      body: JSON.stringify({model, max_tokens: maxTokens || 300, system, messages: [{role: "user", content: user}]})});
+    const j = await r.json().catch(() => ({}));
+    if(!r.ok) throw new Error(r.status === 401 ? "Schlüssel ungültig" : (j.error && j.error.message) || "Fehler " + r.status);
+    const txt = (j.content || []).map(c => c.text || "").join(""), m = txt.match(/\{[\s\S]*\}/);
+    if(!m) throw new Error("Antwort nicht lesbar");
+    return JSON.parse(m[0]);
+  } catch(e){ throw new Error(e.name === "AbortError" ? "keine Antwort (Zeitüberschreitung)" : e.message); }
+  finally { clearTimeout(tm); }
+}
+const AI_GAP_SYS = "Du prüfst Antworten in einem Business-English-Vokabeltest an einer Hochschule. In jeder Aufgabe gibt es eine Musterlösung. "
+  + "Entscheide streng, aber fair, ob die Antwort des Studenten GENAUSO richtig ist wie die Musterlösung: Sie muss im Zusammenhang dasselbe bedeuten, "
+  + "natürlich klingen und grammatisch genau passen (Wortart, Singular/Plural, Zeitform, Artikel davor). Ein Rechtschreibfehler macht die Antwort falsch. "
+  + "Ein verwandtes Wort mit anderer Bedeutung ist falsch, ebenso eine zu allgemeine oder zu lange Antwort. "
+  + 'Antworte nur mit JSON: {"accept": true oder false, "reason": "kurze Begründung auf Deutsch, höchstens 25 Wörter"}';
+// lohnt sich die Nachfrage? (leer, Tippfehler am richtigen Wort oder abgebrochen: nein)
+const aiWorth = (res, typed) => aiOn() && String(typed).trim().length >= 2 && res && res.e !== "s" && !(res.e === "n" && res.d === "unvollständig") && res.e !== "n";
+function aiGap({def, sentence, prompt, g, typed}){
+  const parts = [];
+  if(def) parts.push("Angezeigte Definition: " + def);
+  if(sentence) parts.push("Satz mit Lücke: " + sentence);
+  if(prompt) parts.push("Aufgabe: das englische Wort für diesen deutschen Begriff schreiben: " + prompt);
+  parts.push("Musterlösung: " + g, "Antwort des Studenten: " + typed);
+  return claude(AI_FAST, AI_GAP_SYS, parts.join("\n"), 200).then(r => ({accept: r.accept === true, reason: String(r.reason || "").slice(0, 200)}));
+}
+const AI_EXPL_SYS = "Du bewertest wie ein fairer Dozent Antworten in einem Business-English-Vokabeltest. "
+  + "Aufgabentyp A: \"Give the full form of the following word and explain it\" – 1 Punkt: 0,5 für die richtig geschriebene Langform, 0,5 für eine zutreffende Erklärung. "
+  + "Aufgabentyp B: \"Explain the following word\" – 1 Punkt für eine zutreffende Erklärung, 0,5 wenn sie nur teilweise stimmt oder zu ungenau ist. "
+  + "Ein Rechtschreibfehler in der Langform kostet deren halben Punkt; in der Erklärung sind kleine Sprachfehler egal, solange die Bedeutung stimmt. Fehlt die Erklärung, gibt es dafür nichts. "
+  + 'Antworte nur mit JSON: {"points": 0 oder 0.5 oder 1, "reason": "kurze Begründung auf Deutsch, höchstens 30 Wörter"}';
+function aiExplain(q){
+  const word = q.type === "abbr" ? q.u.ab.a : cleanE(q.v), model = q.type === "abbr" ? q.u.ab.f[0] + " – " + q.u.ab.x : q.v.df;
+  return claude(AI_GOOD, AI_EXPL_SYS, `Aufgabentyp: ${q.type === "abbr" ? "A" : "B"}\nWort: ${word}\nMusterlösung: ${model}\nAntwort des Studenten: ${q.ans}`, 250)
+    .then(r => ({points: [0, 0.5, 1].includes(+r.points) ? +r.points : 0, reason: String(r.reason || "").slice(0, 240)}));
+}
+function renderAI(){
+  $("aiDot").className = "dot" + (aiKey ? " ok" : "");
+  $("homeAI").textContent = aiKey ? "An – prüft andere passende Wörter und bewertet Frage 7/8" : "Aus – erkennt andere passende Wörter, braucht einen API-Schlüssel";
+}
+$("goAI").onclick = () => { $("aiKeyIn").value = aiKey; $("aiMsg").textContent = ""; show("aiScreen"); };
+$("aiHome").onclick = () => show("home");
+$("aiSave").onclick = async () => {
+  const k = $("aiKeyIn").value.trim(); if(!k) return;
+  aiKey = k; store.set("aiKey", k); renderAI(); $("aiMsg").textContent = "Teste die Verbindung …";
+  try{ const r = await aiGap({sentence: "Apple plans to ___ a new phone in September.", g: "launch", typed: "release"}); $("aiMsg").textContent = "Verbunden ✓ Testfrage „release“ statt „launch“: " + (r.accept ? "anerkannt" : "nicht anerkannt") + " – " + r.reason; }
+  catch(e){ $("aiMsg").textContent = "Gespeichert, aber der Test ging schief: " + e.message; }
+};
+$("aiDel").onclick = () => { aiKey = ""; store.set("aiKey", ""); $("aiKeyIn").value = ""; $("aiMsg").textContent = "Entfernt."; renderAI(); };
+renderAI();
+
 // ---------- Prüfungssimulation im Format des Moodle-Übungstests (24.11.2026)
 // Frage 1–6: englische Definition + Satz mit einer Lücke (bei 2 von 6 steht der Anfangsbuchstabe davor, bei mehreren Wörtern „(2 words)“)
 // Frage 7: Abkürzung ausschreiben und erklären · Frage 8: Wort erklären (beides selbst bewerten) · Frage 9: Text mit 8 Lücken ohne Hilfe
@@ -1360,12 +1457,12 @@ function finishExam(auto){
       q.ans = q.el.value; const typed = q.letter + q.ans.trim(), c = Engine.gapCheck(q.u, typed, q.g);
       q.ok = c.ok; q.res = c.res; q.got = q.ok ? 1 : 0;
       if(!q.ok && q.letter && Engine.gapRight(q.u, q.ans, q.g)) q.res = {e: "f", d: "der Anfangsbuchstabe stand schon vor der Lücke – im Test wäre das falsch"};
-      record(q.u, q.ok ? (q.letter ? 2 : 3) : 1, "x", q.res.e, q.res.p, true);
+      q.att = record(q.u, q.ok ? (q.letter ? 2 : 3) : 1, "x", q.res.e, q.res.p, true);
       if(!q.ok) logs.push([q, {m: "Prüfung", v: q.v, a: q.letter ? q.letter + "|" + q.ans : q.ans, q: q.s, h: !!q.letter, k: q.res.e, p: q.res.p}]);
     } else if(q.type === "text"){
       for(const g of q.gaps){
         g.ans = g.el.value; const c = Engine.gapCheck(g.u, g.ans, g.g); g.ok = c.ok; g.res = c.res;
-        record(g.u, g.ok ? 3 : 1, "t", g.res.e, g.res.p, true);
+        g.att = record(g.u, g.ok ? 3 : 1, "t", g.res.e, g.res.p, true);
         if(!g.ok) logs.push([g, {m: "Lückentext", v: g.v, a: g.ans, q: contextOf(q, g), k: g.res.e, p: g.res.p}]);
       }
       q.got = q.pts ? q.gaps.filter(g => g.ok).length * q.pts / q.gaps.length : 0;
@@ -1382,6 +1479,35 @@ function finishExam(auto){
   scoreExam();
   const ex = store.get("exams", []); ex.push(exam.rec); store.set("exams", ex.slice(-50));
   show("resultScreen"); renderResult();
+  if(aiOn()) aiReview(exam);
+}
+// Claude prüft falsche Lücken auf gleichwertige Wörter und bewertet Frage 7/8; Ergebnis, Verlauf und Protokoll werden nachgezogen
+async function aiReview(ex){
+  const jobs = [];
+  for(const q of ex.qs){
+    const items = q.type === "def" ? [q] : q.type === "text" ? q.gaps : [];
+    for(const it of items){
+      if(it.ok || !aiWorth(it.res, (it.letter || "") + it.ans)) continue;
+      const sentence = q.type === "def" ? q.s.replace("___", q.letter + "___") : contextOf(q, it);
+      it.aiWait = true;
+      jobs.push(aiGap({def: q.type === "def" ? defText(q.v, q.g) : "", sentence, g: it.g, typed: (it.letter || "") + it.ans.trim()})
+        .then(r => { it.ai = r; if(r.accept){ it.ok = true; if(it.att){ it.att[1] = 2; it.att.length = 3; histVer++; }
+          const lg = store.get("log", []), e = lg.find(x => x.id === it.logId); if(e){ e.ov = "KI"; e.u = Date.now(); store.set("log", lg); } } })
+        .catch(e => { it.ai = {error: e.message}; }).finally(() => { it.aiWait = false; }));
+    }
+    if((q.type === "abbr" || q.type === "expl") && q.ans.trim()){
+      q.aiWait = true;
+      jobs.push(aiExplain(q).then(r => { q.ai = r; q.got = r.points; }).catch(e => { q.ai = {error: e.message}; }).finally(() => { q.aiWait = false; }));
+    }
+  }
+  if(!jobs.length) return;
+  ex.aiRunning = true; if(exam === ex && $("resultScreen").classList.contains("on")) renderScore();
+  await Promise.all(jobs);
+  ex.aiRunning = false;
+  for(const q of ex.qs) if(q.type === "text") q.got = q.pts ? q.gaps.filter(g => g.ok).length * q.pts / q.gaps.length : 0;
+  for(const q of ex.qs) if(q.type === "def") q.got = q.ok ? 1 : 0;
+  store.set("hist", hist);
+  if(exam === ex){ saveExamRec(); if($("resultScreen").classList.contains("on")) renderResult(); }
 }
 // Frage 7/8 automatisch vorbewerten (änderbar): Abkürzung 0,5 für die exakt geschriebene Langform + 0,5 für eine Erklärung,
 // die Kernwörter der Musterlösung enthält; Erklären 1 / 0,5 / 0 nach Anteil der getroffenen Kernwörter
@@ -1409,14 +1535,22 @@ function renderScore(){
   const r = exam.rec, pct = 100 * r.p / r.n, d = Math.round(exam.dur / 1000);
   $("score").textContent = `${fmtP(r.p)} / ${fmtP(r.n)}`;
   $("grade").textContent = `${Math.round(pct)} % · Note etwa ${gradeOf(pct)} · Dauer ${Math.floor(d / 60)} Min. ${d % 60} Sek.` + (exam.auto ? " · Zeit abgelaufen" : "")
+    + (exam.aiRunning ? " · Claude prüft noch …" : "")
     + (r.o ? ` · ${r.o} ${r.o > 1 ? "Antworten" : "Antwort"} unten selbst bewerten` : "");
 }
 function wrongBlock(it, sol){
-  const f = el("div", "mqf no"), typed = (it.letter || "") + String(it.ans || "").trim();
+  const typed = (it.letter || "") + String(it.ans || "").trim();
+  if(it.ai && it.ai.accept){
+    const f = el("div", "mqf ok"); f.append(el("b", null, `„${typed}“ von Claude anerkannt. `), document.createTextNode(it.ai.reason));
+    f.append(el("div", "y", "Musterlösung: " + sol + " – im echten Test zählt vermutlich nur sie.")); return f;
+  }
+  const f = el("div", "mqf no");
   f.append(document.createTextNode("Die richtige Antwort ist: "), el("b", null, sol));
   const y = el("div", "y"); y.append(el("span", null, errLabel(it.res) + " · Deine Antwort: " + (typed || "–")));
   const o = el("button", null, "Bewertung melden"); o.onclick = () => { flagLog(it.logId); o.textContent = "Gemeldet"; o.disabled = true; };
   y.append(o); f.append(y);
+  if(it.aiWait) f.append(el("div", "y", "Claude prüft, ob dein Wort auch passt …"));
+  else if(it.ai) f.append(el("div", "y", it.ai.error ? "KI-Prüfung nicht möglich: " + it.ai.error : "Claude: " + it.ai.reason));
   if(typed && (it.res.e === "s" || it.res.e === "f")) f.append(diffBlock(typed, it.res.e === "f" || Engine.dist(Engine.norm(typed), Engine.norm(sol)) <= Engine.closest(it.u, typed).d ? sol : Engine.closest(it.u, typed).form));
   return f;
 }
@@ -1457,8 +1591,10 @@ function renderResult(){
           f.append(el("b", null, cleanE(q.v)), document.createTextNode(": " + q.v.df), document.createElement("br"), el("span", "muted", "Deutsch: " + q.v.d));
           f.append(el("div", "y", "Volle Punktzahl nur, wenn deine Erklärung dasselbe sagt – auf Englisch, in eigenen Worten."));
         }
-        if(q.auto) f.append(el("div", "y", q.auto.words < 3 ? "Automatisch bewertet: keine Erklärung erkannt – die gehört immer dazu."
-          : `Automatisch bewertet (${fmtP(q.got)} P.): ${q.auto.hit.length ? "Kernwörter getroffen: " + q.auto.hit.join(", ") : "keine Kernwörter der Musterlösung getroffen"}. Du kannst es ändern.`));
+        if(q.aiWait) f.append(el("div", "y", "Claude bewertet deine Antwort …"));
+        else if(q.ai && !q.ai.error) f.append(el("div", "y", `Bewertung von Claude: ${fmtP(q.ai.points)} P. – ${q.ai.reason}`));
+        else if(q.auto) f.append(el("div", "y", (q.ai ? "KI-Bewertung nicht möglich (" + q.ai.error + "). " : "") + (q.auto.words < 3 ? "Automatisch bewertet: keine Erklärung erkannt – die gehört immer dazu."
+          : `Automatisch bewertet (${fmtP(q.got)} P.): ${q.auto.hit.length ? "Kernwörter getroffen: " + q.auto.hit.join(", ") : "keine Kernwörter der Musterlösung getroffen"}. Du kannst es ändern.`)));
         if(q.ans.trim()) f.append(rateRow(q, () => { draw(); renderScore(); }));
         c.append(f);
       } else {
@@ -1783,7 +1919,7 @@ function logExport(){
   for(const e of [...log].reverse()){
     const ans = e.m === "Karte" ? `nicht gewusst (Karteikarte ${e.q})` : `„${e.a.trim() || "leer"}“`;
     const k = kindOf(e), kind = k ? " · " + (Engine.ERR[k] || k) + (e.p ? " ↔ " + fullE(e.p) : "") : "";
-    const extra = (e.h ? " · mit Tipp" : "") + (e.ov ? " · [Zählt doch]" : "") + (e.fl ? " · [gemeldet]" : "");
+    const extra = (e.h ? " · mit Tipp" : "") + (e.ov === "KI" ? " · [von Claude als gleichwertig anerkannt]" : e.ov ? " · [Zählt doch]" : "") + (e.fl ? " · [gemeldet]" : "");
     const q = e.m === "Karte" ? "" : ` · Abfrage: ${e.q}`;
     L.push(`${dt(e.t)} · ${e.d} · ${e.m} · ${e.n} · gesucht: ${e.e} · meine Antwort: ${ans}${kind}${extra}${q}`);
   }
