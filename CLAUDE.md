@@ -7,7 +7,7 @@
 > sie zusammen mit dem Code. Am Ende jeder Arbeitssitzung muss hier der aktuelle Zwischenstand stehen.
 > Keine Passwörter, Tokens oder Schlüssel in diese Datei – das Repo ist öffentlich.
 
-Zuletzt aktualisiert: 24.11.2026, Version 1.19 (versionCode 23): Prüfung im Format des Moodle-Übungstests, englische Definitionen, 100 Wörter aus den Kursunterlagen.
+Zuletzt aktualisiert: 24.11.2026, Version 1.19.1 (versionCode 24): Prüfung im Format des Moodle-Übungstests, englische Definitionen, 100 Wörter aus den Kursunterlagen.
 
 ## Worum es geht
 - Max Werner (GitHub: Mymaxyt), Student International Management (FH Würzburg), schreibt am
@@ -90,7 +90,7 @@ git push
 ```
 - Signierschlüssel: `key.jks`, Alias `max`. Max gibt Datei und Passwort direkt im Chat (nie committen).
   **Ohne genau diesen Schlüssel lässt sich kein Update über die installierte App spielen.**
-- versionCode immer um 1 erhöhen (aktuell 23 → nächste 24). Die App vergleicht ihn mit `version.json`
+- versionCode immer um 1 erhöhen (aktuell 24 → nächste 25). Die App vergleicht ihn mit `version.json`
   (`https://raw.githubusercontent.com/Mymaxyt/voctrainer/main/version.json`) und zeigt dann das Update-Banner.
 - Nach dem Push prüfen, dass raw.githubusercontent.com die neue `version.json` und eine identische APK ausliefert.
 - UI-Tests (Playwright) liegen nicht im Repo; bisher: Lernfluss, Sync zwischen zwei Geräten, Tastatur,
@@ -130,13 +130,20 @@ git push
 ## KI-Prüfung mit Claude (seit 1.19, Kachel „KI-Prüfung (Claude)“)
 - Max will: „Antworten auf andere passende Wörter prüfen lassen“. Die App ruft die Anthropic-API direkt aus der WebView auf
   (`fetch` an api.anthropic.com mit Header `anthropic-dangerous-direct-browser-access: true`; CORS erlaubt das).
-- **Eigener API-Schlüssel von Max** (console.anthropic.com, getrennt vom Claude-Abo), nur in `localStorage.aiKey` auf dem
-  Gerät, NICHT im Sync und NIE im Repo. Ohne Schlüssel verhält sich die App wie vorher.
+- **Eigener API-Schlüssel von Max** (getrennt vom Claude-Abo), in `localStorage.aiKey`/`aiKeyU`; seit 1.19.1 über den
+  Ende-zu-Ende-verschlüsselten Geräte-Sync geteilt (Payload-Feld `ai: {k, u}`, neuerer gewinnt). NIE ins Repo/APK – die
+  APK ist öffentlich, ein eingebauter Schlüssel wäre für jeden auslesbar. Max hat den Schlüssel im Chat genannt; er muss ihn
+  selbst einmal in der App eintragen. Ohne Schlüssel verhält sich die App wie vorher.
+- **Kosten niedrig halten (Vorgabe von Max):** alles mit `claude-haiku-5-5` (laut Presse 0,10 $/Mio. Eingabe, 0,50 $/Mio.
+  Ausgabe), `thinking: {type: "disabled"}` (Haiku 5.5 denkt sonst standardmäßig und verdoppelt die Ausgabe-Token),
+  `max_tokens` 160, nur bei falschen Antworten ohne Tippfehler. Eine Prüfung ≈ 300 Eingabe- + 70 Ausgabe-Token ≈ 0,007 Cent.
+- Am 24.11. mit dem echten Schlüssel getestet (18 Fälle): develop/launch ✗, release/launch ✓, assigned/promoted ✗,
+  consolidate ✗ (Wortart), voucher/coupon ✗, edge/competitive advantage ✓; Frage 7: Langform prüft die App exakt selbst,
+  Claude bewertet nur die Erklärung (0/0,5).
 - Lückensätze/Schreiben im Lernplan: falsche Antwort (nicht leer, kein Tippfehler „s“) → `aiGap` mit `claude-haiku-5-5`.
   Anerkannt → Punkt, aber Note 2 („mit Hilfe“), Wort kommt heute wieder; Hinweis, dass im echten Test vermutlich nur die
   Musterlösung zählt. Abgelehnt → Begründung von Claude unter der Lösung.
-- Prüfungssimulation: nach der Abgabe prüft `aiReview` alle falschen Lücken (haiku) und bewertet Frage 7/8 (`aiExplain`,
-  `claude-sonnet-5-5`, 0/0,5/1); Ergebnis, Verlauf (Note 1 → 2) und Fehlerprotokoll (`ov: "KI"`) werden nachgezogen.
+- Prüfungssimulation: nach der Abgabe prüft `aiReview` alle falschen Lücken und bewertet Frage 7/8 (`aiExplain`, 0/0,5/1); Ergebnis, Verlauf (Note 1 → 2) und Fehlerprotokoll (`ov: "KI"`) werden nachgezogen.
   Ohne Schlüssel/bei Fehlern greift die Stichwort-Vorbewertung `autoGrade`.
 - Antwort an Max: Im echten Moodle-Test zählt nur, was der Dozent als Lösung hinterlegt hat (ggf. manuelle Nachkorrektur) –
   gleichwertige Wörter sind dort nicht sicher.
@@ -175,6 +182,7 @@ git push
 - 1.17 Notenprognose an Max angepasst (siehe oben)
 - 1.18 Prüfung genau im Format des Moodle-Übungstests; Lückensätze mit englischer Definition statt Strichen; strenge
   Lückenbewertung; 100 Wörter aus den Kursunterlagen; Karteikarten „Erklären“; Prognose auf 16 Punkte
+- 1.19.1 KI günstiger (nur Haiku, ohne Nachdenken), fairere Synonym-Prüfung, Langform lokal geprüft, Schlüssel über Sync
 - 1.19 KI-Prüfung mit Claude (eigener API-Schlüssel): gleichwertige Wörter anerkennen, Frage 7/8 bewerten
 - 1.18.1 Frage 7/8 automatisch vorbewertet; Buchstabenvergleich in der Überprüfung repariert (stand untereinander)
 

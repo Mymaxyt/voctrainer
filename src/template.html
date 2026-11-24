@@ -485,7 +485,7 @@ span.gapin{display:inline-block;min-height:1.9em;width:auto;min-width:6em}
   </div>
   <div class="panel">
     <h3>API-Schlüssel</h3>
-    <p>Dafür braucht die App einen eigenen Schlüssel von <b>console.anthropic.com</b> (API Keys → Create Key). Das ist getrennt vom Claude-Abo und wird pro Nutzung abgerechnet; eine Prüfung kostet nur einen Bruchteil eines Cents. Der Schlüssel bleibt nur auf diesem Gerät und wird nicht synchronisiert – auf Handy und Tablet je einmal eintragen.</p>
+    <p>Dafür braucht die App einen eigenen Schlüssel von <b>console.anthropic.com</b> (API Keys → Create Key). Das ist getrennt vom Claude-Abo und wird pro Nutzung abgerechnet; eine Prüfung kostet nur einen Bruchteil eines Cents. Der Schlüssel liegt nur auf deinen Geräten: Sind Handy und Tablet gekoppelt, kommt er Ende-zu-Ende-verschlüsselt über den Geräte-Sync aufs andere Gerät. Ins öffentliche Repo kommt er nie.</p>
     <input id="aiKeyIn" class="typein" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="sk-ant-…">
     <div class="actions"><button class="btn main" id="aiSave">Speichern und testen</button><button class="btn ghost" id="aiDel">Entfernen</button></div>
     <p id="aiMsg"></p>
@@ -1249,28 +1249,32 @@ $("examSave").onclick = () => {
 };
 
 // ---------- KI-Prüfung mit Claude (eigener API-Schlüssel, nur auf diesem Gerät, nie im Sync)
-let aiKey = store.get("aiKey", "");
-const AI_FAST = "claude-haiku-5-5", AI_GOOD = "claude-sonnet-5-5";
+let aiKey = store.get("aiKey", ""), aiKeyU = store.get("aiKeyU", 0);   // Schlüssel nur auf den eigenen Geräten (Sync ist Ende-zu-Ende-verschlüsselt), nie im Repo
+function setAiKey(k, u){ aiKey = k; aiKeyU = u || Date.now(); store.set("aiKey", k); store.set("aiKeyU", aiKeyU); renderAI(); }
+const AI_FAST = "claude-haiku-5-5", AI_GOOD = "claude-haiku-5-5";   // günstigstes Modell, ohne „Nachdenken“ (spart Ausgabe-Token)
 const aiOn = () => !!aiKey && navigator.onLine !== false;
 async function claude(model, system, user, maxTokens){
   const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 20000);
   try{
     const r = await fetch("https://api.anthropic.com/v1/messages", {method: "POST", signal: ctl.signal,
       headers: {"x-api-key": aiKey, "anthropic-version": "2023-06-01", "content-type": "application/json", "anthropic-dangerous-direct-browser-access": "true"},
-      body: JSON.stringify({model, max_tokens: maxTokens || 300, system, messages: [{role: "user", content: user}]})});
+      body: JSON.stringify({model, max_tokens: maxTokens || 160, thinking: {type: "disabled"}, system, messages: [{role: "user", content: user}]})});
     const j = await r.json().catch(() => ({}));
     if(!r.ok) throw new Error(r.status === 401 ? "Schlüssel ungültig" : (j.error && j.error.message) || "Fehler " + r.status);
-    const txt = (j.content || []).map(c => c.text || "").join(""), m = txt.match(/\{[\s\S]*\}/);
-    if(!m) throw new Error("Antwort nicht lesbar");
-    return JSON.parse(m[0]);
+    const txt = (j.content || []).map(c => c.type === "text" ? c.text || "" : "").join(""), m = txt.match(/\{[\s\S]*\}/);
+    if(m){ try{ return JSON.parse(m[0]); }catch(e){} }
+    // nachsichtig lesen, falls die Begründung ungeschützte Anführungszeichen enthält
+    const acc = txt.match(/"accept"\s*:\s*(true|false)/), pts = txt.match(/"points"\s*:\s*([0-9.]+)/), rs = txt.match(/"reason"\s*:\s*"([\s\S]*?)"?\s*\}?\s*$/);
+    if(!acc && !pts) throw new Error("Antwort nicht lesbar");
+    return {accept: acc ? acc[1] === "true" : undefined, points: pts ? +pts[1] : undefined, reason: rs ? rs[1] : ""};
   } catch(e){ throw new Error(e.name === "AbortError" ? "keine Antwort (Zeitüberschreitung)" : e.message); }
   finally { clearTimeout(tm); }
 }
-const AI_GAP_SYS = "Du prüfst Antworten in einem Business-English-Vokabeltest an einer Hochschule. In jeder Aufgabe gibt es eine Musterlösung. "
-  + "Entscheide streng, aber fair, ob die Antwort des Studenten GENAUSO richtig ist wie die Musterlösung: Sie muss im Zusammenhang dasselbe bedeuten, "
-  + "natürlich klingen und grammatisch genau passen (Wortart, Singular/Plural, Zeitform, Artikel davor). Ein Rechtschreibfehler macht die Antwort falsch. "
-  + "Ein verwandtes Wort mit anderer Bedeutung ist falsch, ebenso eine zu allgemeine oder zu lange Antwort. "
-  + 'Antworte nur mit JSON: {"accept": true oder false, "reason": "kurze Begründung auf Deutsch, höchstens 25 Wörter"}';
+const AI_GAP_SYS = "Du bist erfahrener Englischlehrer und korrigierst einen Business-English-Vokabeltest an einer Hochschule. Zu jeder Lücke gibt es eine Musterlösung. "
+  + "Entscheide, ob du die Antwort des Studenten als GENAUSO richtig anerkennen würdest: Sie muss in diesem Satz dasselbe aussagen, für Muttersprachler natürlich klingen "
+  + "und grammatisch genau passen (Wortart, Singular/Plural, Zeitform, Artikel davor). Ein gängiges Synonym, das hier gleich gut passt, ist richtig, auch wenn es nicht die Musterlösung ist. "
+  + "Falsch sind: Rechtschreibfehler, ein verwandtes Wort mit anderer Bedeutung, eine deutlich allgemeinere oder unvollständige Antwort, eine falsche Wortform. "
+  + 'Antworte nur mit JSON: {"accept": true oder false, "reason": "Begründung auf Deutsch, höchstens 20 Wörter"}';
 // lohnt sich die Nachfrage? (leer, Tippfehler am richtigen Wort oder abgebrochen: nein)
 const aiWorth = (res, typed) => aiOn() && String(typed).trim().length >= 2 && res && res.e !== "s" && !(res.e === "n" && res.d === "unvollständig") && res.e !== "n";
 function aiGap({def, sentence, prompt, g, typed}){
@@ -1282,14 +1286,18 @@ function aiGap({def, sentence, prompt, g, typed}){
   return claude(AI_FAST, AI_GAP_SYS, parts.join("\n"), 200).then(r => ({accept: r.accept === true, reason: String(r.reason || "").slice(0, 200)}));
 }
 const AI_EXPL_SYS = "Du bewertest wie ein fairer Dozent Antworten in einem Business-English-Vokabeltest. "
-  + "Aufgabentyp A: \"Give the full form of the following word and explain it\" – 1 Punkt: 0,5 für die richtig geschriebene Langform, 0,5 für eine zutreffende Erklärung. "
+  + "Aufgabentyp A: \"Give the full form of the following word and explain it\" – bewerte NUR die Erklärung (die Langform prüft die App selbst): 0,5 wenn sie zutrifft, sonst 0. "
   + "Aufgabentyp B: \"Explain the following word\" – 1 Punkt für eine zutreffende Erklärung, 0,5 wenn sie nur teilweise stimmt oder zu ungenau ist. "
   + "Ein Rechtschreibfehler in der Langform kostet deren halben Punkt; in der Erklärung sind kleine Sprachfehler egal, solange die Bedeutung stimmt. Fehlt die Erklärung, gibt es dafür nichts. "
-  + 'Antworte nur mit JSON: {"points": 0 oder 0.5 oder 1, "reason": "kurze Begründung auf Deutsch, höchstens 30 Wörter"}';
+  + 'Antworte nur mit JSON: {"points": Zahl, "reason": "Begründung auf Deutsch, höchstens 25 Wörter"}';
 function aiExplain(q){
   const word = q.type === "abbr" ? q.u.ab.a : cleanE(q.v), model = q.type === "abbr" ? q.u.ab.f[0] + " – " + q.u.ab.x : q.v.df;
   return claude(AI_GOOD, AI_EXPL_SYS, `Aufgabentyp: ${q.type === "abbr" ? "A" : "B"}\nWort: ${word}\nMusterlösung: ${model}\nAntwort des Studenten: ${q.ans}`, 250)
-    .then(r => ({points: [0, 0.5, 1].includes(+r.points) ? +r.points : 0, reason: String(r.reason || "").slice(0, 240)}));
+    .then(r => {
+      let pts = +r.points; if(![0, 0.5, 1].includes(pts)) pts = 0;
+      if(q.type === "abbr"){ pts = (q.fullOk ? 0.5 : 0) + Math.min(pts, 0.5); return {points: pts, reason: (q.fullOk ? "Langform richtig (0,5). " : "Langform fehlt oder falsch geschrieben (0). ") + "Erklärung: " + String(r.reason || "")}; }
+      return {points: pts, reason: String(r.reason || "").slice(0, 240)};
+    });
 }
 function renderAI(){
   $("aiDot").className = "dot" + (aiKey ? " ok" : "");
@@ -1299,11 +1307,11 @@ $("goAI").onclick = () => { $("aiKeyIn").value = aiKey; $("aiMsg").textContent =
 $("aiHome").onclick = () => show("home");
 $("aiSave").onclick = async () => {
   const k = $("aiKeyIn").value.trim(); if(!k) return;
-  aiKey = k; store.set("aiKey", k); renderAI(); $("aiMsg").textContent = "Teste die Verbindung …";
+  setAiKey(k); if(window.syncReady && sync) syncSoon(); $("aiMsg").textContent = "Teste die Verbindung …";
   try{ const r = await aiGap({sentence: "Apple plans to ___ a new phone in September.", g: "launch", typed: "release"}); $("aiMsg").textContent = "Verbunden ✓ Testfrage „release“ statt „launch“: " + (r.accept ? "anerkannt" : "nicht anerkannt") + " – " + r.reason; }
   catch(e){ $("aiMsg").textContent = "Gespeichert, aber der Test ging schief: " + e.message; }
 };
-$("aiDel").onclick = () => { aiKey = ""; store.set("aiKey", ""); $("aiKeyIn").value = ""; $("aiMsg").textContent = "Entfernt."; renderAI(); };
+$("aiDel").onclick = () => { setAiKey(""); if(window.syncReady && sync) syncSoon(); $("aiKeyIn").value = ""; $("aiMsg").textContent = "Entfernt (auch auf gekoppelten Geräten)."; };
 renderAI();
 
 // ---------- Prüfungssimulation im Format des Moodle-Übungstests (24.11.2026)
@@ -1662,7 +1670,7 @@ async function open_(blob, k){
 }
 // Ab 1.15: Verlauf aller Antworten (hist). Für ein Gerät mit älterer Version wird zusätzlich der alte Kästchen-Stand (srs) mitgeschickt.
 function localState(){
-  return {v: 2, hist, settings, exams: store.get("exams", []), log: store.get("log", []), logCleared: store.get("logCleared", 0), srs: Engine.legacySrs(hist)};
+  return {v: 2, hist, settings, exams: store.get("exams", []), log: store.get("log", []), logCleared: store.get("logCleared", 0), srs: Engine.legacySrs(hist), ai: {k: aiKey, u: aiKeyU}};
 }
 function merge(remote){
   let pulled = false, push = false;
@@ -1690,6 +1698,10 @@ function merge(remote){
   applying = true; hist = H2; settings = st; histVer++;
   store.set("hist", hist); store.set("settings", settings); store.set("exams", ex); store.set("log", lg); store.set("logCleared", lc);
   applying = false;
+  // KI-Schlüssel: der zuletzt gesetzte gilt auf allen gekoppelten Geräten
+  const ra = remote.ai;
+  if(ra && (ra.u || 0) > aiKeyU){ setAiKey(ra.k || "", ra.u); pulled = true; }
+  else if(aiKeyU > ((ra && ra.u) || 0)) push = true;
   return {pulled, push};
 }
 // Sparsam mit GitHub: höchstens ein Abgleich alle zwei Minuten beim Üben, sofort beim Verlassen der App.

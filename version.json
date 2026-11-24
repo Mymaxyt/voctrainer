@@ -1,6 +1,6 @@
 {
-  "versionCode": 23,
-  "versionName": "1.19",
-  "notes": "KI-Prüfung mit Claude: erkennt gleichwertige Wörter und bewertet Frage 7/8 (eigener API-Schlüssel nötig).",
+  "versionCode": 24,
+  "versionName": "1.19.1",
+  "notes": "KI-Prüfung günstiger und fairer: gleichwertige Synonyme werden anerkannt, Schlüssel gilt nach einmaligem Eintragen auf allen gekoppelten Geräten.",
   "apk": "https://raw.githubusercontent.com/Mymaxyt/voctrainer/main/dist/Vokabeltrainer.apk"
 }
