@@ -7,7 +7,7 @@
 > sie zusammen mit dem Code. Am Ende jeder Arbeitssitzung muss hier der aktuelle Zwischenstand stehen.
 > Keine Passwörter, Tokens oder Schlüssel in diese Datei – das Repo ist öffentlich.
 
-Zuletzt aktualisiert: 24.11.2026, Version 1.20 (versionCode 26): Prüfung im Format des Moodle-Übungstests, englische Definitionen, 100 Wörter aus den Kursunterlagen.
+Zuletzt aktualisiert: 24.11.2026, Version 1.21 (versionCode 27): Prüfung im Format des Moodle-Übungstests, englische Definitionen, 100 Wörter aus den Kursunterlagen.
 
 ## Worum es geht
 - Max Werner (GitHub: Mymaxyt), Student International Management (FH Würzburg), schreibt am
@@ -19,8 +19,17 @@ Zuletzt aktualisiert: 24.11.2026, Version 1.20 (versionCode 26): Prüfung im For
   Lückentext, Buchstabensalat, Fehler finden). Die Hörübung „Organisational structures“ lag NICHT vor – ihre Wörter sind
   aus Übungstest und Wiederholungsblatt erschlossen (hierarchy, span of control, chain of command, flat/tall structure …).
   Die Lesetexte der Buchkapitel stehen nicht auf der Liste.
-- 255 Einträge = 251 verschiedene Wörter: 155 Self-study-Einträge (Kapitel 1, 2, 3, 7, 8) + 100 aus den Kursunterlagen
-  (Kapitel-Codes W = Übungstest + Wiederholungsblatt, K1 = Kurs Industries, K3 = Kurs Organisation, K7 = Kurs Marketing).
+- 273 Einträge = 269 verschiedene Wörter: 155 Self-study-Einträge (Kapitel 1, 2, 3, 7, 8) + 100 aus den Kursunterlagen
+  (Kapitel-Codes W = Übungstest + Wiederholungsblatt, K1 = Kurs Industries, K3 = Kurs Organisation, K7 = Kurs Marketing)
+  + 18 aus der Liste eines Mitstudenten (Code S, Chip „Liste Mitstudent“, seit 1.21).
+- **Liste eines Mitstudenten „BE1 Vokabeltest 25.11.“** (188 Begriffe, Englisch/Erklärung/Deutsch, inkl. der Hörübung
+  „Organisational structures“: span of control, chain of command, report to/answer to, subordinates, layer, promotion,
+  accountability, hierarchical/tall vs. flat, Vor-/Nachteile). Am 24.11. komplett abgeglichen: neu waren brand,
+  agriculture, manufacturing, economy/economics/economic/economical, layer, promotion (Beförderung), accountability,
+  hierarchical, career progression, introduction/growth/maturity/decline (Produktlebenszyklus), saturation,
+  reverse logistics; außerdem Schreibweisen/Synonyme ergänzt (board of directors, senior management, non-durables,
+  breakeven point, quote, order fulfilment, EXW (+ Frage-7-Abkürzung), product range, answer to, skimming price,
+  private limited company, takeover = acquisition, hierarchical structure = tall structure).
 - Die App läuft auf seinem Handy und seinem Samsung-Tablet; Stände synchronisieren über einen privaten Gist.
 - Max kommuniziert auf Deutsch. App-Texte sind Deutsch, Übungssätze Englisch.
 
@@ -65,7 +74,7 @@ Zuletzt aktualisiert: 24.11.2026, Version 1.20 (versionCode 26): Prüfung im For
   `H`: englische Hinweise (≤ 45 Zeichen, nur noch Reserve); `TEXTS`: 17 eigene Lückentexte je Buchaufgabe
   (`[[i]]` = Lücke für Eintrag i; Text „3.4“ deckt 3.4 und 3.5 ab). Einträge 155+ stehen im Block „ab 1.18“ am Ende.
 - `src/definitions.py` (seit 1.18) – `D`: englische Definition je Eintrag (eigene Worte, verrät das Wort nicht);
-  `ABBR`: 14 Abkürzungen für Frage 7 (Kurzform, Langformen, Musterantwort); `MTEXTS`: 15 Prüfungstexte mit genau 8 Lücken,
+  `ABBR`: 15 Abkürzungen für Frage 7 (Kurzform, Langformen, Musterantwort); `MTEXTS`: 18 Prüfungstexte mit genau 8 Lücken,
   `[[i|wort]]` = Lücke mit genau diesem Wort. build.py hängt `df`, `ab` an jeden Eintrag und `MTEXTS` an `TEXTS`.
 - Weitere Felder in vocab.json: `sg` = Lückenwort des Prüfungssatzes, falls anders als `g`; `ga` = echte Synonyme, die in
   dieselbe Lücke passen (headquarters/head office, stock market/stock exchange, shareholders/stockholders; seit 1.20 auch
@@ -83,7 +92,7 @@ Zuletzt aktualisiert: 24.11.2026, Version 1.20 (versionCode 26): Prüfung im For
 ## Bauen, prüfen, veröffentlichen
 ```bash
 TZ=Europe/Berlin node tests/engine.test.js          # "engine: 19 Testgruppen bestanden"
-python3 -I tools/check_content.py                   # "510 Übungssätze, 17 Lückentexte + 15 Prüfungstexte, 255 von 255 …", 0 FEHLER
+python3 -I tools/check_content.py                   # "546 Übungssätze, 17 Lückentexte + 18 Prüfungstexte, 273 von 273 …", 0 FEHLER
 python3 -I build.py --html /pfad/index.html 1.18 21 # nur App-Seite zum Testen im Browser (Playwright ist gut dafür)
 KEYSTORE=/pfad/key.jks KEYPASS=<von Max> python3 -I build.py 1.18 21 "Kurze Notiz für das Update-Banner"
 jarsigner -verify dist/Vokabeltrainer.apk && python3 -I tools/dexcheck.py dist/Vokabeltrainer.apk
@@ -92,7 +101,7 @@ git push
 ```
 - Signierschlüssel: `key.jks`, Alias `max`. Max gibt Datei und Passwort direkt im Chat (nie committen).
   **Ohne genau diesen Schlüssel lässt sich kein Update über die installierte App spielen.**
-- versionCode immer um 1 erhöhen (aktuell 26 → nächste 27). Die App vergleicht ihn mit `version.json`
+- versionCode immer um 1 erhöhen (aktuell 27 → nächste 28). Die App vergleicht ihn mit `version.json`
   (`https://raw.githubusercontent.com/Mymaxyt/voctrainer/main/version.json`) und zeigt dann das Update-Banner.
 - Nach dem Push prüfen, dass raw.githubusercontent.com die neue `version.json` und eine identische APK ausliefert.
 - UI-Tests (Playwright) liegen nicht im Repo; bisher: Lernfluss, Sync zwischen zwei Geräten, Tastatur,
@@ -193,6 +202,7 @@ git push
 - 1.17 Notenprognose an Max angepasst (siehe oben)
 - 1.18 Prüfung genau im Format des Moodle-Übungstests; Lückensätze mit englischer Definition statt Strichen; strenge
   Lückenbewertung; 100 Wörter aus den Kursunterlagen; Karteikarten „Erklären“; Prognose auf 16 Punkte
+- 1.21 18 Wörter aus der Liste eines Mitstudenten (Kategorie „Liste Mitstudent“), 3 neue Prüfungstexte, EXW als Abkürzung
 - 1.20 Auswertung Fehlerprotokoll 24.11.: Prüfungsformat-Faktor in der Prognose, echte Synonyme in Lücken (`ga`),
   -ise/-ize als Schreibvariante, mehrdeutige Sätze (branch, tall structure, brick-and-mortar store) eindeutig gemacht
 - 1.19.2 „Antwort nicht lesbar“ behoben (Werkzeug-Ausgabe), Erklärungen ohne Text gar nicht erst senden, Wiederholen-Knopf
@@ -207,6 +217,6 @@ git push
 - Mehrdeutig bleiben einzelne 7.5-Sätze (characteristic/feature/benefit) – dafür ist die KI-Prüfung da.
 - Prognose mit echten Daten von Max beobachten: Wie viele Abrufe über Nacht gibt es, wie weit weicht k von 1 ab?
 - Notenschlüssel ist unbekannt (Standard 1,0 ab 95 %, 4,0 ab 50 %) – Max fragen, falls er ihn erfährt.
-- Hörübung „Organisational structures“ fehlt – falls Max sie (oder ihre Wortliste) schickt, Wörter in K3 ergänzen.
+- Hörübung „Organisational structures“ selbst fehlt weiter; ihre Vokabeln stehen aber in der Mitstudenten-Liste (übernommen).
 - Bewertung von Frage 9 unklar (6 von 8 Lücken richtig = 5,3 Punkte): Abzug für Fehler oder 9. Lücke?
 - Nach der Prüfung (26.11.) ggf. echte Note mit Prognose vergleichen und hier notieren.

@@ -471,7 +471,7 @@ span.gapin{display:inline-block;min-height:1.9em;width:auto;min-width:6em}
       <li><b>Grenzen:</b> Die Prognose rechnet mit 16 Punkten wie im Übungstest (je Lücke, Satz oder Erklärung ein Punkt) und nimmt an, dass nur Wörter aus der App drankommen. Seit 1.18 sind auch die Kursunterlagen der Wiederholungsliste drin; die Hörübung „Organisational structures“ lag nicht vor, ihre Wörter sind aus Übungstest und Wiederholungsblatt erschlossen. Der Notenschlüssel ist nicht bekannt; stell ihn in der Notenprognose um, sobald du ihn kennst. Nie geübte Wörter zählen als falsch.</li>
       <li><b>Lernstufen</b> zählen nur Fakten aus getippten Antworten. Gefestigt: seit dem letzten Fehler 2× ohne Hilfe richtig, mindestens 10 Minuten auseinander. Sicher: an 2 Tagen, davon 1× im Lückensatz. Prüfungsfest: 3× an 3 Tagen, davon 2× im Satz. Ein Fehler oder Tipp setzt auf „In Arbeit“ zurück. Karteikarten zählen nicht, weil man sich dort selbst bewertet.</li>
       <li><b>Heute geschafft:</b> einmal ohne Hilfe richtig; nach einem Fehler zweimal (nach etwa 1 und 10 Minuten). Der Lerntag beginnt um 4 Uhr.</li>
-      <li>251 verschiedene Wörter: 151 aus den Self-study-Aufgaben (market share, brand loyalty, distribution channel und end user stehen in zwei Kapiteln und zählen je einmal) und 100 aus den Kursunterlagen der Wiederholungsliste.</li>
+      <li>269 verschiedene Wörter: 151 aus den Self-study-Aufgaben (market share, brand loyalty, distribution channel und end user stehen in zwei Kapiteln und zählen je einmal), 100 aus den Kursunterlagen der Wiederholungsliste und 18 aus der Liste eines Mitstudenten.</li>
     </ul>
   </div>
 </section>
@@ -627,7 +627,7 @@ const DATA = /*DATA*/[];
 const TEXTS = /*TEXTS*/[];
 /*ENGINE*/
 const UNITS = Engine.init(DATA);
-const CHAPS = [["all","Alle"],["1","1 Industries"],["3","3 Strategy"],["7","7 Marketing"],["8","8 Distribution"],["2","2 Globalization"],["W","Übungstest + Wdh."],["K1","Kurs Industries"],["K3","Kurs Organisation"],["K7","Kurs Marketing"]];
+const CHAPS = [["all","Alle"],["1","1 Industries"],["3","3 Strategy"],["7","7 Marketing"],["8","8 Distribution"],["2","2 Globalization"],["W","Übungstest + Wdh."],["K1","Kurs Industries"],["K3","Kurs Organisation"],["K7","Kurs Marketing"],["S","Liste Mitstudent"]];
 const MIN = 60e3, HOUR = 60 * MIN, DAY = 24 * HOUR;
 const SYNC_KEYS = new Set(["hist", "exams", "log", "logCleared", "settings"]);
 const store = {

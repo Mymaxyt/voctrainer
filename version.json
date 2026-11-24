@@ -1,6 +1,6 @@
 {
-  "versionCode": 26,
-  "versionName": "1.20",
-  "notes": "Prognose rechnet jetzt ein, dass das Prüfungsformat schwerer ist; echte Synonyme in Lücken (z. B. brand recognition) zählen; mehrdeutige Sätze korrigiert.",
+  "versionCode": 27,
+  "versionName": "1.21",
+  "notes": "18 neue Wörter aus der Liste eines Mitstudenten unter „Liste Mitstudent“ (z. B. layer, accountability, economy/economic/economical, Produktlebenszyklus), weitere Synonyme.",
   "apk": "https://raw.githubusercontent.com/Mymaxyt/voctrainer/main/dist/Vokabeltrainer.apk"
 }

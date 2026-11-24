@@ -74,7 +74,7 @@ D = {
 66: "an amount that is added to the cost of a product to fix the selling price",
 67: "the number of units you must sell to cover all your costs",
 68: "groups of related goods that are physically similar or intended for the same buyers",
-69: "the whole range of goods that a company sells, including all its lines and individual offerings",
+69: "the whole selection of goods that a company sells, including all its lines and individual offerings",
 70: "the words that companies use to identify their products, such as Ariel or Pampers",
 71: "the tendency of customers to keep buying the same make of product",
 72: "how far customers know and recognize a particular make of product",
@@ -186,7 +186,7 @@ D = {
 177: "a situation in which the owner of a business is personally responsible for all its debts",
 178: "a business run by two or more people who share profits, costs and risks and are all personally liable for its debts",
 179: "a business of several partners whose risk is restricted to the money they have invested",
-180: "a private business in which the owners are not personally responsible for its debts",
+180: "a business in which the owners are not personally responsible for its debts and whose shares are not sold publicly",
 181: "a large business or group of businesses owned by shareholders (US term)",
 182: "people or institutions that own part of a company",
 183: "money that a company pays to its shareholders from its profits",
@@ -261,6 +261,25 @@ D = {
 252: "two companies working together to promote their products, e.g. a fast-food chain and a film studio",
 253: "adverts chosen for each customer based on their previous purchases",
 254: "the combination of product, price, place and promotion that a company uses to sell a product",
+# --- ab 1.21: Liste Mitstudent
+255: "the name, symbol and identity that people connect with a product or company",
+256: "the science or business of farming, i.e. growing crops and keeping animals",
+257: "the business of making goods in large quantities in factories",
+258: "the system of trade, industry and money of a country",
+259: "the academic subject that studies how production, money and trade work",
+260: "connected with trade, industry and the money of a country",
+261: "using little money, fuel or energy; not wasteful",
+262: "one level of managers or employees in an organisation",
+263: "a move to a higher position at work with more responsibility",
+264: "the fact of being responsible for your decisions and results and having to explain them",
+265: "organised in many levels of authority, from the top to the bottom",
+266: "the process of moving to higher positions during your working life",
+267: "the first stage of the product life cycle, when a product has just been launched and sales are low",
+268: "the stage of the product life cycle when sales rise quickly and competitors appear",
+269: "the stage of the product life cycle when sales stop growing and competition is strongest",
+270: "the last stage of the product life cycle, when sales fall and the product may be taken off the market",
+271: "the point at which a market cannot grow any more because almost everyone already has the product",
+272: "the process of handling goods that customers send back, e.g. returns and defective products",
 }
 
 # Frage 7: Abkürzung -> (Abkürzung, akzeptierte Langformen, Musterantwort)
@@ -279,6 +298,7 @@ ABBR = {
 218: ('B2B', ['business-to-business', 'business to business'], 'trade between companies, e.g. industrial products sold to other firms'),
 219: ('B2C', ['business-to-consumer', 'business to consumer'], 'trade between companies and private customers (end-users), e.g. consumer products'),
 246: ('BOGOF', ['buy one get one free', 'buy one, get one free'], 'a sales promotion: if you buy one product, you get a second one free'),
+136: ("EXW", ["ex works", "ex-works"], "a delivery term (Incoterm): the buyer collects the goods at the seller's premises and pays for all transport and insurance"),
 }
 
 # Lückentexte im Prüfungsformat (Frage 9): ein zusammenhängender Text, genau 8 Lücken, keine Hilfen.
@@ -314,4 +334,10 @@ MTEXTS = [
  "Online retailers know a lot about their customers. With [[253]], each visitor sees products based on earlier purchases. Small companies with low budgets often try [[240]], such as surprising events in public places, and a funny video can become part of a [[241]] campaign if people share it with friends. Our company sells mainly to private customers, so it is a [[219|B2C]] business, but it also has [[218|B2B]] customers such as hotels. Last year, its sneakers appeared in a popular film through [[127]]. Delivery within 24 hours gives it a strong [[166]]. Next spring, it plans to [[163|launch]] a cheaper line of shoes."},
 {"id": "M15", "title": "Ein Unternehmen im Wandel", "text":
  "The company started as a small family business but has grown quickly. As a private [[155]] company, its owners do not risk their private property. To protect its name, it decided to [[164|register]] it as a [[65|trademark]]. It buys [[9]] from suppliers in three countries, which makes its [[167]] long and complex. To cut costs, it plans to [[165]] the production of packaging to a partner in Poland. Finished products are stored in a central [[107]]. The managers' biggest complaint is the [[162]]: every new factory needs dozens of permits."},
+{"id": "M16", "title": "Die Wirtschaft eines Landes", "text":
+ "Mia studies [[259]] because she wants to understand how the [[258]] of a country works. In her home region, many people still work in [[256]], but most jobs are now in [[257]], where cars and machines are built. The government is hoping for strong [[260]] growth next year. Mia herself drives a small, very [[261]] car that uses little fuel. After her studies, she would like to work for a famous [[255]] such as Adidas, which has built an excellent [[159]] over many years."},
+{"id": "M17", "title": "Flach oder hierarchisch?", "text":
+ "In a [[265]] structure, there are many [[262|layers]] of management and a long [[199]]. One advantage is clear [[264]]: everyone knows who is responsible for which decision. The structure also offers ambitious employees clear [[266]], because there are many levels to climb. On the other hand, communication is slow and the structure is expensive. In a flat structure, each manager has a wide [[157]] and many [[33]]. Communication is faster, but a [[263|promotion]] is rare because there are only a few levels."},
+{"id": "M18", "title": "Der Lebenszyklus eines Produkts", "text":
+ "Every product goes through several stages. In the [[267|introduction]] stage, sales are low and the company is usually still [[76]]. In the [[268|growth]] stage, sales rise quickly and competitors enter the market. In the [[269]] stage, sales stop growing, and finally the market reaches [[271]]: almost everyone who wants the product already has one. In the [[270]] stage, sales fall because tastes have changed, and the product is [[83]]. For an online shop, [[272]] also matters, because customers send many items back."},
 ]

@@ -9,10 +9,10 @@ const test = (name, fn) => { try { fn(); n++; } catch (e) { console.error("FEHLE
 const U = e => Engine.unitOf(DATA.findIndex(v => v.e === e));
 const T0 = new Date(2026, 10, 23, 10, 0).getTime();      // Mo 23.11.2026 10:00
 
-test("Wörter: 251 verschiedene, keine Überschneidung der Schreibweisen", () => {
-  assert.strictEqual(units.length, 251);
-  const seen = new Map();
-  for (const u of units) for (const a of u.acc) { assert.ok(!seen.has(a) || seen.get(a) === u, "doppelt: " + a); seen.set(a, u); }
+test("Wörter: 269 verschiedene, keine Überschneidung der Schreibweisen", () => {
+  assert.strictEqual(units.length, 269);
+  const seen = new Map(), HOMONYM = new Set(["promotion", "promotions"]);   // Werbung (8.2) und Beförderung (Hörübung)
+  for (const u of units) for (const a of u.acc) { assert.ok(!seen.has(a) || seen.get(a) === u || HOMONYM.has(a), "doppelt: " + a); if (!seen.has(a)) seen.set(a, u); }
   assert.strictEqual(U("market share").entries.length, 2);
   assert.strictEqual(U("end-user"), U("end user"));
 });
@@ -36,7 +36,10 @@ test("Lücken wie in Moodle: nur die Form, die der Satz braucht", () => {
   assert.strictEqual(Engine.wordCount("limited liability"), 2);
   // jede Vokabel hat eine englische Definition, Abkürzungen haben Langform und Erklärung
   for (const v of DATA) assert.ok(v.df && v.df.length > 10, "Definition fehlt: " + v.e);
-  assert.strictEqual(units.filter(u => u.ab).length, 14);
+  assert.strictEqual(units.filter(u => u.ab).length, 15);
+  assert.ok(g("report to", "answer to", "report to").ok);
+  assert.ok(g("acquisition", "takeover", "acquisition").ok);
+  assert.ok(!g("economic", "economical", "economic").ok);                                   // economic ≠ economical
   assert.ok(g("headquarters / head office", "head office", "headquarters").ok);           // echtes Synonym in derselben Lücke
   assert.ok(g("stock market", "stock exchange", "stock market").ok);
   assert.ok(!g("promote (be promoted)", "promotion", "promoted").ok);
