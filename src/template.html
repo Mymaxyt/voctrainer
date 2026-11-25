@@ -422,6 +422,7 @@ span.gapin{display:inline-block;min-height:1.9em;width:auto;min-width:6em}
     <h3 style="font-size:15px;margin-top:4px">Wie gut passt die Prognose zu dir?</h3>
     <p id="calText"></p>
     <p id="simText"></p>
+    <p id="typoText"></p>
     <div class="examdate"><span class="muted" id="assumeText"></span><button class="linkbtn" id="assumeEdit">ändern</button></div>
     <div class="examdate" id="assumeRow" style="display:none">
       <label class="muted">Punkte <input type="number" id="asN" min="5" max="214" step="1" style="width:70px"></label>
@@ -466,9 +467,10 @@ span.gapin{display:inline-block;min-height:1.9em;width:auto;min-width:6em}
   <div class="panel wide">
     <h3>So wird gerechnet</h3>
     <ul class="method">
-      <li><b>Prognose:</b> Für jedes Wort schätzt das Gedächtnismodell FSRS-6, wie wahrscheinlich du es zum Prüfungstermin ohne Hilfe richtig schreibst – aus deinen Antworten, ihren Abständen und deinen Fehlern. Das Modell wird an dich angepasst: Es vergleicht, was es für deine Abrufe über Nacht (erste Antwort eines Tages zu einem Wort vom Vortag) vorhergesagt hat, mit dem, was du wirklich wusstest, und schätzt daraus, ob du schneller oder langsamer vergisst als der Durchschnitt. Bei wenigen Daten bleibt es nahe am Durchschnitt.</li>
+      <li><b>Prognose:</b> Für jedes Wort schätzt das Gedächtnismodell FSRS-6, wie wahrscheinlich du es zum Prüfungstermin ohne Hilfe richtig schreibst – aus deinen Antworten, ihren Abständen und deinen Fehlern. Das Modell wird an dich angepasst: Es vergleicht, was es für deine Abrufe über Nacht (erste Antwort eines Tages zu einem Wort vom Vortag) vorhergesagt hat, mit dem, was du wirklich wusstest, und schätzt daraus, ob du schneller oder langsamer vergisst als der Durchschnitt. Bei wenigen Daten bleibt es nahe am Durchschnitt. Angepasst wird so, dass die vorhergesagte Zahl gewusster Wörter zur tatsächlichen passt.</li>
+      <li><b>Tippfehler:</b> Ein Tippfehler oder eine falsche Form heißt „gewusst, aber falsch hingeschrieben“. Im Lernplan bleibt das ein Fehler, für das Gedächtnismodell der Prognose gilt das Wort als (schwer) gewusst. Ob es in der Prüfung trotzdem den Punkt kostet, rechnet die Prognose je Wort extra: Ein einzelner Tippfehler zählt mit dem Anteil, der in Prüfungssimulationen übrig bleibt (vorab angenommen: die Hälfte – der Rest ist schnelles Tippen), jeder weitere Tippfehler beim selben Wort voll.</li>
       <li><b>Notenverteilung:</b> Viele simulierte Prüfungen mit zufällig gezogenen Wörtern; jedes Wort ist mit seiner Wahrscheinlichkeit richtig, und die Unsicherheit der Anpassung wird mitgerechnet. Daraus kommen der wahrscheinliche Bereich und die Wahrscheinlichkeit jeder Note. „Mit Lernplan“ nimmt an, dass du bis zur Prüfung jeden Tag das Tagesziel schaffst (eine Runde um 18 Uhr); Fehler werden dabei wie im Lernplan zweimal nachgelernt.</li>
-      <li><b>Grenzen:</b> Die Prognose rechnet mit 16 Punkten wie im Übungstest (je Lücke, Satz oder Erklärung ein Punkt) und nimmt an, dass nur Wörter aus der App drankommen. Seit 1.18 sind auch die Kursunterlagen der Wiederholungsliste drin; die Hörübung „Organisational structures“ lag nicht vor, ihre Wörter sind aus Übungstest und Wiederholungsblatt erschlossen. Der Notenschlüssel ist nicht bekannt; stell ihn in der Notenprognose um, sobald du ihn kennst. Nie geübte Wörter zählen als falsch.</li>
+      <li><b>Grenzen:</b> Die Prognose rechnet mit 16 Punkten wie im Übungstest (je Lücke, Satz oder Erklärung ein Punkt) und nimmt an, dass nur Wörter aus der App drankommen. Seit 1.18 sind auch die Kursunterlagen der Wiederholungsliste drin; die Hörübung „Organisational structures“ lag nicht vor, ihre Wörter sind aus Übungstest und Wiederholungsblatt erschlossen. Der Notenschlüssel ist nicht bekannt; stell ihn in der Notenprognose um, sobald du ihn kennst. Nie geübte Wörter zählen so oft als gewusst, wie du ein neues Wort beim allerersten Versuch schon wusstest.</li>
       <li><b>Lernstufen</b> zählen nur Fakten aus getippten Antworten. Gefestigt: seit dem letzten Fehler 2× ohne Hilfe richtig, mindestens 10 Minuten auseinander. Sicher: an 2 Tagen, davon 1× im Lückensatz. Prüfungsfest: 3× an 3 Tagen, davon 2× im Satz. Ein Fehler oder Tipp setzt auf „In Arbeit“ zurück. Karteikarten zählen nicht, weil man sich dort selbst bewertet.</li>
       <li><b>Heute geschafft:</b> einmal ohne Hilfe richtig; nach einem Fehler zweimal (nach etwa 1 und 10 Minuten). Der Lerntag beginnt um 4 Uhr.</li>
       <li>269 verschiedene Wörter: 151 aus den Self-study-Aufgaben (market share, brand loyalty, distribution channel und end user stehen in zwei Kapiteln und zählen je einmal), 100 aus den Kursunterlagen der Wiederholungsliste und 18 aus der Liste eines Mitstudenten.</li>
@@ -1130,7 +1132,7 @@ function renderForecast(now, S){
   const o = examOpts(), F = scen === "plan" ? forecastFor(true) : S.F, other = scen === "plan" ? S.F : forecastFor(true), cal = F.cal;
   for(const b of $("scen").children) b.classList.toggle("on", b.dataset.s === scen);
   const when = fmtWhen(Math.max(now, settings.examAt)).split(",")[0];
-  $("scenText").textContent = scen === "plan"
+  $("scenText").textContent = settings.examAt <= now ? `Der eingetragene Prüfungstermin (${fmtWhen(settings.examAt)}) ist vorbei – die Prognose gilt für einen Test jetzt. Neuen Termin oben unter „ändern“ eintragen.` : scen === "plan"
     ? (F.sessions.length ? `Angenommen, du schaffst ${F.sessions.length > 1 ? "heute und an den nächsten Tagen" : "heute noch"} das Tagesziel (je eine Runde um 18 Uhr). Ohne weiteres Lernen: ${Math.round(other.mean)} %, Note ${gradeOf(other.mean)}.` : "Vor der Prüfung ist keine weitere Lernrunde mehr eingeplant – gleich wie „Stand jetzt“.")
     : `Wenn du ab jetzt nichts mehr lernst. Mit Tagesziel bis zur Prüfung: ${Math.round(other.mean)} %, Note ${gradeOf(other.mean)}.`;
   $("progPct").textContent = Math.round(F.mean) + " %"; $("progNote").textContent = gradeOf(F.mean);
@@ -1147,17 +1149,25 @@ function renderForecast(now, S){
   }
   box.setAttribute("aria-label", "Wahrscheinlichkeit je Note: " + order.filter(g => F.grades[g] >= 0.01).map(g => `${g}: ${Math.round(100 * F.grades[g])} %`).join(", "));
   $("progNever").textContent = (o.n <= 60 ? `Bei ${o.n} Punkten zählt jeder Punkt ${pctTxt(100 / o.n).replace(" %", " Prozentpunkte")} – deshalb sind manche Noten wahrscheinlicher als ihre Nachbarn. ` : "")
-    + (S.never ? `${S.never} Wörter noch nie geübt – sie zählen als falsch.` : "");
+    + (S.never ? `${S.never} Wörter noch nie geübt – für sie rechnet die Prognose mit ${Math.round(100 * F.fresh.p)} %, so oft wusstest du ein neues Wort schon beim allerersten Versuch (${F.fresh.got} von ${F.fresh.n}).` : "");
   // Gegenprobe: Abrufe über Nacht und Prüfungssimulationen
   $("calText").textContent = cal.n < 20
     ? `Erst ${cal.n} Abrufe über Nacht (erste Antwort eines Tages zu einem Wort vom Vortag) – zu wenig zum Anpassen. Die Prognose nutzt vorerst das Durchschnittsmodell.`
-    : `${cal.n} Abrufe über Nacht ausgewertet: ${cal.right} richtig (${Math.round(100 * cal.right / cal.n)} %). Das Durchschnittsmodell hätte ${Math.round(100 * cal.expStd / cal.n)} % erwartet, angepasst an dich ${Math.round(100 * cal.expMe / cal.n)} %. `
+    : `${cal.n} Abrufe über Nacht ausgewertet: ${cal.right} gewusst (${Math.round(100 * cal.right / cal.n)} %${cal.slips ? `, davon ${cal.slips} mit Tipp- oder Formfehler` : ""}). Das Durchschnittsmodell hätte ${Math.round(100 * cal.expStd / cal.n)} % erwartet, angepasst an dich ${Math.round(100 * cal.expMe / cal.n)} %. `
       + (cal.k < 0.8 ? "Du vergisst über Nacht mehr als der Durchschnitt – die Prognose ist deshalb strenger." : cal.k > 1.25 ? "Du behältst über Nacht mehr als der Durchschnitt – die Prognose ist deshalb großzügiger." : "Du liegst nahe am Durchschnitt.");
   const ec = Engine.examCheck(hist, cal.k);
   const fm = fmtShift(), ex80 = Math.round(100 * Engine.shiftP(0.8, fm.d));
-  $("simText").textContent = ec.n ? `Prüfungssimulationen: ${ec.right} von ${ec.n} schon geübten Wörtern richtig, das Gedächtnismodell hätte ${Math.round(ec.exp)} erwartet. `
+  $("simText").textContent = ec.n ? `Prüfungssimulationen (nur Wörter, die du an diesem Tag noch nicht geübt hattest): ${ec.got} von ${ec.n} gewusst, ${ec.right} davon auch richtig geschrieben; das Gedächtnismodell hätte ${Math.round(ec.exp)} erwartet. `
     + (Math.abs(ex80 - 80) >= 2 ? `Im Prüfungsformat klappt der Abruf also ${ex80 < 80 ? "schlechter" : "besser"} als beim Üben – die Prognose rechnet das ein: Wo das Modell 80 % erwartet, setzt sie ${ex80} % an.` : "Das passt zum Modell.")
-    : "Noch keine Prüfungssimulation – sie ist die beste Gegenprobe für die Prognose.";
+    : "Noch keine Prüfungssimulation am Tag nach dem Üben – sie ist die beste Gegenprobe für die Prognose (Simulationen direkt nach dem Üben messen vor allem das Kurzzeitgedächtnis).";
+  const sm = F.slips;
+  $("typoText").textContent = `Tippfehler: beim Üben bei ${Math.round(100 * sm.sTr / Math.max(1, sm.rTr))} % der gewussten Wörter (${sm.sTr} von ${sm.rTr})`
+    + (sm.rEx ? `, in Prüfungssimulationen bei ${Math.round(100 * sm.sEx / sm.rEx)} % (${sm.sEx} von ${sm.rEx}). ` : ". ")
+    + `Für die Prognose gilt ein Tippfehler als gewusst – in der Prüfung kostet er aber den Punkt. `
+    + (sm.rEx < 15 ? `Weil beim Üben oft schnell getippt wird, rechnet sie vorerst mit der Hälfte davon; Prüfungssimulationen passen das an. `
+       : sm.phi < 0.85 ? `In Simulationen vertippst du dich seltener, deshalb rechnet sie mit ${Math.round(100 * sm.phi)} % davon. `
+       : `In Simulationen vertippst du dich ähnlich oft, deshalb rechnet sie mit ${Math.round(100 * sm.phi)} % davon – genau hinschauen lohnt sich. `)
+    + `Wiederholte Tippfehler beim selben Wort und falsche Formen zählen voll.`;
   $("assumeText").textContent = `Annahmen: ${o.n} Punkte${o.n === 16 ? " wie im Übungstest" : ""} · 1,0 ab ${pctTxt(o.key1)} · bestanden (4,0) ab ${pctTxt(o.key4)}`;
 }
 $("assumeEdit").onclick = () => { const o = examOpts(); $("asN").value = o.n; $("asK1").value = o.key1; $("asK4").value = o.key4; $("assumeRow").style.display = "flex"; };
@@ -1191,14 +1201,16 @@ function renderProgress(){
     rows.append(el("span", null, label), bar, el("span", "fig", `${c[3] + c[4]} / ${us.length} sicher`));
   }
   // Wackelkandidaten
-  const log = store.get("log", []), weak = UNITS.filter(u => I.get(u.k).n).sort((a, b) => I.get(a.k).rExam - I.get(b.k).rExam || I.get(b.k).errs - I.get(a.k).errs).slice(0, 10);
+  const pF = new Map(UNITS.map((u, j) => [u.k, S.F.rs[j]])), pOf = u => pF.get(u.k);
+  const log = store.get("log", []), weak = UNITS.filter(u => I.get(u.k).n).sort((a, b) => pOf(a) - pOf(b) || I.get(b.k).errs - I.get(a.k).errs).slice(0, 10);
   const wl = $("weakList"); wl.textContent = "";
   for(const u of weak){
     const i = I.get(u.k), es = new Set(u.entries.map(x => DATA[x].e)), wrong = [];
     for(let j = log.length - 1; j >= 0 && wrong.length < 2; j--){ const e = log[j]; if(es.has(e.e) && e.a && e.a.trim() && !wrong.includes(e.a.trim())) wrong.push(e.a.trim()); }
     const row = el("div", "mrow"), bx = el("span", "bx"), m = el("span", "meter"), f = el("i");
-    f.style.width = Math.round(100 * i.rExam) + "%"; m.appendChild(f); m.setAttribute("role", "img"); m.setAttribute("aria-label", Math.round(100 * i.rExam) + " Prozent");
-    bx.append(m, el("span", null, Math.round(100 * i.rExam) + " %"));
+    const pr = Math.round(100 * pOf(u));
+    f.style.width = pr + "%"; m.appendChild(f); m.setAttribute("role", "img"); m.setAttribute("aria-label", pr + " Prozent");
+    bx.append(m, el("span", null, pr + " %"));
     row.append(el("span", "nm", firstEntry(u).e), bx);
     row.append(el("span", "wr", [Engine.STAGES[i.stage], i.errs ? i.errs + "× falsch" : "", wrong.length ? "zuletzt: " + wrong.map(w => "„" + w + "“").join(", ") : ""].filter(Boolean).join(" · ")));
     wl.appendChild(row);
@@ -1939,6 +1951,13 @@ function topErrors(n){
   for(const e of store.get("log", [])){ const k = e.e + "|" + e.n; c.set(k, (c.get(k) || 0) + 1); }
   return [...c.entries()].sort((a, b) => b[1] - a[1]).slice(0, n).map(([k, cnt]) => { const [e, a] = k.split("|"); return `${cnt}× ${e} (${a})`; });
 }
+// Rohdaten zum Nachrechnen der Prognose: je Wort alle Antworten (Minuten ab Beginn, Note, Modus, Fehlerart)
+function rawHist(){
+  const all = Object.values(hist).flat(); if(!all.length) return [];
+  const t0 = Engine.dayStart(Math.min(...all.map(a => a[0]))), out = [`Rohdaten (Verlauf je Wort; Minuten ab ${fmtWhen(t0)}, Note 1–3, Modus, Fehlerart):`];
+  for(const u of UNITS){ const a = hist[u.k]; if(a && a.length) out.push(u.k + " = " + a.map(x => [Math.round((x[0] - t0) / MIN), x[1], x[2], x[3] || ""].join(",").replace(/,$/, "")).join(" ")); }
+  return out;
+}
 function logExport(){
   const log = store.get("log", []), d = new Date(), now = Date.now(), S = summary(now);
   const devs = [...new Set(log.map(e => e.d))].join(" + ") || DEVICE;
@@ -1948,13 +1967,15 @@ function logExport(){
   const FP = forecastFor(true), cal = S.F.cal, exc = Engine.examCheck(hist, cal.k), o = examOpts();
   L.push(`Prüfung: ${fmtWhen(settings.examAt)} · Annahmen ${o.n} Punkte, 1,0 ab ${pctTxt(o.key1)}, 4,0 ab ${pctTxt(o.key4)} · heute geschafft ${S.done}/${UNITS.length}`);
   L.push(`Prognose Stand jetzt: ${S.F.mean.toFixed(1)} % (Note ${gradeOf(S.F.mean)}, Bereich ${Math.round(S.F.p10)}–${Math.round(S.F.p90)} %, 1,0-Chance ${Math.round(100 * S.F.p1)} %) · mit Lernplan: ${FP.mean.toFixed(1)} % (Note ${gradeOf(FP.mean)}, 1,0-Chance ${Math.round(100 * FP.p1)} %)`);
-  L.push(`Anpassung: ${cal.n} Abrufe über Nacht, ${cal.right} richtig, Durchschnittsmodell erwartete ${cal.expStd.toFixed(1)}, angepasst ${cal.expMe.toFixed(1)} (Faktor ${cal.k.toFixed(2)} ± ${cal.se.toFixed(2)} log) · Simulationen: ${exc.right}/${exc.n} richtig, erwartet ${exc.exp.toFixed(1)} · Prüfungsformat ${fmtShift().d.toFixed(2)} ± ${fmtShift().se.toFixed(2)} logit (aus 80 % werden ${Math.round(100 * Engine.shiftP(0.8, fmtShift().d))} %)`);
+  L.push(`Anpassung: ${cal.n} Abrufe über Nacht, ${cal.right} gewusst (${cal.slips} davon mit Tipp-/Formfehler), Durchschnittsmodell erwartete ${cal.expStd.toFixed(1)}, angepasst ${cal.expMe.toFixed(1)} (Faktor ${cal.k.toFixed(2)} ± ${cal.se.toFixed(2)} log) · Simulationen über Nacht: ${exc.got}/${exc.n} gewusst, ${exc.right} richtig geschrieben, erwartet ${exc.exp.toFixed(1)} · Prüfungsformat ${fmtShift().d.toFixed(2)} ± ${fmtShift().se.toFixed(2)} logit (aus 80 % werden ${Math.round(100 * Engine.shiftP(0.8, fmtShift().d))} %)`);
+  const sm = S.F.slips, fr = S.F.fresh;
+  L.push(`Schreibfehler: Üben ${sm.sTr}/${sm.rTr} Tippfehler, Simulation ${sm.sEx}/${sm.rEx}, Form ${sm.fGap}/${sm.rGap} → Prüfung: Tippfehleranteil ${sm.phi.toFixed(2)} × Üben, Grundrisiko je Wort ${(100 * sm.eps0).toFixed(1)} % · neue Wörter beim 1. Versuch ${fr.got}/${fr.n} → ${Math.round(100 * fr.p)} %`);
   L.push("Lernstufen: " + ORDER.map(s => `${Engine.STAGES[s]} ${S.counts[s]}`).join(" · "));
   const ec = Engine.errorsByType(hist, now - 7 * DAY);
   L.push("Fehlerarten (7 Tage): " + Object.entries(ec).map(([k, n]) => `${Engine.ERR[k]} ${n}`).join(" · "));
   const days = Engine.daily(hist, now, 7);
   if(days.length) L.push("Verlauf: " + days.map(x => { const dd = new Date(x.t); return `${pad(dd.getDate())}.${pad(dd.getMonth() + 1)}. ${x.answers} Antw., 1. Versuch ${x.words ? Math.round(100 * x.firstOk / x.words) : 0} %, geschafft ${x.done}`; }).join(" | "));
-  if(!log.length && !syncEvents.length) return L.join("\n") + "\n\nKeine Fehler aufgezeichnet.";
+  if(!log.length && !syncEvents.length) return [...L, "", "Keine Fehler aufgezeichnet.", "", ...rawHist()].join("\n");
   L.push("", "Häufigste Fehler:", ...topErrors(15));
   const fl = log.filter(e => e.fl);
   if(fl.length){ L.push("", `Gemeldete Bewertungen (${fl.length}):`); for(const e of fl.slice(-20).reverse()) L.push(`${dt(e.t)} · ${e.e} · „${e.a}“ · ${e.m}`); }
@@ -1970,6 +1991,7 @@ function logExport(){
     const q = e.m === "Karte" ? "" : ` · Abfrage: ${e.q}`;
     L.push(`${dt(e.t)} · ${e.d} · ${e.m} · ${e.n} · gesucht: ${e.e} · meine Antwort: ${ans}${kind}${extra}${q}`);
   }
+  L.push("", ...rawHist());
   return L.join("\n");
 }
 function renderLog(){

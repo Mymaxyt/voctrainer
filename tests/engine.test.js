@@ -261,8 +261,49 @@ test("Abrufe über Nacht", () => {
   const h = { a: [[D1, 3, "c"], [D2, 1, "c", "s"], [D2 + 2 * MIN, 3, "w"], [D3, 3, "c"]],
               b: [[D1 - DAY, 3, "l"], [D1, 3, "k"], [D1 + MIN, 2, "c"], [D2, 3, "x"]] };
   const r = Engine.recalls(h);
-  assert.deepStrictEqual(r.map(x => x.y), [0, 1, 0, 1]);          // gleicher Tag zählt nicht, Tipp zählt als nicht gewusst
+  // gleicher Tag zählt nicht, Tipp zählt als nicht gewusst, Tippfehler als gewusst (seit 1.22), Prüfungssimulation (x) separat
+  assert.deepStrictEqual(r.map(x => x.y), [1, 1, 0]);
+  assert.deepStrictEqual(r.map(x => x.slip), [true, false, false]);
   assert.ok(Math.abs(r[0].dt - 1) < 1e-9);
+});
+
+test("Tippfehler in der Prognose: gewusst, aber falsch hingeschrieben", () => {
+  const D1 = T0, D2 = T0 + DAY, ex = T0 + 2 * DAY, ks = units.map(u => u.k);
+  const mk = e => { const h = {}; ks.forEach((k, i) => { h[k] = [[D1, 3, "w"], [D1 + 10 * MIN, 3, "c"], [D2, i % 3 ? 3 : 1, "c", e], [D2 + MIN, 3, "w"], [D2 + 11 * MIN, 3, "c"]]; }); return h; };
+  const typo = mk("s"), forgot = mk("n"), clean = mk("x"); ks.forEach(k => { clean[k][2] = [D2, 3, "c"]; });
+  // Gedächtnis: Tippfehler wie „schwer gewusst“, nicht wie vergessen – im Lernplan bleibt es ein Fehler
+  assert.ok(Engine.memory(typo[ks[0]], true).S > Engine.memory(forgot[ks[0]], true).S);
+  assert.strictEqual(Engine.memory(typo[ks[0]]).S, Engine.memory(forgot[ks[0]]).S);
+  assert.strictEqual(Engine.stage(typo[ks[0]]), Engine.stage(forgot[ks[0]]));
+  const F = h => Engine.forecast(h, ex - HOUR, {examAt: ex, n: 16, sims: 1500}).mean;
+  assert.ok(F(typo) > F(forgot) + 3 && F(typo) < F(clean), JSON.stringify([F(forgot), F(typo), F(clean)]));
+  // je Wort: wiederholte Tippfehler zählen voll, ein einzelner nur teilweise (schnelles Tippen)
+  const h = {a: [[D1, 1, "c", "s"], [D1 + MIN, 1, "c", "s"], [D2, 1, "c", "s"]], b: [[D1, 1, "c", "s"], [D2, 3, "c"]], c: [[D1, 3, "c"], [D2, 3, "c"]]};
+  const sm = Engine.slipModel(h);
+  assert.ok(sm.eps("a") > 0.4 && sm.eps("a") > sm.eps("b") && sm.eps("b") > sm.eps("c") && sm.eps("c") < sm.eps0, JSON.stringify([sm.eps("a"), sm.eps("b"), sm.eps("c"), sm.eps0]));
+  assert.ok(sm.phi > 0.4 && sm.phi <= 0.5);                                   // ohne Prüfungssimulationen: die Hälfte
+  // in Prüfungssimulationen genauso viele Tippfehler wie beim Üben → Anteil steigt
+  const many = {}; for(let i = 0; i < 80; i++) many["w" + i] = [[D1, i % 5 ? 3 : 1, "c", "s"], [D2, i % 5 ? 3 : 1, "x", "s"]];
+  assert.ok(Engine.slipModel(many).phi > 0.7);
+});
+
+test("Kalibrierung im Großen und Wörter ohne Verlauf", () => {
+  // Einige sicher geglaubte Wörter falsch, viele unsichere richtig, insgesamt mehr richtig als erwartet → k nicht unter 1
+  // (bis 1.21 kam hier k = 0,49 heraus: 62 richtig, Durchschnittsmodell 53, „angepasst“ 49,5 – wie im Protokoll vom 25.11.)
+  const h = {};
+  for(let i = 0; i < 60; i++) h["u" + i] = [[T0 - 9 * DAY, 1, "c", "n"], [T0 + DAY, i < 50 ? 3 : 1, "c", "n"]];
+  for(let i = 0; i < 20; i++) h["v" + i] = [[T0 - 20 * DAY, 3, "k"], [T0 - 10 * DAY, 3, "k"], [T0 - DAY, 3, "k"], [T0 + DAY, i < 12 ? 3 : 1, "c", "n"]];
+  const c = Engine.calibrate(h);
+  assert.ok(c.n === 80 && c.right === 62 && c.right > c.expStd && c.k > 1 && Math.abs(c.expMe - c.right) < Math.abs(c.expStd - c.right), JSON.stringify(c));
+  // Prüfungssimulation direkt nach dem Üben (gleicher Tag) zählt nicht für den Format-Faktor
+  const g = {}; units.slice(0, 30).forEach(u => { g[u.k] = [[T0, 3, "w"], [T0 + 30 * MIN, 1, "x", "n"]]; });
+  assert.strictEqual(Engine.formatShift(g, 1).n, 0);
+  // nie geübte Wörter: Anteil beim allerersten Versuch gewusst
+  const f = {}; for(let i = 0; i < 40; i++) f["n" + i] = [[T0, i < 20 ? 3 : 1, "w", "n"]];
+  const nr = Engine.newRate(f);
+  assert.ok(nr.n === 40 && Math.abs(nr.p - 21 / 45) < 1e-9);
+  const ex = T0 + 2 * DAY, fc = Engine.forecast({}, T0, {examAt: ex, n: 16, sims: 500, fresh: {p: 0.3}});
+  assert.ok(fc.mean > 20 && fc.mean < 35, "ohne Verlauf ≈ 30 % × Format × Schreibrisiko: " + fc.mean);
 });
 
 test("Persönlicher Faktor", () => {

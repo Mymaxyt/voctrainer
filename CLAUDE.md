@@ -7,11 +7,14 @@
 > sie zusammen mit dem Code. Am Ende jeder Arbeitssitzung muss hier der aktuelle Zwischenstand stehen.
 > Keine Passwörter, Tokens oder Schlüssel in diese Datei – das Repo ist öffentlich.
 
-Zuletzt aktualisiert: 24.11.2026, Version 1.21 (versionCode 27): Prüfung im Format des Moodle-Übungstests, englische Definitionen, 100 Wörter aus den Kursunterlagen.
+Zuletzt aktualisiert: 25.11.2026, Version 1.22 (versionCode 28): Notenprognose realistischer (Tippfehler = gewusst, aber falsch geschrieben; Kalibrierung im Großen; Simulationen nur über Nacht; nie geübte Wörter nicht mehr 0 %), Rohdaten im Fehlerprotokoll.
 
 ## Worum es geht
 - Max Werner (GitHub: Mymaxyt), Student International Management (FH Würzburg), schreibt am
-  **Do 26.11.2026 um 08:00** einen englischen Vokabeltest (Business English, Self-study-Vokabeln aus dem Buch).
+  einen englischen Vokabeltest (Business English, Self-study-Vokabeln aus dem Buch). Termin: hier stand zuerst **Do 26.11.2026
+  08:00**; im Fehlerprotokoll vom 25.11. hat Max in der App **Mi 25.11.2026, 08:15** eingetragen (passt zur Mitstudenten-Liste
+  „BE1 Vokabeltest 25.11.“) – der Test war also vermutlich am 25.11. um 08:15. Das Protokoll kam um 08:38 mit „die noten
+  bewertung ist zu negativ geschätzt“. Echtes Ergebnis noch unbekannt.
 - **Prüfungsstoff laut Dozent („Vocabulary revision for the test – WS 26-27“, es gibt keine offizielle Wortliste):**
   Kursmaterial „Industries and companies – vocabulary exercise“ und „Organisational structures – listening exercise
   (vocabulary)“; Self-study 1.1, 1.5, 1.6, 3.1, 3.4, 3.5, 3.6, 7.1–7.5, 8.1, 8.2, 8.3, 8.8, 2.1, 2.4.
@@ -58,7 +61,11 @@ Zuletzt aktualisiert: 24.11.2026, Version 1.21 (versionCode 27): Prüfung im For
 - „Zählt doch“ gibt es nicht mehr; stattdessen „Bewertung melden“ (landet im Fehlerprotokoll).
 - **Urheberrecht:** Übungstexte aus dem Buch nicht übernehmen – nur eigene Sätze und Lückentexte.
 - **Geheimnisse nie ins Repo:** Signierschlüssel (`*.jks`, in `.gitignore`) und Sync-Token.
-- Max schickt ab und zu das **Fehlerprotokoll** (Export aus der App) – daraus Probleme ableiten.
+- Max schickt ab und zu das **Fehlerprotokoll** (Export aus der App) – daraus Probleme ableiten. Seit 1.22 stehen am Ende
+  „Rohdaten“ (Verlauf je Wort: Minuten ab Start, Note, Modus, Fehlerart) – damit lässt sich die Prognose an seinen echten
+  Daten nachrechnen (`hist` daraus rekonstruieren, `Engine.calibrate/forecast` laufen lassen).
+- „Rechtschreibfehler sind zum Teil vom zu schnellen Tippen“ (25.11.) – gilt **nur für die Prognose**: Training und
+  Prüfungssimulation bleiben streng (Tippfehler = Fehler, Wort kommt wieder).
 - Antworten an Max kurz halten, auf Deutsch; beim Fertigstellen sagen, dass das Update über das Banner kommt
   (zum Installieren Samsung „Auto Blocker“ kurz ausschalten).
 
@@ -85,13 +92,13 @@ Zuletzt aktualisiert: 24.11.2026, Version 1.21 (versionCode 27): Prüfung im For
   resources.arsc, Icon von Hand). Paket `de.maxwerner.vokabeln`, MainActivity = WebView, minSdk 26, targetSdk 29.
   Native Teil: Link `vokabeltrainer://update?url=…` → App lädt die APK selbst (DownloadManager) und öffnet die Installation.
 - `build.py` – HTML erzeugen, APK bauen, mit jarsigner signieren, `dist/Vokabeltrainer.apk` + `version.json` schreiben.
-- `tests/engine.test.js` (17 Testgruppen), `tests/fsrs_cases.json` (+ `make_fsrs_cases.py`, Abgleich mit py-fsrs).
+- `tests/engine.test.js` (21 Testgruppen), `tests/fsrs_cases.json` (+ `make_fsrs_cases.py`, Abgleich mit py-fsrs).
 - `tools/check_content.py` – prüft Sätze, Hinweise, Lückentexte (muss 0 Fehler melden).
 - `tools/dexcheck.py` – prüft die DEX-Datei in der fertigen APK.
 
 ## Bauen, prüfen, veröffentlichen
 ```bash
-TZ=Europe/Berlin node tests/engine.test.js          # "engine: 19 Testgruppen bestanden"
+TZ=Europe/Berlin node tests/engine.test.js          # "engine: 21 Testgruppen bestanden"
 python3 -I tools/check_content.py                   # "546 Übungssätze, 17 Lückentexte + 18 Prüfungstexte, 273 von 273 …", 0 FEHLER
 python3 -I build.py --html /pfad/index.html 1.18 21 # nur App-Seite zum Testen im Browser (Playwright ist gut dafür)
 KEYSTORE=/pfad/key.jks KEYPASS=<von Max> python3 -I build.py 1.18 21 "Kurze Notiz für das Update-Banner"
@@ -101,7 +108,7 @@ git push
 ```
 - Signierschlüssel: `key.jks`, Alias `max`. Max gibt Datei und Passwort direkt im Chat (nie committen).
   **Ohne genau diesen Schlüssel lässt sich kein Update über die installierte App spielen.**
-- versionCode immer um 1 erhöhen (aktuell 27 → nächste 28). Die App vergleicht ihn mit `version.json`
+- versionCode immer um 1 erhöhen (aktuell 28 → nächste 29). Die App vergleicht ihn mit `version.json`
   (`https://raw.githubusercontent.com/Mymaxyt/voctrainer/main/version.json`) und zeigt dann das Update-Banner.
 - Nach dem Push prüfen, dass raw.githubusercontent.com die neue `version.json` und eine identische APK ausliefert.
 - UI-Tests (Playwright) liegen nicht im Repo; bisher: Lernfluss, Sync zwischen zwei Geräten, Tastatur,
@@ -165,26 +172,44 @@ git push
   gleichwertige Wörter sind dort nicht sicher.
 
 ## Notenprognose (seit 1.17, Fortschritt → Notenprognose)
-- **Persönlicher Faktor k** auf die FSRS-Stabilität: aus „Abrufen über Nacht“ (`recalls`: erste getippte Antwort
-  eines Lerntags zu einem Wort, das an einem früheren Tag schon dran war; Hilfe = falsch; Modus `l` zählt nicht als Ziel).
-  `calibrate`: MAP mit Prior log k ~ N(0, 0,7²), Goldener Schnitt auf [−3, 3], Unsicherheit aus der Krümmung.
+- **Persönlicher Faktor k** auf die FSRS-Stabilität: aus „Abrufen über Nacht“ (`recalls` = `overnightObs(hist, "wc")`:
+  erste getippte Antwort eines Lerntags zu einem Wort, das an einem früheren Tag schon dran war; nur Üben (w/c) – x/t gehen
+  in den Format-Faktor; Hilfe = falsch). Seit 1.22 **Kalibrierung im Großen** (`fitSum`): k so, dass die Summe der
+  vorhergesagten Abrufe zur Zahl der gewussten passt (Normal-Näherung, Prior log k ~ N(0, 0,7²), Goldener Schnitt).
+  Anlass: Protokoll 25.11. – 52 von 79 richtig, Durchschnittsmodell 49,8, trotzdem k = 0,54 (volle Likelihood: Fehler bei
+  „sicheren“ Wörtern, oft Tippfehler, zogen k herunter). Test „Kalibrierung im Großen“ bildet das nach.
+- **Tippfehler/Form (seit 1.22):** `gotIt(a)` = Note 3, Tippfehler „s“ oder Form „f“ (= `slip`), oder x/t mit Note 2.
+  Für die Prognose gilt das als abgerufen: `memory(atts, true)` wertet `slip` als FSRS-Note 2 (Hard) statt 1 – im Lernplan
+  bleibt `memory(atts)` streng. `slipModel(hist)`: Tippfehlerquote Üben `tTr` (Prior 5 %), Prüfungsbedingungen
+  `tEx` = Beta-Mittel mit Prior `PHI0` 0,5 × tTr (Stärke 30, Max: „zum Teil zu schnelles Tippen“), `phi` = tEx/tTr (≤ 1,5);
+  Formfehlerquote `fr`; Grundrisiko `eps0` = tEx + fr. Je Wort (letzte 4 Abrufe): erster Tippfehler zählt phi, jeder weitere 1,
+  Form 1; `eps = (num + 3·eps0)/(n + 3)`. `forecast`: p = shiftP(examRecall, d) × (1 − eps).
+- **Nie geübte Wörter (seit 1.22):** `newRate` = Anteil der Wörter, die beim allerersten Versuch gewusst wurden
+  ((got + 1)/(n + 5)); `examRecall(…, p0)` nutzt das für Wörter ohne Verlauf (vorher 0 %).
 - **Szenarien:** „Stand jetzt“ und „Mit Lernplan bis zur Prüfung“ (`sessionsUntil`: täglich 18:00 bis 2 h vor
   Prüfung; `examRecall`: Erfolg mit p, sonst Again + Good + Good).
 - **Monte Carlo** (`forecast`): 7 Stützstellen über die Unsicherheit von k, ~4200 simulierte Prüfungen mit
   n Lücken → Notenverteilung, Bereich p10–p90, Chance auf 1,0. Seed fest (mulberry 20261126).
 - **Selbstkontrolle:** Abrufe über Nacht richtig vs. erwartet (Standard- und angepasstes Modell); `examCheck`
   vergleicht Prüfungssimulationen (Modi x/t) mit dem Modell.
-- **Prüfungsformat-Faktor (seit 1.20, `formatShift`):** Verschiebung d auf der Logit-Skala aus allen Prüfungssimulationen
-  (Modi x/t, nur schon geübte Wörter), MAP mit Prior d ~ N(0, 1²). `forecast` wendet `shiftP(p, d + z·se)` auf jede
-  Abrufwahrscheinlichkeit an. Anlass: Fehlerprotokoll 24.11. – Simulationen 9/23 richtig, Modell erwartete 18,2.
-  `examCheck` zählt seit 1.20 Note 2 (richtig mit vorgegebenem Anfangsbuchstaben) als richtig.
+- **Prüfungsformat-Faktor (seit 1.20, `formatShift`):** Verschiebung d auf der Logit-Skala aus Prüfungssimulationen
+  (Modi x/t), Prior d ~ N(0, 1²). `forecast` wendet `shiftP(p, d + z·se)` auf jede Abrufwahrscheinlichkeit an.
+  Seit 1.22: nur Abrufe über Nacht (Simulation direkt nach dem Üben misst das Kurzzeitgedächtnis, das FSRS überschätzt –
+  das hatte d am 25.11. auf −1,22 gedrückt), Tippfehler zählen als gewusst (sonst doppelt mit `eps`), Schätzung wie k über
+  `fitSum`. `examCheck` liefert {n, right (Moodle-richtig), got (gewusst), exp}.
+- **Prüfung vorbei:** liegt `settings.examAt` in der Vergangenheit, rechnet die Prognose für „jetzt“ und `#scenText` sagt,
+  dass ein neuer Termin einzutragen ist. Wackelkandidaten sortieren seit 1.22 nach der Prognose je Wort (`F.rs`).
+- **Synthetische Prüfung (Skript nicht im Repo):** Lerner mit bekannter Wahrheit (FSRS, k, Tippfehler Üben/Prüfung, Format-d,
+  nie geübte Wörter, Kurzzeit-Überschätzung). Mittelwert-Abweichung alt (1.21) −9,4 … +6,0 Prozentpunkte, neu −2,3 … +3,8;
+  im Max-ähnlichen Fall (37 nie geübt, Kurzzeit überschätzt) alt −4,8, neu +0,7.
 - **Annahmen einstellbar:** Punkte `settings.n` (seit 1.18 Standard 16 wie im Übungstest, Migration über `settings.f18`), Notenschlüssel `key1` (1,0 ab, Standard 95 %)
   und `key4` (4,0 ab, Standard 50 %), dazwischen linear (`gradeKey`, `gradeOf`).
 - Recherche dahinter: DASH (Lindsey et al. 2014), HLR (Settles & Meeder 2016), FSRS-Benchmark (Expertium;
   angepasste Parameter bei ~84 % besser, wenig Daten → zum Durchschnitt schrumpfen; Same-Day-Reviews zählen nicht),
   Kaur et al. 2025 (Übung↔Prüfung ρ 0,60–0,72 → Bereich statt Punktwert), Pan & Rickard 2018 (anderes Format
   → schwächerer Transfer), Notenschlüssel schwanken (DHBW 1,0 ab 98 %, IHK 1 ab 92 Punkten, 4 ab 50 %).
-- Grenze: App-Format (Striche + Hinweis) hilft mehr als eine leere Lücke → Prognose eher zu hoch, falls die Prüfung weniger Hilfe gibt.
+- Grenze: Hilfen beim Üben (Definition, Tipp) können den Abruf erleichtern → Format-Faktor fängt das nur mit Simulationen über
+  Nacht auf; ohne sie bleibt d unsicher (se = 1) und der Bereich breit. Q7/Q8 (Abkürzung, Erklären) werden wie Lücken gerechnet.
 
 ## Sync
 - Privater GitHub-Gist (`vokabeltrainer.json`), Inhalt AES-GCM-verschlüsselt. `sync = {gist, key, token, …}` im localStorage.
@@ -202,6 +227,9 @@ git push
 - 1.17 Notenprognose an Max angepasst (siehe oben)
 - 1.18 Prüfung genau im Format des Moodle-Übungstests; Lückensätze mit englischer Definition statt Strichen; strenge
   Lückenbewertung; 100 Wörter aus den Kursunterlagen; Karteikarten „Erklären“; Prognose auf 16 Punkte
+- 1.22 Notenprognose nach Protokoll 25.11. („zu negativ“): Tippfehler/Form = gewusst, Risiko je Wort extra (schnelles Tippen
+  halb), Kalibrierung im Großen, Format-Faktor nur aus Simulationen über Nacht, nie geübte Wörter mit Erstversuch-Quote,
+  Hinweis bei vergangenem Termin, Rohdaten im Fehlerprotokoll
 - 1.21 18 Wörter aus der Liste eines Mitstudenten (Kategorie „Liste Mitstudent“), 3 neue Prüfungstexte, EXW als Abkürzung
 - 1.20 Auswertung Fehlerprotokoll 24.11.: Prüfungsformat-Faktor in der Prognose, echte Synonyme in Lücken (`ga`),
   -ise/-ize als Schreibvariante, mehrdeutige Sätze (branch, tall structure, brick-and-mortar store) eindeutig gemacht
@@ -215,8 +243,9 @@ git push
   („handeling“), subsidiary („subsidary“), catalogue, apparel, hierarchy; Verwechslungen household appliances ↔ household
   products, subsidiary ↔ subsidy ↔ subordinates, characteristic ↔ specification/feature, coupon ↔ discount.
 - Mehrdeutig bleiben einzelne 7.5-Sätze (characteristic/feature/benefit) – dafür ist die KI-Prüfung da.
-- Prognose mit echten Daten von Max beobachten: Wie viele Abrufe über Nacht gibt es, wie weit weicht k von 1 ab?
+- Prognose mit echten Daten von Max beobachten: Mit dem nächsten Protokoll (enthält Rohdaten) alt gegen neu nachrechnen;
+  wie weit weicht k von 1 ab, wie groß ist phi (Tippfehler Prüfung/Üben)?
 - Notenschlüssel ist unbekannt (Standard 1,0 ab 95 %, 4,0 ab 50 %) – Max fragen, falls er ihn erfährt.
 - Hörübung „Organisational structures“ selbst fehlt weiter; ihre Vokabeln stehen aber in der Mitstudenten-Liste (übernommen).
 - Bewertung von Frage 9 unklar (6 von 8 Lücken richtig = 5,3 Punkte): Abzug für Fehler oder 9. Lücke?
-- Nach der Prüfung (26.11.) ggf. echte Note mit Prognose vergleichen und hier notieren.
+- Nach der Prüfung (vermutlich 25.11., 08:15) echte Punktzahl von Max mit der Prognose vergleichen und hier notieren.

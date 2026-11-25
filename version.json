@@ -1,6 +1,6 @@
 {
-  "versionCode": 27,
-  "versionName": "1.21",
-  "notes": "18 neue Wörter aus der Liste eines Mitstudenten unter „Liste Mitstudent“ (z. B. layer, accountability, economy/economic/economical, Produktlebenszyklus), weitere Synonyme.",
+  "versionCode": 28,
+  "versionName": "1.22",
+  "notes": "Notenprognose realistischer: Tippfehler zählen als gewusst (Risiko je Wort extra), Simulationen nur über Nacht, nie geübte Wörter nicht mehr 0 %",
   "apk": "https://raw.githubusercontent.com/Mymaxyt/voctrainer/main/dist/Vokabeltrainer.apk"
 }
